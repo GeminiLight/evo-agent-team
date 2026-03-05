@@ -1,0 +1,9 @@
+
+> server@1.0.0 start
+> node dist/index.js
+
+Server running on http://localhost:3006
+  Teams dir: /data/home/geminitwang/.claude/teams
+  Tasks dir: /data/home/geminitwang/.claude/tasks
+  Demo mode: auto
+  Poll interval: 2000ms

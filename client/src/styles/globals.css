@@ -1,0 +1,784 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Syne:wght@400;500;600;700;800&family=Rajdhani:wght@400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500;600&family=Playfair+Display:wght@700;800&family=Space+Mono:wght@400;700&family=Oxanium:wght@400;500;600;700&family=Share+Tech+Mono&display=swap');
+@import "tailwindcss";
+
+/* ═══════════════════════════════════════════════════════════
+   THEME SYSTEM
+   All components use only CSS vars — never raw hex values.
+   Each theme maps the same semantic tokens to different colors.
+   ═══════════════════════════════════════════════════════════ */
+
+/* ─── THEME 1: PHOSPHOR — CRT green terminal ─── */
+:root,
+[data-theme="phosphor"] {
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-display: 'Syne', sans-serif;
+
+  /* Primary accent (phosphor green) */
+  --phosphor:             #39ff6a;
+  --phosphor-dim:         #1a7a35;
+  --phosphor-glow:        rgba(57, 255, 106, 0.15);
+  --phosphor-glow-strong: rgba(57, 255, 106, 0.35);
+  --accent-rgb:           57, 255, 106;
+
+  /* Secondary accent (in-progress) — vivid orange, clearly distinct from yellow */
+  --amber:     #ff8c42;
+  --amber-dim: #7a3800;
+  --amber-glow: rgba(255, 140, 66, 0.18);
+
+  /* Error/blocked */
+  --crimson:     #ff3b5c;
+  --crimson-dim: #7a1524;
+  --crimson-glow: rgba(255, 59, 92, 0.15);
+
+  /* Info — brighter, more cyan-leaning blue for clear contrast vs orange */
+  --ice:     #5bc8f5;
+  --ice-dim: #1a4f70;
+  --ice-glow: rgba(91, 200, 245, 0.15);
+
+  /* Surfaces */
+  --void:      #040608;
+  --surface-0: #070b0f;
+  --surface-1: #0c1318;
+  --surface-2: #111a22;
+  --surface-3: #172330;
+
+  /* Borders & text */
+  --border:        rgba(57, 255, 106, 0.12);
+  --border-bright: rgba(57, 255, 106, 0.28);
+  --text-primary:   #d4f5df;
+  --text-secondary: #6b9e7a;
+  --text-muted:     #3a6048;
+
+  /* Active element helpers (used by AgentCard, AgentNode, etc.) */
+  --active-bg:     rgba(57, 255, 106, 0.03);
+  --active-bg-med: rgba(57, 255, 106, 0.08);
+  --active-bg-hi:  rgba(57, 255, 106, 0.15);
+  --active-border: rgba(57, 255, 106, 0.25);
+  --active-border-hi: rgba(57, 255, 106, 0.4);
+  --active-glow:   0 0 6px var(--phosphor);
+  --active-text:   var(--phosphor);
+
+  /* Status colors */
+  --color-completed:        var(--phosphor);
+  --color-completed-bg:     rgba(57, 255, 106, 0.08);
+  --color-completed-text:   var(--phosphor);
+  --color-in-progress:      var(--amber);
+  --color-in-progress-bg:   rgba(255, 140, 66, 0.08);
+  --color-in-progress-text: var(--amber);
+  --color-pending:          #94a3b8;
+  --color-pending-bg:       rgba(148, 163, 184, 0.06);
+  --color-pending-text:     #94a3b8;
+  --color-blocked:          var(--crimson);
+  --color-blocked-bg:       rgba(255, 59, 92, 0.08);
+  --color-blocked-text:     var(--crimson);
+
+  /* Unread dot */
+  --unread-dot: var(--phosphor);
+
+  /* Graph/ReactFlow */
+  --graph-bg:         #040608;
+  --graph-dot-color:  rgba(57, 255, 106, 0.08);
+  --graph-edge-glow:  rgba(57, 255, 106, 0.2);
+  --minimap-mask:     rgba(4, 6, 8, 0.85);
+
+  /* Elevation shadows — layered depth, not flat black */
+  --shadow-sm:  0 1px 3px rgba(0,0,0,0.35), 0 1px 2px rgba(0,0,0,0.25);
+  --shadow-md:  0 4px 12px rgba(0,0,0,0.45), 0 2px 4px rgba(0,0,0,0.3);
+  --shadow-lg:  0 8px 24px rgba(0,0,0,0.55), 0 4px 8px rgba(0,0,0,0.35);
+  --shadow-panel: 0 0 0 1px var(--border), var(--shadow-md);
+
+  /* Standardized semantic status dot colors (traffic-light) */
+  --status-ok:      var(--phosphor);          /* green = done/healthy */
+  --status-warn:    var(--amber);             /* amber = busy/in-progress */
+  --status-error:   var(--crimson);           /* red   = blocked/error */
+  --status-neutral: var(--color-pending);     /* grey  = pending/idle */
+
+  /* Effects */
+  --scanline-opacity:   0.15;
+  --vignette-strength:  rgba(0, 0, 0, 0.6);
+  --scrollbar-thumb:    var(--phosphor-dim);
+  --scrollbar-thumb-hover: var(--phosphor);
+}
+
+/* ─── THEME 2: RADAR — deep space amber ─── */
+[data-theme="amber"] {
+  --font-mono: 'IBM Plex Mono', monospace;
+  --font-display: 'Rajdhani', sans-serif;
+
+  --phosphor:             #ffb627;
+  --phosphor-dim:         #8a5c00;
+  --phosphor-glow:        rgba(255, 182, 39, 0.15);
+  --phosphor-glow-strong: rgba(255, 182, 39, 0.35);
+  --accent-rgb:           255, 182, 39;
+
+  --amber:     #ff6b35;
+  --amber-dim: #7a2800;
+  --amber-glow: rgba(255, 107, 53, 0.15);
+
+  --crimson:     #ff4500;
+  --crimson-dim: #7a1a00;
+  --crimson-glow: rgba(255, 69, 0, 0.15);
+
+  --ice:     #ffd166;
+  --ice-dim: #7a5500;
+  --ice-glow: rgba(255, 209, 102, 0.15);
+
+  --void:      #080500;
+  --surface-0: #0e0900;
+  --surface-1: #180e00;
+  --surface-2: #221500;
+  --surface-3: #2d1c00;
+
+  --border:        rgba(255, 182, 39, 0.14);
+  --border-bright: rgba(255, 182, 39, 0.32);
+  --text-primary:   #fff3cc;
+  --text-secondary: #b8860b;
+  --text-muted:     #5c4000;
+
+  --active-bg:        rgba(255, 182, 39, 0.04);
+  --active-bg-med:    rgba(255, 182, 39, 0.08);
+  --active-bg-hi:     rgba(255, 182, 39, 0.15);
+  --active-border:    rgba(255, 182, 39, 0.28);
+  --active-border-hi: rgba(255, 182, 39, 0.5);
+  --active-glow:      0 0 6px #ffb627;
+  --active-text:      var(--phosphor);
+
+  --color-completed:        var(--phosphor);
+  --color-completed-bg:     rgba(255, 182, 39, 0.08);
+  --color-completed-text:   var(--phosphor);
+  --color-in-progress:      var(--amber);
+  --color-in-progress-bg:   rgba(255, 107, 53, 0.08);
+  --color-in-progress-text: var(--amber);
+  --color-pending:          #a07040;
+  --color-pending-bg:       rgba(160, 112, 64, 0.06);
+  --color-pending-text:     #a07040;
+  --color-blocked:          var(--crimson);
+  --color-blocked-bg:       rgba(255, 69, 0, 0.08);
+  --color-blocked-text:     var(--crimson);
+
+  --unread-dot: var(--phosphor);
+
+  --graph-bg:         #080500;
+  --graph-dot-color:  rgba(255, 182, 39, 0.08);
+  --graph-edge-glow:  rgba(255, 182, 39, 0.2);
+  --minimap-mask:     rgba(8, 5, 0, 0.85);
+
+  --shadow-sm:  0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-md:  0 4px 12px rgba(0,0,0,0.5), 0 2px 4px rgba(0,0,0,0.35);
+  --shadow-lg:  0 8px 24px rgba(0,0,0,0.6), 0 4px 8px rgba(0,0,0,0.4);
+  --shadow-panel: 0 0 0 1px var(--border), var(--shadow-md);
+  --status-ok:      var(--phosphor);
+  --status-warn:    var(--amber);
+  --status-error:   var(--crimson);
+  --status-neutral: var(--color-pending);
+
+  --scanline-opacity:      0.12;
+  --vignette-strength:     rgba(0, 0, 0, 0.65);
+  --scrollbar-thumb:       var(--phosphor-dim);
+  --scrollbar-thumb-hover: var(--phosphor);
+}
+
+/* ─── THEME 3: NEURAL — cold electric blue ─── */
+[data-theme="neural"] {
+  --font-mono: 'Space Mono', monospace;
+  --font-display: 'Oxanium', sans-serif;
+
+  --phosphor:             #00d4ff;
+  --phosphor-dim:         #005f80;
+  --phosphor-glow:        rgba(0, 212, 255, 0.15);
+  --phosphor-glow-strong: rgba(0, 212, 255, 0.35);
+  --accent-rgb:           0, 212, 255;
+
+  --amber:     #7b61ff;
+  --amber-dim: #2d1f8a;
+  --amber-glow: rgba(123, 97, 255, 0.15);
+
+  --crimson:     #ff4d6d;
+  --crimson-dim: #7a0020;
+  --crimson-glow: rgba(255, 77, 109, 0.15);
+
+  --ice:     #a78bfa;
+  --ice-dim: #3b1fa8;
+  --ice-glow: rgba(167, 139, 250, 0.15);
+
+  --void:      #00080f;
+  --surface-0: #010d18;
+  --surface-1: #041525;
+  --surface-2: #071e33;
+  --surface-3: #0b2840;
+
+  --border:        rgba(0, 212, 255, 0.12);
+  --border-bright: rgba(0, 212, 255, 0.28);
+  --text-primary:   #cff4ff;
+  --text-secondary: #4a9eb8;
+  --text-muted:     #1a5566;
+
+  --active-bg:        rgba(0, 212, 255, 0.04);
+  --active-bg-med:    rgba(0, 212, 255, 0.08);
+  --active-bg-hi:     rgba(0, 212, 255, 0.15);
+  --active-border:    rgba(0, 212, 255, 0.25);
+  --active-border-hi: rgba(0, 212, 255, 0.45);
+  --active-glow:      0 0 6px #00d4ff;
+  --active-text:      var(--phosphor);
+
+  --color-completed:        var(--phosphor);
+  --color-completed-bg:     rgba(0, 212, 255, 0.08);
+  --color-completed-text:   var(--phosphor);
+  --color-in-progress:      var(--amber);
+  --color-in-progress-bg:   rgba(123, 97, 255, 0.08);
+  --color-in-progress-text: var(--amber);
+  --color-pending:          #6b8fa8;
+  --color-pending-bg:       rgba(107, 143, 168, 0.06);
+  --color-pending-text:     #6b8fa8;
+  --color-blocked:          var(--crimson);
+  --color-blocked-bg:       rgba(255, 77, 109, 0.08);
+  --color-blocked-text:     var(--crimson);
+
+  --unread-dot: var(--phosphor);
+
+  --graph-bg:         #00080f;
+  --graph-dot-color:  rgba(0, 212, 255, 0.07);
+  --graph-edge-glow:  rgba(0, 212, 255, 0.2);
+  --minimap-mask:     rgba(0, 8, 15, 0.85);
+
+  --shadow-sm:  0 1px 3px rgba(0,0,10,0.45), 0 1px 2px rgba(0,0,10,0.3);
+  --shadow-md:  0 4px 12px rgba(0,0,10,0.55), 0 2px 4px rgba(0,0,10,0.4);
+  --shadow-lg:  0 8px 24px rgba(0,0,10,0.65), 0 4px 8px rgba(0,0,10,0.45);
+  --shadow-panel: 0 0 0 1px var(--border), var(--shadow-md);
+  --status-ok:      var(--phosphor);
+  --status-warn:    var(--amber);
+  --status-error:   var(--crimson);
+  --status-neutral: var(--color-pending);
+
+  --scanline-opacity:      0.07;
+  --vignette-strength:     rgba(0, 0, 20, 0.7);
+  --scrollbar-thumb:       var(--phosphor-dim);
+  --scrollbar-thumb-hover: var(--phosphor);
+}
+
+/* ─── THEME 4: PAPER — light editorial ─── */
+[data-theme="paper"] {
+  --font-mono: 'IBM Plex Mono', monospace;
+  --font-display: 'Playfair Display', serif;
+
+  --phosphor:             #1a1a2e;
+  --phosphor-dim:         #999;
+  --phosphor-glow:        rgba(26, 26, 46, 0.08);
+  --phosphor-glow-strong: rgba(26, 26, 46, 0.18);
+  --accent-rgb:           26, 26, 46;
+
+  --amber:     #b45309;
+  --amber-dim: #fde68a;
+  --amber-glow: rgba(180, 83, 9, 0.1);
+
+  --crimson:     #dc2626;
+  --crimson-dim: #fee2e2;
+  --crimson-glow: rgba(220, 38, 38, 0.1);
+
+  --ice:     #1d4ed8;
+  --ice-dim: #dbeafe;
+  --ice-glow: rgba(29, 78, 216, 0.1);
+
+  --void:      #f5f0e8;
+  --surface-0: #faf7f2;
+  --surface-1: #f0ebe0;
+  --surface-2: #e5ddd0;
+  --surface-3: #d8cfc0;
+
+  --border:        rgba(26, 26, 46, 0.1);
+  --border-bright: rgba(26, 26, 46, 0.25);
+  --text-primary:   #111122;
+  --text-secondary: #44446a;
+  --text-muted:     #9090b0;
+
+  --active-bg:        rgba(26, 26, 46, 0.04);
+  --active-bg-med:    rgba(26, 26, 46, 0.08);
+  --active-bg-hi:     rgba(26, 26, 46, 0.14);
+  --active-border:    rgba(26, 26, 46, 0.25);
+  --active-border-hi: rgba(26, 26, 46, 0.45);
+  --active-glow:      0 0 0 1px rgba(26,26,46,0.2);
+  --active-text:      var(--phosphor);
+
+  --color-completed:        #16a34a;
+  --color-completed-bg:     rgba(22, 163, 74, 0.07);
+  --color-completed-text:   #16a34a;
+  --color-in-progress:      var(--amber);
+  --color-in-progress-bg:   rgba(180, 83, 9, 0.06);
+  --color-in-progress-text: var(--amber);
+  --color-pending:          #6b7280;
+  --color-pending-bg:       rgba(107, 114, 128, 0.06);
+  --color-pending-text:     #6b7280;
+  --color-blocked:          var(--crimson);
+  --color-blocked-bg:       rgba(220, 38, 38, 0.06);
+  --color-blocked-text:     var(--crimson);
+
+  --unread-dot: var(--amber);
+
+  --graph-bg:         #f5f0e8;
+  --graph-dot-color:  rgba(26, 26, 46, 0.07);
+  --graph-edge-glow:  rgba(26, 26, 46, 0.1);
+  --minimap-mask:     rgba(240, 235, 224, 0.85);
+
+  --scanline-opacity:      0;
+  --vignette-strength:     rgba(180, 165, 140, 0.25);
+  --shadow-sm:  0 1px 3px rgba(180,165,140,0.12), 0 1px 2px rgba(0,0,0,0.08);
+  --shadow-md:  0 4px 12px rgba(180,165,140,0.18), 0 2px 4px rgba(0,0,0,0.1);
+  --shadow-lg:  0 8px 24px rgba(180,165,140,0.25), 0 4px 8px rgba(0,0,0,0.12);
+  --shadow-panel: 0 0 0 1px var(--border), var(--shadow-md);
+  --status-ok:      #16a34a;
+  --status-warn:    var(--amber);
+  --status-error:   var(--crimson);
+  --status-neutral: var(--color-pending);
+
+  --scrollbar-thumb:       #c0b8a8;
+  --scrollbar-thumb-hover: #888;
+}
+
+/* ─── THEME 5: CRIMSON OPS — blood red tactical ─── */
+[data-theme="crimson"] {
+  --font-mono: 'Share Tech Mono', monospace;
+  --font-display: 'Rajdhani', sans-serif;
+
+  --phosphor:             #ff2244;
+  --phosphor-dim:         #8a0018;
+  --phosphor-glow:        rgba(255, 34, 68, 0.15);
+  --phosphor-glow-strong: rgba(255, 34, 68, 0.35);
+  --accent-rgb:           255, 34, 68;
+
+  --amber:     #ff8c00;
+  --amber-dim: #7a3800;
+  --amber-glow: rgba(255, 140, 0, 0.15);
+
+  --crimson:     #ff0055;
+  --crimson-dim: #6b0020;
+  --crimson-glow: rgba(255, 0, 85, 0.15);
+
+  --ice:     #ff6680;
+  --ice-dim: #7a1530;
+  --ice-glow: rgba(255, 102, 128, 0.15);
+
+  --void:      #080003;
+  --surface-0: #0f0005;
+  --surface-1: #1a000a;
+  --surface-2: #240010;
+  --surface-3: #300018;
+
+  --border:        rgba(255, 34, 68, 0.14);
+  --border-bright: rgba(255, 34, 68, 0.32);
+  --text-primary:   #ffe0e6;
+  --text-secondary: #b85060;
+  --text-muted:     #5c1525;
+
+  --active-bg:        rgba(255, 34, 68, 0.04);
+  --active-bg-med:    rgba(255, 34, 68, 0.09);
+  --active-bg-hi:     rgba(255, 34, 68, 0.16);
+  --active-border:    rgba(255, 34, 68, 0.28);
+  --active-border-hi: rgba(255, 34, 68, 0.5);
+  --active-glow:      0 0 7px #ff2244;
+  --active-text:      var(--phosphor);
+
+  --color-completed:        var(--phosphor);
+  --color-completed-bg:     rgba(255, 34, 68, 0.08);
+  --color-completed-text:   var(--phosphor);
+  --color-in-progress:      var(--amber);
+  --color-in-progress-bg:   rgba(255, 140, 0, 0.08);
+  --color-in-progress-text: var(--amber);
+  --color-pending:          #804050;
+  --color-pending-bg:       rgba(128, 64, 80, 0.06);
+  --color-pending-text:     #804050;
+  --color-blocked:          #ff0055;
+  --color-blocked-bg:       rgba(255, 0, 85, 0.08);
+  --color-blocked-text:     #ff0055;
+
+  --unread-dot: var(--phosphor);
+
+  --graph-bg:         #080003;
+  --graph-dot-color:  rgba(255, 34, 68, 0.08);
+  --graph-edge-glow:  rgba(255, 34, 68, 0.2);
+  --minimap-mask:     rgba(8, 0, 3, 0.85);
+
+  --shadow-sm:  0 1px 3px rgba(0,0,0,0.5), 0 1px 2px rgba(0,0,0,0.35);
+  --shadow-md:  0 4px 12px rgba(0,0,0,0.6), 0 2px 4px rgba(0,0,0,0.45);
+  --shadow-lg:  0 8px 24px rgba(0,0,0,0.7), 0 4px 8px rgba(0,0,0,0.5);
+  --shadow-panel: 0 0 0 1px var(--border), var(--shadow-md);
+  --status-ok:      var(--phosphor);
+  --status-warn:    var(--amber);
+  --status-error:   var(--crimson);
+  --status-neutral: var(--color-pending);
+
+  --scanline-opacity:      0.18;
+  --vignette-strength:     rgba(0, 0, 0, 0.7);
+  --scrollbar-thumb:       var(--phosphor-dim);
+  --scrollbar-thumb-hover: var(--phosphor);
+}
+
+/* ─── THEME 6: SLATE — cool charcoal pro ─── */
+[data-theme="slate"] {
+  --font-mono: 'IBM Plex Mono', monospace;
+  --font-display: 'Syne', sans-serif;
+
+  --phosphor:             #94a3b8;
+  --phosphor-dim:         #475569;
+  --phosphor-glow:        rgba(148, 163, 184, 0.12);
+  --phosphor-glow-strong: rgba(148, 163, 184, 0.28);
+  --accent-rgb:           148, 163, 184;
+
+  --amber:     #f59e0b;
+  --amber-dim: #78350f;
+  --amber-glow: rgba(245, 158, 11, 0.15);
+
+  --crimson:     #f87171;
+  --crimson-dim: #7f1d1d;
+  --crimson-glow: rgba(248, 113, 113, 0.15);
+
+  --ice:     #60a5fa;
+  --ice-dim: #1e3a5f;
+  --ice-glow: rgba(96, 165, 250, 0.15);
+
+  --void:      #0a0d12;
+  --surface-0: #0f1318;
+  --surface-1: #161b24;
+  --surface-2: #1e2530;
+  --surface-3: #252e3c;
+
+  --border:        rgba(148, 163, 184, 0.1);
+  --border-bright: rgba(148, 163, 184, 0.22);
+  --text-primary:   #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-muted:     #475569;
+
+  --active-bg:        rgba(148, 163, 184, 0.04);
+  --active-bg-med:    rgba(148, 163, 184, 0.08);
+  --active-bg-hi:     rgba(148, 163, 184, 0.14);
+  --active-border:    rgba(148, 163, 184, 0.22);
+  --active-border-hi: rgba(148, 163, 184, 0.4);
+  --active-glow:      0 0 6px rgba(148,163,184,0.4);
+  --active-text:      var(--phosphor);
+
+  --color-completed:        #4ade80;
+  --color-completed-bg:     rgba(74, 222, 128, 0.08);
+  --color-completed-text:   #4ade80;
+  --color-in-progress:      var(--amber);
+  --color-in-progress-bg:   rgba(245, 158, 11, 0.08);
+  --color-in-progress-text: var(--amber);
+  --color-pending:          #64748b;
+  --color-pending-bg:       rgba(100, 116, 139, 0.06);
+  --color-pending-text:     #64748b;
+  --color-blocked:          var(--crimson);
+  --color-blocked-bg:       rgba(248, 113, 113, 0.08);
+  --color-blocked-text:     var(--crimson);
+
+  --unread-dot: var(--ice);
+
+  --graph-bg:         #0a0d12;
+  --graph-dot-color:  rgba(148, 163, 184, 0.06);
+  --graph-edge-glow:  rgba(148, 163, 184, 0.15);
+  --minimap-mask:     rgba(10, 13, 18, 0.85);
+
+  --shadow-sm:  0 1px 3px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2);
+  --shadow-md:  0 4px 12px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.25);
+  --shadow-lg:  0 8px 24px rgba(0,0,0,0.5), 0 4px 8px rgba(0,0,0,0.3);
+  --shadow-panel: 0 0 0 1px var(--border), var(--shadow-md);
+  --status-ok:      #4ade80;
+  --status-warn:    var(--amber);
+  --status-error:   var(--crimson);
+  --status-neutral: var(--color-pending);
+
+  --scanline-opacity:      0;
+  --vignette-strength:     rgba(0, 0, 0, 0.5);
+  --scrollbar-thumb:       #334155;
+  --scrollbar-thumb-hover: #64748b;
+}
+
+/* ─── THEME 7: AURORA — northern lights purple/teal ─── */
+[data-theme="aurora"] {
+  --font-mono: 'Space Mono', monospace;
+  --font-display: 'Oxanium', sans-serif;
+
+  --phosphor:             #a78bfa;
+  --phosphor-dim:         #4c2d9e;
+  --phosphor-glow:        rgba(167, 139, 250, 0.15);
+  --phosphor-glow-strong: rgba(167, 139, 250, 0.35);
+  --accent-rgb:           167, 139, 250;
+
+  --amber:     #34d399;
+  --amber-dim: #065f46;
+  --amber-glow: rgba(52, 211, 153, 0.15);
+
+  --crimson:     #f87171;
+  --crimson-dim: #7f1d1d;
+  --crimson-glow: rgba(248, 113, 113, 0.15);
+
+  --ice:     #22d3ee;
+  --ice-dim: #164e63;
+  --ice-glow: rgba(34, 211, 238, 0.15);
+
+  --void:      #05030f;
+  --surface-0: #0a0618;
+  --surface-1: #110c25;
+  --surface-2: #181332;
+  --surface-3: #201a40;
+
+  --border:        rgba(167, 139, 250, 0.12);
+  --border-bright: rgba(167, 139, 250, 0.28);
+  --text-primary:   #ede9fe;
+  --text-secondary: #8b7ac8;
+  --text-muted:     #3d3060;
+
+  --active-bg:        rgba(167, 139, 250, 0.04);
+  --active-bg-med:    rgba(167, 139, 250, 0.09);
+  --active-bg-hi:     rgba(167, 139, 250, 0.16);
+  --active-border:    rgba(167, 139, 250, 0.28);
+  --active-border-hi: rgba(167, 139, 250, 0.5);
+  --active-glow:      0 0 8px rgba(167,139,250,0.5);
+  --active-text:      var(--phosphor);
+
+  --color-completed:        var(--phosphor);
+  --color-completed-bg:     rgba(167, 139, 250, 0.08);
+  --color-completed-text:   var(--phosphor);
+  --color-in-progress:      var(--amber);
+  --color-in-progress-bg:   rgba(52, 211, 153, 0.08);
+  --color-in-progress-text: var(--amber);
+  --color-pending:          #6b5ea8;
+  --color-pending-bg:       rgba(107, 94, 168, 0.06);
+  --color-pending-text:     #6b5ea8;
+  --color-blocked:          var(--crimson);
+  --color-blocked-bg:       rgba(248, 113, 113, 0.08);
+  --color-blocked-text:     var(--crimson);
+
+  --unread-dot: var(--amber);
+
+  --graph-bg:         #05030f;
+  --graph-dot-color:  rgba(167, 139, 250, 0.07);
+  --graph-edge-glow:  rgba(167, 139, 250, 0.2);
+  --minimap-mask:     rgba(5, 3, 15, 0.85);
+
+  --shadow-sm:  0 1px 3px rgba(5,0,20,0.45), 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-md:  0 4px 12px rgba(5,0,20,0.55), 0 2px 4px rgba(0,0,0,0.4);
+  --shadow-lg:  0 8px 24px rgba(5,0,20,0.65), 0 4px 8px rgba(0,0,0,0.5);
+  --shadow-panel: 0 0 0 1px var(--border), var(--shadow-md);
+  --status-ok:      var(--phosphor);
+  --status-warn:    var(--amber);
+  --status-error:   var(--crimson);
+  --status-neutral: var(--color-pending);
+
+  --scanline-opacity:      0.05;
+  --vignette-strength:     rgba(5, 0, 20, 0.65);
+  --scrollbar-thumb:       var(--phosphor-dim);
+  --scrollbar-thumb-hover: var(--phosphor);
+}
+
+/* ─── THEME 8: VOID — near-black monochrome ─── */
+[data-theme="void"] {
+  --font-mono: 'Share Tech Mono', monospace;
+  --font-display: 'Syne', sans-serif;
+
+  --phosphor:             #e0e0e0;
+  --phosphor-dim:         #555;
+  --phosphor-glow:        rgba(224, 224, 224, 0.1);
+  --phosphor-glow-strong: rgba(224, 224, 224, 0.22);
+  --accent-rgb:           224, 224, 224;
+
+  --amber:     #a0a0a0;
+  --amber-dim: #404040;
+  --amber-glow: rgba(160, 160, 160, 0.1);
+
+  --crimson:     #cc4444;
+  --crimson-dim: #5a1010;
+  --crimson-glow: rgba(204, 68, 68, 0.15);
+
+  --ice:     #888888;
+  --ice-dim: #333333;
+  --ice-glow: rgba(136, 136, 136, 0.1);
+
+  --void:      #030303;
+  --surface-0: #080808;
+  --surface-1: #0f0f0f;
+  --surface-2: #161616;
+  --surface-3: #1e1e1e;
+
+  --border:        rgba(255, 255, 255, 0.08);
+  --border-bright: rgba(255, 255, 255, 0.18);
+  --text-primary:   #d8d8d8;
+  --text-secondary: #707070;
+  --text-muted:     #383838;
+
+  --active-bg:        rgba(255, 255, 255, 0.03);
+  --active-bg-med:    rgba(255, 255, 255, 0.07);
+  --active-bg-hi:     rgba(255, 255, 255, 0.12);
+  --active-border:    rgba(255, 255, 255, 0.18);
+  --active-border-hi: rgba(255, 255, 255, 0.35);
+  --active-glow:      0 0 6px rgba(224,224,224,0.3);
+  --active-text:      var(--phosphor);
+
+  --color-completed:        #aaaaaa;
+  --color-completed-bg:     rgba(170, 170, 170, 0.08);
+  --color-completed-text:   #aaaaaa;
+  --color-in-progress:      #dddddd;
+  --color-in-progress-bg:   rgba(221, 221, 221, 0.08);
+  --color-in-progress-text: #dddddd;
+  --color-pending:          #555555;
+  --color-pending-bg:       rgba(85, 85, 85, 0.06);
+  --color-pending-text:     #555555;
+  --color-blocked:          var(--crimson);
+  --color-blocked-bg:       rgba(204, 68, 68, 0.08);
+  --color-blocked-text:     var(--crimson);
+
+  --unread-dot: #e0e0e0;
+
+  --graph-bg:         #030303;
+  --graph-dot-color:  rgba(255, 255, 255, 0.05);
+  --graph-edge-glow:  rgba(255, 255, 255, 0.1);
+  --minimap-mask:     rgba(3, 3, 3, 0.85);
+
+  --shadow-sm:  0 1px 3px rgba(0,0,0,0.5), 0 1px 2px rgba(0,0,0,0.35);
+  --shadow-md:  0 4px 12px rgba(0,0,0,0.65), 0 2px 4px rgba(0,0,0,0.45);
+  --shadow-lg:  0 8px 24px rgba(0,0,0,0.75), 0 4px 8px rgba(0,0,0,0.55);
+  --shadow-panel: 0 0 0 1px var(--border), var(--shadow-md);
+  --status-ok:      #aaaaaa;
+  --status-warn:    var(--amber);
+  --status-error:   var(--crimson);
+  --status-neutral: var(--color-pending);
+
+  --scanline-opacity:      0.1;
+  --vignette-strength:     rgba(0, 0, 0, 0.7);
+  --scrollbar-thumb:       #333;
+  --scrollbar-thumb-hover: #666;
+}
+
+
+/* ════════════════════════════════════════════
+   BASE STYLES
+   ════════════════════════════════════════════ */
+
+* { box-sizing: border-box; }
+
+html, body, #root { height: 100%; margin: 0; padding: 0; }
+
+body {
+  background: var(--void);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: var(--surface-0); }
+::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
+
+/* Scan lines overlay */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent, transparent 2px,
+    rgba(0, 0, 0, var(--scanline-opacity)) 2px,
+    rgba(0, 0, 0, var(--scanline-opacity)) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* Vignette */
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background: radial-gradient(ellipse at center, transparent 60%, var(--vignette-strength) 100%);
+  pointer-events: none;
+  z-index: 9998;
+}
+
+
+/* ════════════════════════════════════════════
+   KEYFRAME ANIMATIONS
+   ════════════════════════════════════════════ */
+
+@keyframes phosphor-pulse {
+  0%, 100% { opacity: 1; text-shadow: 0 0 8px var(--phosphor-glow-strong); }
+  50%       { opacity: 0.7; text-shadow: 0 0 4px var(--phosphor-glow); }
+}
+
+@keyframes status-pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 6px currentColor; }
+  50%       { opacity: 0.4; box-shadow: 0 0 2px currentColor; }
+}
+
+@keyframes agent-glow {
+  0%, 100% { box-shadow: 0 0 0 1px var(--border),        0 0 15px var(--phosphor-glow); }
+  50%       { box-shadow: 0 0 0 1px var(--border-bright), 0 0 30px var(--phosphor-glow-strong); }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes data-stream {
+  0%   { transform: translateY(-100%); opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { transform: translateY(100%); opacity: 0; }
+}
+
+@keyframes flicker {
+  0%, 95%, 100% { opacity: 1; }
+  96% { opacity: 0.7; }
+  97% { opacity: 1; }
+  98% { opacity: 0.85; }
+}
+
+@keyframes slide-in-right {
+  from { transform: translateX(20px); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
+@keyframes fade-up {
+  from { transform: translateY(8px); opacity: 0; }
+  to   { transform: translateY(0);   opacity: 1; }
+}
+
+@keyframes border-march {
+  0%   { background-position: 0% 0%, 100% 0%, 100% 100%, 0% 100%; }
+  100% { background-position: 100% 0%, 100% 100%, 0% 100%, 0% 0%; }
+}
+
+@keyframes progress-fill { from { width: 0%; } }
+
+@keyframes theme-morph {
+  from { opacity: 0.6; }
+  to   { opacity: 1; }
+}
+
+/* ── Status dot animation — standardized across all views ── */
+@keyframes status-dot-live {
+  0%, 100% { opacity: 1;   box-shadow: 0 0 0 0   currentColor; }
+  50%       { opacity: 0.6; box-shadow: 0 0 0 3px transparent; }
+}
+.status-dot-live {
+  animation: status-dot-live 2s ease-in-out infinite !important;
+}
+
+/* Theme transition — smooth color changes */
+*, *::before, *::after {
+  transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease, box-shadow 0.25s ease;
+}
+/* But don't slow down animations */
+[style*="animation"] { transition: none !important; }
+
+
+/* ════════════════════════════════════════════
+   TAILWIND UTILITIES
+   ════════════════════════════════════════════ */
+
+@utility animate-pulse-status { animation: status-pulse 2s ease-in-out infinite; }
+@utility animate-glow          { animation: agent-glow 2s ease-in-out infinite; }
+@utility animate-spin-slow     { animation: spin-slow 2.5s linear infinite; }
+@utility animate-phosphor      { animation: phosphor-pulse 3s ease-in-out infinite; }
+@utility animate-flicker       { animation: flicker 8s ease-in-out infinite; }
+@utility animate-fade-up       { animation: fade-up 0.4s ease-out forwards; }
+@utility font-mono-display     { font-family: var(--font-mono); }
+@utility font-display          { font-family: var(--font-display); }

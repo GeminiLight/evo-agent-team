@@ -1,0 +1,29 @@
+{
+  "name": "evo-agent-team",
+  "version": "1.0.0",
+  "description": "Real-time dashboard for monitoring Claude Code agent teams",
+  "type": "module",
+  "bin": {
+    "evo-agent-team": "./bin/evo-agent-team.js"
+  },
+  "files": [
+    "bin/",
+    "server/dist/",
+    "server/src/",
+    "server/package.json",
+    "server/tsconfig.json",
+    ".env.example"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev -w server\" \"npm run dev -w client\"",
+    "build": "npm run build -w client && npm run build -w server",
+    "start": "node server/dist/index.js",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": ["claude", "agent", "visualizer", "dashboard", "monitoring"],
+  "license": "MIT",
+  "workspaces": ["server", "client"],
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  }
+}

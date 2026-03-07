@@ -1,15 +1,32 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { BookOpen, X } from 'lucide-react';
-import type { TeamDetail } from '../../types';
+import type { TeamDetail, AgentSessionStats } from '../../types';
+import MarkdownContent, { inlineRender } from '../shared/MarkdownContent';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 interface TeamOverviewProps {
   team: TeamDetail;
+  sessionStats?: Record<string, AgentSessionStats>;
 }
 
-export default function TeamOverview({ team }: TeamOverviewProps) {
+export default function TeamOverview({ team, sessionStats = {} }: TeamOverviewProps) {
   const [guideOpen, setGuideOpen] = useState(false);
+  const [descExpanded, setDescExpanded] = useState(false);
 
   const { stats } = team;
+
+  const aggregatedStats = useMemo(() => {
+    const values = Object.values(sessionStats);
+    if (values.length === 0) return null;
+    return {
+      inputTokens: values.reduce((s, v) => s + v.inputTokens, 0),
+      outputTokens: values.reduce((s, v) => s + v.outputTokens, 0),
+      cacheReadTokens: values.reduce((s, v) => s + v.cacheReadTokens, 0),
+      messageCount: values.reduce((s, v) => s + v.messageCount, 0),
+      maxDurationMs: Math.max(...values.map(v => v.sessionDurationMs ?? 0)),
+      agentCount: values.length,
+    };
+  }, [sessionStats]);
   const total = stats.total || 1;
 
   const completedPct = (stats.completed / total) * 100;
@@ -94,12 +111,30 @@ export default function TeamOverview({ team }: TeamOverviewProps) {
           </div>
 
           {team.config?.description && (
-            <div style={{
-              fontSize: '11px', color: 'var(--text-muted)',
-              letterSpacing: '0.03em', lineHeight: 1.5,
-              marginBottom: '14px', maxWidth: '480px',
-            }}>
-              {team.config.description}
+            <div style={{ marginBottom: '14px', maxWidth: '480px' }}>
+              <div style={{
+                fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.15em',
+                marginBottom: '4px',
+              }}>
+                MISSION
+              </div>
+              <div
+                onClick={() => setDescExpanded(prev => !prev)}
+                style={{
+                  fontSize: '11px', color: 'var(--text-secondary)',
+                  letterSpacing: '0.03em', lineHeight: 1.5,
+                  cursor: 'pointer',
+                  ...(!descExpanded ? {
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical' as const,
+                    overflow: 'hidden',
+                  } : {}),
+                }}
+                title={descExpanded ? 'Click to collapse' : 'Click to expand'}
+              >
+                {team.config.description}
+              </div>
             </div>
           )}
 
@@ -133,6 +168,28 @@ export default function TeamOverview({ team }: TeamOverviewProps) {
               </div>
             ))}
           </div>
+
+          {/* Session stats — team-wide aggregated */}
+          {aggregatedStats && (
+            <div style={{
+              display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'center',
+              marginTop: '14px', paddingTop: '12px',
+              borderTop: '1px solid var(--border)',
+            }}>
+              <span style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.15em', flexShrink: 0 }}>
+                SESSION
+              </span>
+              <StatCell label="IN" value={fmtTokens(aggregatedStats.inputTokens)} color="var(--ice)" title={`Total input tokens: ${aggregatedStats.inputTokens.toLocaleString()}`} />
+              <StatCell label="OUT" value={fmtTokens(aggregatedStats.outputTokens)} color="var(--phosphor)" title={`Total output tokens: ${aggregatedStats.outputTokens.toLocaleString()}`} />
+              {aggregatedStats.cacheReadTokens > 0 && (
+                <StatCell label="CACHE" value={fmtTokens(aggregatedStats.cacheReadTokens)} color="var(--text-secondary)" title={`Cache read tokens: ${aggregatedStats.cacheReadTokens.toLocaleString()}`} />
+              )}
+              <StatCell label="MSG" value={String(aggregatedStats.messageCount)} color="var(--text-secondary)" title={`Total API messages across ${aggregatedStats.agentCount} agents`} />
+              {aggregatedStats.maxDurationMs > 0 && (
+                <StatCell label="TIME" value={fmtDuration(aggregatedStats.maxDurationMs)} color="var(--text-secondary)" title="Longest agent session duration" />
+              )}
+            </div>
+          )}
         </div>
 
         {/* Right: big completion number */}
@@ -162,6 +219,7 @@ export default function TeamOverview({ team }: TeamOverviewProps) {
 
 function TeamGuidePanel({ teamId, teamName, onClose }: { teamId: string; teamName: string; onClose: () => void }) {
   const [content, setContent] = useState<string | null | 'loading'>('loading');
+  const panelRef = useFocusTrap<HTMLDivElement>();
 
   useEffect(() => {
     fetch(`/api/teams/${teamId}/guide`)
@@ -175,12 +233,18 @@ function TeamGuidePanel({ teamId, teamName, onClose }: { teamId: string; teamNam
       {/* Backdrop */}
       <div
         onClick={onClose}
+        aria-hidden="true"
         style={{ position: 'fixed', inset: 0, background: 'rgba(4,6,8,0.6)', zIndex: 99 }}
       />
 
       {/* Panel */}
-      <div style={{
-        position: 'fixed', right: 0, top: 0, bottom: 0, width: '520px',
+      <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Team guide for ${teamName}`}
+        style={{
+        position: 'fixed', right: 0, top: 0, bottom: 0, width: '520px', maxWidth: '100vw',
         zIndex: 100,
         background: 'var(--surface-0)',
         borderLeft: '1px solid var(--border-bright)',
@@ -238,184 +302,36 @@ function TeamGuidePanel({ teamId, teamName, onClose }: { teamId: string; teamNam
   );
 }
 
-// ─── Minimal markdown renderer ────────────────────────────────────────────────
-// Renders headings, bold, inline code, code blocks, lists, and tables
-// without any external dependency.
+// ─── Markdown renderer and inline render imported from shared/MarkdownContent ─
 
-function MarkdownContent({ content }: { content: string }) {
-  const lines = content.split('\n');
-  const elements: React.ReactNode[] = [];
-  let i = 0;
-
-  while (i < lines.length) {
-    const line = lines[i];
-
-    // Fenced code block
-    if (line.startsWith('```')) {
-      const lang = line.slice(3).trim();
-      const codeLines: string[] = [];
-      i++;
-      while (i < lines.length && !lines[i].startsWith('```')) {
-        codeLines.push(lines[i]);
-        i++;
-      }
-      elements.push(
-        <pre key={i} style={{
-          background: 'var(--surface-2)', border: '1px solid var(--border)',
-          borderRadius: '3px', padding: '12px 14px', overflowX: 'auto',
-          fontSize: '10px', lineHeight: 1.6, color: 'var(--text-secondary)',
-          fontFamily: 'var(--font-mono)', letterSpacing: '0.02em',
-          margin: '10px 0',
-        }}>
-          {lang && <div style={{ fontSize: '8px', color: 'var(--text-muted)', marginBottom: '6px', letterSpacing: '0.1em' }}>{lang.toUpperCase()}</div>}
-          {codeLines.join('\n')}
-        </pre>
-      );
-      i++;
-      continue;
-    }
-
-    // Heading
-    const hMatch = line.match(/^(#{1,4})\s+(.+)/);
-    if (hMatch) {
-      const level = hMatch[1].length;
-      const sizes = ['18px', '15px', '13px', '11px'];
-      const margins = ['20px 0 10px', '16px 0 8px', '14px 0 6px', '10px 0 4px'];
-      elements.push(
-        <div key={i} style={{
-          fontSize: sizes[level - 1] ?? '11px',
-          fontWeight: 700,
-          color: level === 1 ? 'var(--phosphor)' : level === 2 ? 'var(--text-primary)' : 'var(--text-secondary)',
-          fontFamily: level <= 2 ? 'var(--font-display)' : 'var(--font-mono)',
-          letterSpacing: level <= 2 ? '0.04em' : '0.08em',
-          margin: margins[level - 1] ?? '8px 0 4px',
-          textShadow: level === 1 ? '0 0 20px var(--phosphor-glow)' : 'none',
-          borderBottom: level <= 2 ? '1px solid var(--border)' : 'none',
-          paddingBottom: level <= 2 ? '6px' : '0',
-        }}>
-          {inlineRender(hMatch[2])}
-        </div>
-      );
-      i++;
-      continue;
-    }
-
-    // Horizontal rule
-    if (/^---+$/.test(line.trim())) {
-      elements.push(<div key={i} style={{ height: '1px', background: 'var(--border)', margin: '14px 0' }} />);
-      i++;
-      continue;
-    }
-
-    // Table
-    if (line.includes('|') && lines[i + 1]?.match(/^\|?[\s\-|]+\|?$/)) {
-      const tableRows: string[][] = [];
-      while (i < lines.length && lines[i].includes('|')) {
-        const cells = lines[i].split('|').map(c => c.trim()).filter((c, idx, arr) => !(idx === 0 && c === '') && !(idx === arr.length - 1 && c === ''));
-        if (!cells.every(c => /^[-:\s]+$/.test(c))) tableRows.push(cells);
-        i++;
-      }
-      if (tableRows.length > 0) {
-        const [head, ...body] = tableRows;
-        elements.push(
-          <div key={i} style={{ overflowX: 'auto', margin: '10px 0' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px', fontFamily: 'var(--font-mono)' }}>
-              <thead>
-                <tr>
-                  {head.map((cell, ci) => (
-                    <th key={ci} style={{ padding: '6px 10px', textAlign: 'left', color: 'var(--text-primary)', background: 'var(--surface-2)', border: '1px solid var(--border)', letterSpacing: '0.06em', fontWeight: 600, fontSize: '9px' }}>
-                      {inlineRender(cell)}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {body.map((row, ri) => (
-                  <tr key={ri}>
-                    {row.map((cell, ci) => (
-                      <td key={ci} style={{ padding: '6px 10px', color: 'var(--text-secondary)', border: '1px solid var(--border)', verticalAlign: 'top' }}>
-                        {inlineRender(cell)}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        );
-      }
-      continue;
-    }
-
-    // List item
-    const listMatch = line.match(/^(\s*)([-*]|\d+\.)\s+(.+)/);
-    if (listMatch) {
-      const indent = listMatch[1].length;
-      elements.push(
-        <div key={i} style={{ display: 'flex', gap: '8px', paddingLeft: `${indent * 8 + 4}px`, margin: '2px 0' }}>
-          <span style={{ fontSize: '10px', color: 'var(--phosphor)', flexShrink: 0, marginTop: '1px', opacity: 0.7 }}>▸</span>
-          <span style={{ fontSize: '11px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-            {inlineRender(listMatch[3])}
-          </span>
-        </div>
-      );
-      i++;
-      continue;
-    }
-
-    // Blockquote
-    if (line.startsWith('>')) {
-      elements.push(
-        <div key={i} style={{
-          borderLeft: '2px solid var(--border-bright)', paddingLeft: '12px',
-          margin: '4px 0', fontSize: '10px', color: 'var(--text-muted)',
-          lineHeight: 1.5, fontStyle: 'italic',
-        }}>
-          {inlineRender(line.replace(/^>\s*/, ''))}
-        </div>
-      );
-      i++;
-      continue;
-    }
-
-    // Empty line
-    if (line.trim() === '') {
-      elements.push(<div key={i} style={{ height: '6px' }} />);
-      i++;
-      continue;
-    }
-
-    // Paragraph
-    elements.push(
-      <p key={i} style={{ fontSize: '11px', color: 'var(--text-secondary)', lineHeight: 1.65, margin: '3px 0', letterSpacing: '0.01em' }}>
-        {inlineRender(line)}
-      </p>
-    );
-    i++;
-  }
-
-  return <div>{elements}</div>;
+function StatCell({ label, value, color, title }: { label: string; value: string; color: string; title?: string }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }} title={title}>
+      <span style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>{label}</span>
+      <span style={{ fontSize: '11px', fontWeight: 600, color, fontFamily: 'var(--font-mono)', letterSpacing: '0.04em' }}>
+        {value}
+      </span>
+    </div>
+  );
 }
 
-/** Render inline markdown: **bold**, `code`, *italic* */
-function inlineRender(text: string): React.ReactNode {
-  const parts: React.ReactNode[] = [];
-  const regex = /(\*\*(.+?)\*\*|`(.+?)`|\*(.+?)\*)/g;
-  let last = 0;
-  let m: RegExpExecArray | null;
-  while ((m = regex.exec(text)) !== null) {
-    if (m.index > last) parts.push(text.slice(last, m.index));
-    if (m[2] !== undefined) {
-      parts.push(<strong key={m.index} style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{m[2]}</strong>);
-    } else if (m[3] !== undefined) {
-      parts.push(<code key={m.index} style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: '2px', padding: '1px 5px', fontSize: '9px', fontFamily: 'var(--font-mono)', color: 'var(--phosphor)' }}>{m[3]}</code>);
-    } else if (m[4] !== undefined) {
-      parts.push(<em key={m.index} style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>{m[4]}</em>);
-    }
-    last = m.index + m[0].length;
-  }
-  if (last < text.length) parts.push(text.slice(last));
-  return parts.length === 1 ? parts[0] : parts;
+function fmtTokens(n: number): string {
+  if (n === 0) return '0';
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
+  return String(n);
+}
+
+function fmtDuration(ms: number): string {
+  const totalMins = Math.floor(ms / 60000);
+  if (totalMins < 1) return '<1m';
+  if (totalMins < 60) return `${totalMins}m`;
+  const hours = Math.floor(totalMins / 60);
+  const mins = totalMins % 60;
+  if (hours < 24) return mins > 0 ? `${hours}h${mins}m` : `${hours}h`;
+  const days = Math.floor(hours / 24);
+  const remHours = hours % 24;
+  return remHours > 0 ? `${days}d${remHours}h` : `${days}d`;
 }
 
 function CornerMark({ pos }: { pos: 'tl' | 'tr' | 'bl' | 'br' }) {

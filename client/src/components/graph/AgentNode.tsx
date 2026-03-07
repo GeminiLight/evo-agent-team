@@ -5,9 +5,13 @@ import type { TeamMember } from '../../types';
 interface AgentNodeData {
   member: TeamMember;
   isActive: boolean;
+  isLead?: boolean;
   taskCount: number;
   inProgressCount?: number;
   completedCount?: number;
+  isSelected?: boolean;
+  hasSelection?: boolean;
+  isAlerted?: boolean;
 }
 
 function AgentTooltip({ member, isActive, taskCount, inProgressCount = 0, completedCount = 0 }: AgentNodeData) {
@@ -93,7 +97,7 @@ function AgentTooltip({ member, isActive, taskCount, inProgressCount = 0, comple
 }
 
 export function AgentNode({ data }: { data: AgentNodeData }) {
-  const { member, isActive, taskCount, inProgressCount, completedCount } = data;
+  const { member, isActive, isLead, taskCount, inProgressCount, completedCount, isSelected, hasSelection, isAlerted } = data;
   const initial = member.name.charAt(0).toUpperCase();
   const [showTooltip, setShowTooltip] = useState(false);
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -106,20 +110,41 @@ export function AgentNode({ data }: { data: AgentNodeData }) {
     setShowTooltip(false);
   };
 
+  // Dimming: when another node is selected and this one isn't
+  const isDimmed = hasSelection && !isSelected;
+
   return (
     <div
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       style={{
         background: isActive ? 'var(--active-bg-med)' : 'var(--surface-1)',
-        border: `1px solid ${isActive ? 'var(--active-border-hi)' : 'var(--border)'}`,
+        border: isSelected
+          ? '2px solid var(--phosphor)'
+          : isAlerted
+            ? '2px solid var(--crimson, #ff4466)'
+            : isLead
+              ? '2px solid var(--amber)'
+              : `1px solid ${isActive ? 'var(--active-border-hi)' : 'var(--border)'}`,
         borderRadius: '4px',
-        padding: '12px 14px',
+        padding: isSelected || isAlerted || isLead ? '11px 13px' : '12px 14px',
         minWidth: '160px',
         fontFamily: 'var(--font-mono, monospace)',
-        boxShadow: isActive ? 'var(--active-glow)' : '0 0 0 rgba(0,0,0,0)',
-        animation: isActive ? 'agent-glow 2s ease-in-out infinite' : 'none',
+        boxShadow: isSelected
+          ? '0 0 12px var(--phosphor-glow-strong)'
+          : isAlerted
+            ? '0 0 10px var(--crimson-glow, rgba(255,68,102,0.5))'
+            : isLead
+              ? '0 0 8px var(--amber-glow)'
+              : isActive ? 'var(--active-glow)' : '0 0 0 rgba(0,0,0,0)',
+        animation: isAlerted && !isSelected
+          ? 'agent-alert-pulse 1.5s ease-in-out infinite'
+          : isActive && !isSelected ? 'agent-glow 2s ease-in-out infinite' : 'none',
         position: 'relative',
+        opacity: isDimmed ? 0.35 : 1,
+        filter: isDimmed ? 'saturate(0.3)' : 'none',
+        transform: isSelected ? 'scale(1.03)' : 'none',
+        transition: 'opacity 0.3s, filter 0.3s, transform 0.2s, border-color 0.2s, box-shadow 0.2s',
       }}
     >
       {showTooltip && (
@@ -135,19 +160,41 @@ export function AgentNode({ data }: { data: AgentNodeData }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
         <div style={{
           width: '28px', height: '28px',
-          borderRadius: '3px',
+          borderRadius: isLead ? '50%' : '3px',
           background: isActive ? 'var(--active-bg-hi)' : 'var(--surface-2)',
-          border: `1px solid ${isActive ? 'var(--active-border-hi)' : 'var(--border)'}`,
+          border: isLead
+            ? '2px solid var(--amber)'
+            : `1px solid ${isActive ? 'var(--active-border-hi)' : 'var(--border)'}`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: '13px', fontWeight: 700,
-          color: isActive ? 'var(--active-text)' : 'var(--text-secondary)',
-          textShadow: isActive ? '0 0 8px var(--phosphor-glow-strong)' : 'none',
+          color: isLead ? 'var(--amber)' : isActive ? 'var(--active-text)' : 'var(--text-secondary)',
+          textShadow: isLead ? '0 0 8px var(--amber-glow)' : isActive ? '0 0 8px var(--phosphor-glow-strong)' : 'none',
+          boxShadow: isLead ? '0 0 6px var(--amber-glow)' : 'none',
         }}>
           {initial}
         </div>
         <div>
-          <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '0.04em' }}>
-            {member.name}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '0.04em' }}>
+              {member.name}
+            </div>
+            {isLead && (
+              <span style={{
+                fontSize: '7px', padding: '1px 4px',
+                color: 'var(--amber)', background: 'rgba(245,166,35,0.12)',
+                border: '1px solid rgba(245,166,35,0.35)', borderRadius: '2px',
+                fontFamily: 'var(--font-mono)', letterSpacing: '0.12em', fontWeight: 700,
+              }}>LEAD</span>
+            )}
+            {isAlerted && (
+              <span style={{
+                fontSize: '7px', padding: '1px 4px',
+                color: 'var(--crimson, #ff4466)', background: 'rgba(255,68,102,0.12)',
+                border: '1px solid rgba(255,68,102,0.45)', borderRadius: '2px',
+                fontFamily: 'var(--font-mono)', letterSpacing: '0.1em', fontWeight: 700,
+                animation: 'status-pulse 1.5s ease-in-out infinite',
+              }}>ALERT</span>
+            )}
           </div>
           <div style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
             {member.agentType}

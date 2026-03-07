@@ -55,10 +55,74 @@ export interface AgentSessionStats {
   cacheReadTokens: number;
   messageCount: number;
   sessionDurationMs: number | null;
+  lastMessageAt?: string | null;
+  toolCallCounts?: Record<string, number>;
+  tokenTimeSeries?: TokenDataPoint[];
+}
+export interface TokenDataPoint {
+  timestamp: string;
+  cumulativeInput: number;
+  cumulativeOutput: number;
 }
 export interface SessionStatsResponse {
   teamId: string;
   agents: AgentSessionStats[];
+}
+
+// B2: Alerts
+export type AlertSeverity = 'critical' | 'warning' | 'info';
+export type AlertKind = 'agent_stuck' | 'human_input_escalated' | 'critical_path_blocked' | 'token_anomaly';
+export interface Alert {
+  id: string;
+  kind: AlertKind;
+  severity: AlertSeverity;
+  title: string;
+  detail: string;
+  agentName?: string;
+  taskId?: string;
+  triggeredAt: string;
+  durationMs?: number;
+}
+export interface AlertsResponse {
+  teamId: string;
+  alerts: Alert[];
+}
+
+// B3: Agent session info
+export interface AgentSessionInfo {
+  agentName: string;
+  sessionId: string;
+  messageCount: number;
+  isLead: boolean;
+}
+export interface AgentSessionsResponse {
+  teamId: string;
+  agents: AgentSessionInfo[];
+}
+
+// B4: Cost data
+export interface AgentCostSummary {
+  agentName: string;
+  inputTokens: number;
+  outputTokens: number;
+  cacheReadTokens: number;
+  messageCount: number;
+  percentage: number;
+}
+export interface ToolCostSummary {
+  toolName: string;
+  callCount: number;
+}
+export interface AgentTimeSeries {
+  agentName: string;
+  dataPoints: TokenDataPoint[];
+}
+export interface CostData {
+  teamId: string;
+  totals: { inputTokens: number; outputTokens: number; cacheReadTokens: number };
+  byAgent: AgentCostSummary[];
+  byTool: ToolCostSummary[];
+  timeSeries: AgentTimeSeries[];
 }
 
 export interface TeamSummary {
@@ -167,5 +231,6 @@ export interface SessionMessage {
 export interface SessionHistoryResponse {
   teamId: string;
   sessionId: string | null;
+  agentName?: string | null;
   messages: SessionMessage[];
 }

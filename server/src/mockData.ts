@@ -1,4 +1,4 @@
-import type { TeamConfig, Task, TeamSummary, TeamDetail, TimelineResponse, CommLogResponse, ProjectTodosResponse, InboxSummaryResponse, SessionStatsResponse } from './types.js';
+import type { TeamConfig, Task, TeamSummary, TeamDetail, TimelineResponse, CommLogResponse, ProjectTodosResponse, InboxSummaryResponse, SessionStatsResponse, Alert, CostData, AgentSessionInfo, TokenDataPoint } from './types.js';
 
 const mockConfig: TeamConfig = {
   name: 'demo-team',
@@ -180,13 +180,51 @@ export function getDemoInboxSummary(): InboxSummaryResponse {
 }
 
 export function getDemoSessionStats(): SessionStatsResponse {
+  const base = new Date('2026-03-07T09:00:00Z');
+  const t = (offsetMinutes: number) => new Date(base.getTime() + offsetMinutes * 60000).toISOString();
+
+  function makeSeries(msgs: number, startMin: number): TokenDataPoint[] {
+    const pts: TokenDataPoint[] = [];
+    let ci = 0, co = 0;
+    for (let i = 0; i < msgs; i++) {
+      ci += Math.round(800 + Math.random() * 400);
+      co += Math.round(200 + Math.random() * 150);
+      pts.push({ timestamp: t(startMin + i * 8), cumulativeInput: ci, cumulativeOutput: co });
+    }
+    return pts;
+  }
+
   return {
     teamId: 'demo-team',
     agents: [
-      { agentName: 'team-lead',    inputTokens: 45200, outputTokens: 12300, cacheReadTokens: 89400,  messageCount: 47, sessionDurationMs: 5400000  },
-      { agentName: 'frontend-dev', inputTokens: 38100, outputTokens: 9800,  cacheReadTokens: 71200,  messageCount: 39, sessionDurationMs: 4200000  },
-      { agentName: 'backend-dev',  inputTokens: 52400, outputTokens: 14700, cacheReadTokens: 103000, messageCount: 58, sessionDurationMs: 6100000  },
-      { agentName: 'tester',       inputTokens: 21000, outputTokens: 5600,  cacheReadTokens: 42100,  messageCount: 23, sessionDurationMs: 2800000  },
+      {
+        agentName: 'team-lead',
+        inputTokens: 45200, outputTokens: 12300, cacheReadTokens: 89400, messageCount: 47, sessionDurationMs: 5400000,
+        lastMessageAt: t(-3),
+        toolCallCounts: { Task: 18, Read: 12, Bash: 8, SendMessage: 9 },
+        tokenTimeSeries: makeSeries(8, 0),
+      },
+      {
+        agentName: 'frontend-dev',
+        inputTokens: 38100, outputTokens: 9800, cacheReadTokens: 71200, messageCount: 39, sessionDurationMs: 4200000,
+        lastMessageAt: t(-25),
+        toolCallCounts: { Read: 22, Edit: 15, Write: 8, Bash: 4 },
+        tokenTimeSeries: makeSeries(7, 5),
+      },
+      {
+        agentName: 'backend-dev',
+        inputTokens: 52400, outputTokens: 14700, cacheReadTokens: 103000, messageCount: 58, sessionDurationMs: 6100000,
+        lastMessageAt: t(-8),
+        toolCallCounts: { Bash: 31, Read: 18, Write: 12, Edit: 9 },
+        tokenTimeSeries: makeSeries(9, 2),
+      },
+      {
+        agentName: 'tester',
+        inputTokens: 21000, outputTokens: 5600, cacheReadTokens: 42100, messageCount: 23, sessionDurationMs: 2800000,
+        lastMessageAt: t(-62),
+        toolCallCounts: { Bash: 14, Read: 7, Write: 3 },
+        tokenTimeSeries: makeSeries(5, 10),
+      },
     ],
   };
 }
@@ -253,6 +291,88 @@ export function getDemoCommLog(): CommLogResponse {
         timestamp: t(90), color: '#f5a623', read: false,
         parsedType: undefined, summary: undefined,
       },
+    ],
+  };
+}
+
+export function getDemoAlerts(): Alert[] {
+  const now = new Date().toISOString();
+  return [
+    {
+      id: 'human-frontend-dev',
+      kind: 'human_input_escalated',
+      severity: 'warning',
+      title: 'frontend-dev awaiting human input',
+      detail: 'Agent has been waiting 25 min for a human response.',
+      agentName: 'frontend-dev',
+      triggeredAt: now,
+      durationMs: 25 * 60000,
+    },
+    {
+      id: 'stuck-tester',
+      kind: 'agent_stuck',
+      severity: 'critical',
+      title: 'tester appears stuck',
+      detail: 'No activity for 62 min while task is in progress.',
+      agentName: 'tester',
+      triggeredAt: now,
+      durationMs: 62 * 60000,
+    },
+  ];
+}
+
+export function getDemoAgentSessions(): AgentSessionInfo[] {
+  return [
+    { agentName: 'team-lead',    sessionId: 'demo-lead-session-id',    messageCount: 47, isLead: true  },
+    { agentName: 'frontend-dev', sessionId: 'demo-fe-session-id',      messageCount: 39, isLead: false },
+    { agentName: 'backend-dev',  sessionId: 'demo-be-session-id',      messageCount: 58, isLead: false },
+    { agentName: 'tester',       sessionId: 'demo-tester-session-id',  messageCount: 23, isLead: false },
+  ];
+}
+
+export function getDemoCostData(): CostData {
+  const base = new Date('2026-03-07T09:00:00Z');
+  const t = (offsetMinutes: number) => new Date(base.getTime() + offsetMinutes * 60000).toISOString();
+
+  function makeSeries(msgs: number, startMin: number) {
+    const pts: TokenDataPoint[] = [];
+    let ci = 0, co = 0;
+    for (let i = 0; i < msgs; i++) {
+      ci += Math.round(800 + Math.random() * 400);
+      co += Math.round(200 + Math.random() * 150);
+      pts.push({ timestamp: t(startMin + i * 8), cumulativeInput: ci, cumulativeOutput: co });
+    }
+    return pts;
+  }
+
+  const totalIn  = 45200 + 38100 + 52400 + 21000;
+  const totalOut = 12300 + 9800  + 14700 + 5600;
+  const totalCR  = 89400 + 71200 + 103000 + 42100;
+
+  return {
+    teamId: 'demo-team',
+    totals: { inputTokens: totalIn, outputTokens: totalOut, cacheReadTokens: totalCR },
+    byAgent: [
+      { agentName: 'team-lead',    inputTokens: 45200, outputTokens: 12300, cacheReadTokens: 89400,  messageCount: 47, percentage: Math.round((45200+12300) / (totalIn+totalOut) * 100) },
+      { agentName: 'frontend-dev', inputTokens: 38100, outputTokens: 9800,  cacheReadTokens: 71200,  messageCount: 39, percentage: Math.round((38100+9800)  / (totalIn+totalOut) * 100) },
+      { agentName: 'backend-dev',  inputTokens: 52400, outputTokens: 14700, cacheReadTokens: 103000, messageCount: 58, percentage: Math.round((52400+14700) / (totalIn+totalOut) * 100) },
+      { agentName: 'tester',       inputTokens: 21000, outputTokens: 5600,  cacheReadTokens: 42100,  messageCount: 23, percentage: Math.round((21000+5600)  / (totalIn+totalOut) * 100) },
+    ],
+    byTool: [
+      { toolName: 'Bash',         callCount: 57 },
+      { toolName: 'Read',         callCount: 59 },
+      { toolName: 'Edit',         callCount: 24 },
+      { toolName: 'Write',        callCount: 23 },
+      { toolName: 'Task',         callCount: 18 },
+      { toolName: 'SendMessage',  callCount: 9  },
+      { toolName: 'TaskUpdate',   callCount: 14 },
+      { toolName: 'TaskCreate',   callCount: 6  },
+    ],
+    timeSeries: [
+      { agentName: 'team-lead',    dataPoints: makeSeries(8, 0)  },
+      { agentName: 'frontend-dev', dataPoints: makeSeries(7, 5)  },
+      { agentName: 'backend-dev',  dataPoints: makeSeries(9, 2)  },
+      { agentName: 'tester',       dataPoints: makeSeries(5, 10) },
     ],
   };
 }

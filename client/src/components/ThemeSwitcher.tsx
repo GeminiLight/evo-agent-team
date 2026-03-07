@@ -5,7 +5,9 @@ import { THEMES, useTheme, type ThemeId } from '../context/ThemeContext';
 export default function ThemeSwitcher() {
   const { theme, setTheme } = useTheme();
   const [open, setOpen] = useState(false);
+  const [dropPos, setDropPos] = useState({ top: 0, right: 0 });
   const ref = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -16,13 +18,25 @@ export default function ThemeSwitcher() {
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
 
+  function handleOpen() {
+    if (btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect();
+      setDropPos({ top: r.bottom + 6, right: window.innerWidth - r.right });
+    }
+    setOpen(o => !o);
+  }
+
   const current = THEMES.find(t => t.id === theme)!;
 
   return (
     <div ref={ref} style={{ position: 'relative' }}>
       <button
-        onClick={() => setOpen(o => !o)}
+        ref={btnRef}
+        onClick={handleOpen}
         title="Change theme"
+        aria-expanded={open}
+        aria-controls="theme-menu"
+        aria-haspopup="true"
         style={{
           display: 'flex', alignItems: 'center', gap: '6px',
           padding: '4px 10px',
@@ -58,17 +72,23 @@ export default function ThemeSwitcher() {
       </button>
 
       {open && (
-        <div style={{
-          position: 'absolute', right: 0, top: 'calc(100% + 6px)',
-          zIndex: 200,
-          background: 'var(--surface-1)',
-          border: '1px solid var(--border-bright)',
-          borderRadius: '4px',
-          overflow: 'hidden',
-          width: '320px',
-          animation: 'fade-up 0.15s ease-out',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
-        }}>
+        <div
+          id="theme-menu"
+          role="menu"
+          aria-label="Theme selection"
+          style={{
+            position: 'fixed',
+            top: dropPos.top,
+            right: dropPos.right,
+            zIndex: 9999,
+            background: 'var(--surface-1)',
+            border: '1px solid var(--border-bright)',
+            borderRadius: '4px',
+            overflow: 'hidden',
+            width: '320px',
+            animation: 'fade-up 0.15s ease-out',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+          }}>
           {/* Header */}
           <div style={{
             padding: '8px 12px 6px',
@@ -91,6 +111,8 @@ export default function ThemeSwitcher() {
               return (
                 <button
                   key={t.id}
+                  role="menuitem"
+                  aria-current={isActive ? 'true' : undefined}
                   onClick={() => { setTheme(t.id as ThemeId); setOpen(false); }}
                   style={{
                     display: 'flex', alignItems: 'center', gap: '8px',

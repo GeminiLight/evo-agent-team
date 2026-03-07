@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import type React from 'react';
 import type { TeamSummary, TeamDetail, WsMessage } from '../types';
 
 interface UseTeamDataReturn {
@@ -6,6 +7,7 @@ interface UseTeamDataReturn {
   selectedTeamId: string | null;
   setSelectedTeamId: (id: string) => void;
   teamDetail: TeamDetail | null;
+  setTeamDetail: React.Dispatch<React.SetStateAction<TeamDetail | null>>;
   loading: boolean;
   isDemoMode: boolean;
   enableDemo: () => Promise<void>;
@@ -207,5 +209,5 @@ export function useTeamData(pollInterval = 2000): UseTeamDataReturn {
     }
   }, [fetchTeams]);
 
-  return { teams, selectedTeamId, setSelectedTeamId, teamDetail, loading, isDemoMode, enableDemo, wsConnected };
+  return { teams, selectedTeamId, setSelectedTeamId, teamDetail, setTeamDetail, loading, isDemoMode, enableDemo, wsConnected };
 }

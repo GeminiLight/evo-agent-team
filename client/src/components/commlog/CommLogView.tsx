@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import type { TeamDetail, AgentMessage, CommLogResponse } from '../../types';
 import MessageBubble from './MessageBubble';
 import { agentColor } from '../../utils/agentColors';
+import CRTEmptyState from '../shared/CRTEmptyState';
 
 // ─── Data hook ────────────────────────────────────────────────────────────────
 function useCommLog(teamId: string) {
@@ -150,11 +151,35 @@ function MessageThread({ group }: { group: MessageGroup }) {
 }
 
 // ─── Main view ────────────────────────────────────────────────────────────────
+
+function OrderBtn({ active, onClick, title, children }: { active: boolean; onClick: () => void; title?: string; children: React.ReactNode }) {
+  return (
+    <button
+      onClick={onClick}
+      title={title}
+      style={{
+        padding: '2px 7px', fontSize: '8px', letterSpacing: '0.08em',
+        fontFamily: 'var(--font-mono)',
+        background: active ? 'var(--active-bg-med)' : 'transparent',
+        color: active ? 'var(--active-text)' : 'var(--text-muted)',
+        border: `1px solid ${active ? 'var(--active-border)' : 'transparent'}`,
+        borderRadius: '2px', cursor: 'pointer', transition: 'all 0.1s',
+      }}
+      onMouseEnter={e => { if (!active) e.currentTarget.style.color = 'var(--text-secondary)'; }}
+      onMouseLeave={e => { if (!active) e.currentTarget.style.color = active ? 'var(--active-text)' : 'var(--text-muted)'; }}
+    >
+      {children}
+    </button>
+  );
+}
+
 interface CommLogViewProps {
   teamId: string;
   teamDetail: TeamDetail | null;
   onMessagesChange?: (messages: AgentMessage[]) => void;
 }
+
+type SortOrder = 'desc' | 'asc';
 
 export default function CommLogView({ teamId, teamDetail, onMessagesChange }: CommLogViewProps) {
   const { data, loading } = useCommLog(teamId);
@@ -162,6 +187,7 @@ export default function CommLogView({ teamId, teamDetail, onMessagesChange }: Co
   const [activeAgent, setActiveAgent] = useState<string>('ALL');
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [order, setOrder] = useState<SortOrder>('desc');
 
   // Auto-scroll state
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -174,8 +200,12 @@ export default function CommLogView({ teamId, teamDetail, onMessagesChange }: Co
   const agentNames = data?.agentNames ?? [];
   const allMessages: AgentMessage[] = data?.messages ?? [];
 
-  // Sort oldest-first (bottom = newest, natural chat order)
-  const sorted = [...allMessages].sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+  // Sort by order preference
+  const sorted = [...allMessages].sort((a, b) =>
+    order === 'asc'
+      ? a.timestamp.localeCompare(b.timestamp)
+      : b.timestamp.localeCompare(a.timestamp)
+  );
 
   // Filter pipeline
   const filtered = sorted.filter(msg => {
@@ -223,30 +253,49 @@ export default function CommLogView({ teamId, teamDetail, onMessagesChange }: Co
     prevCountRef.current = currentCount;
   }, [filtered.length, isFollowing]);
 
-  // Auto-scroll to bottom when following
+  // Auto-scroll to newest edge when following
   useEffect(() => {
     if (isFollowing && scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      if (order === 'desc') {
+        scrollRef.current.scrollTop = 0;
+      } else {
+        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      }
       setNewCount(0);
     }
-  }, [filtered.length, isFollowing]);
+  }, [filtered.length, isFollowing, order]);
 
-  // Detect user scroll — pause following if scrolled up
+  // Detect user scroll — pause following if scrolled away from newest edge
   const handleScroll = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
-    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
-    if (distanceFromBottom > 60) {
-      setIsFollowing(false);
+    if (order === 'desc') {
+      // newest at top — following means scrolled to top
+      if (el.scrollTop > 60) {
+        setIsFollowing(false);
+      } else {
+        setIsFollowing(true);
+        setNewCount(0);
+      }
     } else {
-      setIsFollowing(true);
-      setNewCount(0);
+      // newest at bottom
+      const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+      if (distanceFromBottom > 60) {
+        setIsFollowing(false);
+      } else {
+        setIsFollowing(true);
+        setNewCount(0);
+      }
     }
-  }, []);
+  }, [order]);
 
-  const jumpToBottom = () => {
+  const jumpToNewest = () => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+      if (order === 'desc') {
+        scrollRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+      }
     }
     setIsFollowing(true);
     setNewCount(0);
@@ -255,10 +304,10 @@ export default function CommLogView({ teamId, teamDetail, onMessagesChange }: Co
   return (
     <div style={{
       display: 'grid',
-      gridTemplateColumns: '160px 1fr',
+      gridTemplateColumns: 'minmax(120px, 160px) 1fr',
       gap: '16px',
       height: 'calc(100vh - 100px)',
-      maxHeight: '780px',
+      minHeight: '280px',
     }}>
       {/* ── Left sidebar: agent filter ── */}
       <div style={{
@@ -337,9 +386,13 @@ export default function CommLogView({ teamId, teamDetail, onMessagesChange }: Co
             COMMS // {teamName.toUpperCase()}
           </span>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            {/* Follow toggle */}
+            <div style={{ display: 'flex', gap: '2px' }}>
+            <OrderBtn active={order === 'desc'} onClick={() => { setOrder('desc'); setIsFollowing(true); }} title="Newest first">NEW→OLD</OrderBtn>
+            <OrderBtn active={order === 'asc'}  onClick={() => { setOrder('asc');  setIsFollowing(true); }} title="Oldest first">OLD→NEW</OrderBtn>
+          </div>
+          {/* Follow toggle */}
             <button
-              onClick={() => { setIsFollowing(f => !f); if (!isFollowing) jumpToBottom(); }}
+              onClick={() => { setIsFollowing(f => !f); if (!isFollowing) jumpToNewest(); }}
               title={isFollowing ? 'Auto-scroll ON — click to pause' : 'Auto-scroll OFF — click to follow'}
               style={{
                 display: 'flex', alignItems: 'center', gap: '5px',
@@ -496,11 +549,14 @@ export default function CommLogView({ teamId, teamDetail, onMessagesChange }: Co
             </div>
           )}
           {!loading && filtered.length === 0 && (
-            <div style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.1em', padding: '40px', textAlign: 'center' }}>
-              {searchQuery || typeFilter !== 'all' || activeAgent !== 'ALL'
-                ? '— NO MATCHING MESSAGES —'
-                : '— NO MESSAGES —'}
-            </div>
+            <CRTEmptyState
+              title={searchQuery || typeFilter !== 'all' || activeAgent !== 'ALL'
+                ? 'NO MATCHING MESSAGES'
+                : 'NO MESSAGES'}
+              subtitle={searchQuery || typeFilter !== 'all' || activeAgent !== 'ALL'
+                ? 'Try adjusting your filters or search query'
+                : 'Messages will appear here as agents communicate'}
+            />
           )}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
             {groups.map(group => (
@@ -512,7 +568,7 @@ export default function CommLogView({ teamId, teamDetail, onMessagesChange }: Co
         {/* Floating "N new messages" banner */}
         {!isFollowing && newCount > 0 && (
           <button
-            onClick={jumpToBottom}
+            onClick={jumpToNewest}
             style={{
               position: 'absolute',
               bottom: '20px',
@@ -532,7 +588,7 @@ export default function CommLogView({ teamId, teamDetail, onMessagesChange }: Co
               animation: 'fade-up 0.2s ease-out',
             }}
           >
-            ↓ {newCount} NEW MESSAGE{newCount !== 1 ? 'S' : ''}
+            {order === 'desc' ? '↑' : '↓'} {newCount} NEW MESSAGE{newCount !== 1 ? 'S' : ''}
           </button>
         )}
       </div>

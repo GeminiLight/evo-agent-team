@@ -1,12 +1,15 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { CheckCircle2, Loader2, Clock, Lock, ChevronRight, ExternalLink } from 'lucide-react';
 import type { Task, TeamMember } from '../../types';
 import { getTaskStatus, STATUS_COLORS, type StatusKey } from '../../utils/statusColors';
+import CRTEmptyState from '../shared/CRTEmptyState';
 
 interface TaskListProps {
   tasks: Task[];
   members: TeamMember[];
   onTaskSelect: (taskId: string | null) => void;
+  teamId?: string;
+  onTaskUpdated?: (task: Task) => void;
 }
 
 const STATUS_LABELS: Record<StatusKey, string> = {
@@ -16,9 +19,56 @@ const STATUS_LABELS: Record<StatusKey, string> = {
   blocked: 'BLOCKED',
 };
 
-export default function TaskList({ tasks, onTaskSelect }: TaskListProps) {
+const STATUS_CYCLE: Record<Task['status'], Task['status']> = {
+  pending: 'in_progress',
+  in_progress: 'completed',
+  completed: 'pending',
+};
+
+export default function TaskList({ tasks, onTaskSelect, teamId, onTaskUpdated }: TaskListProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [filter, setFilter] = useState<StatusKey | 'all'>('all');
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [undoToast, setUndoToast] = useState<{ taskId: string; prevStatus: Task['status']; subject: string; timer: ReturnType<typeof setTimeout> } | null>(null);
+
+  const revertStatus = useCallback(async (taskId: string, prevStatus: Task['status']) => {
+    if (!teamId) return;
+    try {
+      const res = await fetch(`/api/teams/${teamId}/tasks/${taskId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: prevStatus }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        onTaskUpdated?.(json.task);
+      }
+    } catch { /* silent */ }
+  }, [teamId, onTaskUpdated]);
+
+  const handleStatusCycle = useCallback(async (e: React.MouseEvent, task: Task) => {
+    e.stopPropagation();
+    if (!teamId || updatingId) return;
+    const prevStatus = task.status;
+    const next = STATUS_CYCLE[task.status];
+    setUpdatingId(task.id);
+    try {
+      const res = await fetch(`/api/teams/${teamId}/tasks/${task.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: next }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        onTaskUpdated?.(json.task);
+        // Show undo toast
+        if (undoToast) clearTimeout(undoToast.timer);
+        const timer = setTimeout(() => setUndoToast(null), 4000);
+        setUndoToast({ taskId: task.id, prevStatus, subject: task.subject, timer });
+      }
+    } catch { /* silent */ }
+    finally { setUpdatingId(null); }
+  }, [teamId, updatingId, onTaskUpdated, undoToast]);
 
   const allTasksSimple = tasks.map(t => ({ id: t.id, status: t.status }));
 
@@ -36,6 +86,7 @@ export default function TaskList({ tasks, onTaskSelect }: TaskListProps) {
   };
 
   return (
+    <>
     <div style={{
       background: 'var(--surface-0)',
       border: '1px solid var(--border)',
@@ -64,13 +115,21 @@ export default function TaskList({ tasks, onTaskSelect }: TaskListProps) {
               : f === 'completed' ? 'var(--phosphor)'
               : f === 'blocked' ? 'var(--crimson)'
               : '#4a6070';
+            const tooltips: Record<string, string> = {
+              all: 'Show all tasks',
+              in_progress: 'Show actively running tasks',
+              completed: 'Show finished tasks',
+              pending: 'Show queued tasks',
+              blocked: 'Show blocked tasks waiting on dependencies',
+            };
             return (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
+                title={tooltips[f]}
                 style={{
                   padding: '3px 8px',
-                  fontSize: '9px',
+                  fontSize: '10px',
                   letterSpacing: '0.08em',
                   fontFamily: 'var(--font-mono)',
                   background: isActive ? `${color}18` : 'transparent',
@@ -92,15 +151,10 @@ export default function TaskList({ tasks, onTaskSelect }: TaskListProps) {
       {/* Task list */}
       <div style={{ maxHeight: '60vh', overflowY: 'auto' }}>
         {filtered.length === 0 && (
-          <div style={{
-            padding: '40px',
-            textAlign: 'center',
-            fontSize: '11px',
-            color: 'var(--text-muted)',
-            letterSpacing: '0.1em',
-          }}>
-            — NO TASKS —
-          </div>
+          <CRTEmptyState
+            title={filter !== 'all' ? 'NO MATCHING TASKS' : 'NO TASKS'}
+            subtitle={filter !== 'all' ? 'Try adjusting filters to see more tasks' : undefined}
+          />
         )}
         {filtered.map((task, idx) => {
           const status = getTaskStatus(task, allTasksSimple);
@@ -197,17 +251,38 @@ export default function TaskList({ tasks, onTaskSelect }: TaskListProps) {
                   </span>
                 )}
 
-                {/* Status label */}
-                <span style={{
-                  fontSize: '9px',
-                  color: colors.text,
-                  letterSpacing: '0.1em',
-                  minWidth: '50px',
-                  textAlign: 'right',
-                  flexShrink: 0,
-                }}>
+                {/* Created / updated timestamps */}
+                {task.createdAt && (
+                  <span style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.05em', whiteSpace: 'nowrap', flexShrink: 0, fontFamily: 'var(--font-mono)' }} title={`Created: ${new Date(task.createdAt).toLocaleString()}`}>
+                    +{timeAgo(task.createdAt)}
+                  </span>
+                )}
+
+                {/* Clickable status label — cycles pending→active→done */}
+                <button
+                  onClick={e => handleStatusCycle(e, task)}
+                  title={teamId ? `Click to cycle status (current: ${status})` : undefined}
+                  style={{
+                    fontSize: '9px',
+                    color: colors.text,
+                    background: updatingId === task.id ? 'var(--surface-2)' : colors.bg,
+                    border: `1px solid ${colors.border}40`,
+                    borderRadius: '2px',
+                    padding: '2px 6px',
+                    letterSpacing: '0.1em',
+                    minWidth: '52px',
+                    textAlign: 'center',
+                    flexShrink: 0,
+                    fontFamily: 'var(--font-mono)',
+                    cursor: teamId ? 'pointer' : 'default',
+                    transition: 'opacity 0.15s',
+                    opacity: updatingId === task.id ? 0.5 : 1,
+                  }}
+                  onMouseEnter={e => { if (teamId && updatingId !== task.id) e.currentTarget.style.opacity = '0.75'; }}
+                  onMouseLeave={e => { if (updatingId !== task.id) e.currentTarget.style.opacity = '1'; }}
+                >
                   {STATUS_LABELS[status]}
-                </span>
+                </button>
 
                 {/* Open detail button */}
                 <button
@@ -256,6 +331,40 @@ export default function TaskList({ tasks, onTaskSelect }: TaskListProps) {
                     </p>
                   )}
 
+                  {/* Metadata row: CREATED / UPDATED / DURATION */}
+                  {(task.createdAt || task.updatedAt) && (
+                    <div style={{
+                      display: 'flex', gap: '16px', flexWrap: 'wrap',
+                      marginBottom: '8px', paddingBottom: '8px',
+                      borderBottom: '1px solid var(--border)',
+                    }}>
+                      {task.createdAt && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>CREATED</span>
+                          <span style={{ fontSize: '9px', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', letterSpacing: '0.04em' }}>
+                            {fmtAbsoluteTime(task.createdAt)}
+                          </span>
+                        </div>
+                      )}
+                      {task.updatedAt && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>UPDATED</span>
+                          <span style={{ fontSize: '9px', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', letterSpacing: '0.04em' }}>
+                            {fmtAbsoluteTime(task.updatedAt)}
+                          </span>
+                        </div>
+                      )}
+                      {task.createdAt && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>DURATION</span>
+                          <span style={{ fontSize: '9px', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', letterSpacing: '0.04em' }}>
+                            {durationSince(task.createdAt)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
                     {task.blockedBy.length > 0 && (
                       <span style={{ fontSize: '10px', color: 'var(--crimson)', letterSpacing: '0.06em' }}>
@@ -275,12 +384,83 @@ export default function TaskList({ tasks, onTaskSelect }: TaskListProps) {
         })}
       </div>
     </div>
+
+    {/* Undo toast */}
+    {undoToast && (
+      <div style={{
+        position: 'fixed',
+        bottom: '20px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        zIndex: 200,
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px',
+        padding: '10px 16px',
+        background: 'var(--surface-1)',
+        border: '1px solid var(--border-bright)',
+        borderRadius: '4px',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+        fontFamily: 'var(--font-mono)',
+        animation: 'fade-up 0.2s ease-out',
+      }}>
+        <span style={{ fontSize: '10px', color: 'var(--text-secondary)', letterSpacing: '0.04em', maxWidth: '240px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          Status changed: #{undoToast.taskId}
+        </span>
+        <button
+          onClick={() => {
+            revertStatus(undoToast.taskId, undoToast.prevStatus);
+            clearTimeout(undoToast.timer);
+            setUndoToast(null);
+          }}
+          style={{
+            padding: '3px 10px',
+            fontSize: '10px',
+            fontWeight: 700,
+            letterSpacing: '0.1em',
+            fontFamily: 'var(--font-mono)',
+            background: 'var(--amber-glow)',
+            color: 'var(--amber)',
+            border: '1px solid var(--amber-dim)',
+            borderRadius: '2px',
+            cursor: 'pointer',
+            flexShrink: 0,
+          }}
+        >
+          UNDO
+        </button>
+        <button
+          onClick={() => {
+            clearTimeout(undoToast.timer);
+            setUndoToast(null);
+          }}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            color: 'var(--text-muted)',
+            fontSize: '12px',
+            padding: '2px',
+            lineHeight: 1,
+          }}
+          aria-label="Dismiss"
+        >
+          ✕
+        </button>
+      </div>
+    )}
+    </>
   );
 }
 
 function timeInStatus(updatedAt?: string): string | null {
   if (!updatedAt) return null;
-  const ms = Date.now() - new Date(updatedAt).getTime();
+  return timeAgo(updatedAt);
+}
+
+function timeAgo(iso?: string): string {
+  if (!iso) return '?';
+  const ms = Date.now() - new Date(iso).getTime();
   const m = Math.floor(ms / 60000);
   if (m < 1) return '<1m';
   if (m < 60) return `${m}m`;
@@ -295,4 +475,30 @@ function StatusIcon({ status }: { status: StatusKey }) {
   if (status === 'in_progress') return <Loader2 size={size} style={{ color: 'var(--amber)', flexShrink: 0, animation: 'spin-slow 2.5s linear infinite' }} />;
   if (status === 'blocked') return <Lock size={size} style={{ color: 'var(--crimson)', flexShrink: 0 }} />;
   return <Clock size={size} style={{ color: '#4a6070', flexShrink: 0 }} />;
+}
+
+function fmtAbsoluteTime(iso?: string): string {
+  if (!iso) return '—';
+  try {
+    const d = new Date(iso);
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const hours = String(d.getHours()).padStart(2, '0');
+    const mins = String(d.getMinutes()).padStart(2, '0');
+    return `${month}-${day} ${hours}:${mins}`;
+  } catch { return iso.slice(0, 16); }
+}
+
+function durationSince(iso?: string): string {
+  if (!iso) return '—';
+  const ms = Date.now() - new Date(iso).getTime();
+  const totalMins = Math.floor(ms / 60000);
+  if (totalMins < 1) return '<1m';
+  if (totalMins < 60) return `${totalMins}m`;
+  const hours = Math.floor(totalMins / 60);
+  const mins = totalMins % 60;
+  if (hours < 24) return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+  const days = Math.floor(hours / 24);
+  const remHours = hours % 24;
+  return remHours > 0 ? `${days}d ${remHours}h` : `${days}d`;
 }

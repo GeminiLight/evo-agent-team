@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { X, CheckCircle2, Loader2, Clock, Lock, ChevronDown, ChevronRight, Pencil, Check, RotateCcw } from 'lucide-react';
 import type { TeamMember, Task, AgentSessionStats } from '../types';
 import { getTaskStatus, STATUS_COLORS, type StatusKey } from '../utils/statusColors';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 interface AgentProfilePanelProps {
   member: TeamMember;
@@ -79,6 +80,7 @@ function InfoRow({ label, value, mono = false, accent }: { label: string; value:
 }
 
 export default function AgentProfilePanel({ member, tasks, teamId, isLead = false, sessionStats, onClose, onPromptSaved }: AgentProfilePanelProps) {
+  const panelRef = useFocusTrap<HTMLDivElement>();
   const [promptExpanded, setPromptExpanded] = useState(false);
   const [editing, setEditing] = useState(false);
   const [draftPrompt, setDraftPrompt] = useState(member.prompt ?? '');
@@ -152,11 +154,16 @@ export default function AgentProfilePanel({ member, tasks, teamId, isLead = fals
   return (
     <>
       {/* Backdrop */}
-      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(4,6,8,0.6)', zIndex: 99 }} />
+      <div onClick={onClose} aria-hidden="true" style={{ position: 'fixed', inset: 0, background: 'rgba(4,6,8,0.6)', zIndex: 99 }} />
 
       {/* Panel */}
-      <div style={{
-        position: 'fixed', right: 0, top: 0, bottom: 0, width: '400px',
+      <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Agent profile: ${member.name}`}
+        style={{
+        position: 'fixed', right: 0, top: 0, bottom: 0, width: '400px', maxWidth: '100vw',
         zIndex: 100,
         background: 'var(--surface-0)',
         borderLeft: `1px solid ${isActive ? `${accent}55` : 'var(--border-bright)'}`,

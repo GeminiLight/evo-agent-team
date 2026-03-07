@@ -1,19 +1,20 @@
 import { useState, useMemo } from 'react';
 import { CheckCircle2, Loader2, Clock } from 'lucide-react';
-import type { TeamDetail, TeamMember, Task, InboxSummaryItem, SessionTodo, TodoItem } from '../../types';
+import type { TeamDetail, TeamMember, Task, InboxSummaryItem, AgentSessionStats, SessionTodo, TodoItem } from '../../types';
 import type { BlockingDetail } from '../../hooks/usePendingHumanRequests';
 import TeamOverview from './TeamOverview';
 import AgentCard from './AgentCard';
 import TaskList from './TaskList';
 import AgentHeatmap from './AgentHeatmap';
+import CRTEmptyState from '../shared/CRTEmptyState';
 
 type SortMode = 'default' | 'workload' | 'completion' | 'name';
 
-const SORT_OPTS: { id: SortMode; label: string }[] = [
-  { id: 'default',    label: 'DEFAULT'    },
-  { id: 'workload',   label: 'WORKLOAD ↓' },
-  { id: 'completion', label: 'DONE% ↓'    },
-  { id: 'name',       label: 'A→Z'        },
+const SORT_OPTS: { id: SortMode; label: string; tooltip: string }[] = [
+  { id: 'default',    label: 'DEFAULT',    tooltip: 'Original member order' },
+  { id: 'workload',   label: 'WORKLOAD ↓', tooltip: 'Sort by active tasks (most busy first)' },
+  { id: 'completion', label: 'DONE% ↓',    tooltip: 'Sort by completion percentage' },
+  { id: 'name',       label: 'A→Z',        tooltip: 'Sort alphabetically by name' },
 ];
 
 function sortMembers(members: TeamMember[], tasks: Task[], mode: SortMode): TeamMember[] {
@@ -52,14 +53,16 @@ interface DashboardViewProps {
   team: TeamDetail;
   onTaskSelect: (taskId: string | null) => void;
   onAgentSelect: (agentId: string) => void;
+  onTeamUpdate?: (updatedTask: Task) => void;
   pendingHumanAgents?: string[];
   pendingHumanDetails?: BlockingDetail[];
   inboxSummary?: Record<string, InboxSummaryItem>;
+  sessionStats?: Record<string, AgentSessionStats>;
   leadName?: string | null;
   projectTodos?: SessionTodo[];
 }
 
-export default function DashboardView({ team, onTaskSelect, onAgentSelect, pendingHumanAgents = [], pendingHumanDetails = [], inboxSummary = {}, leadName = null, projectTodos = [] }: DashboardViewProps) {
+export default function DashboardView({ team, onTaskSelect, onAgentSelect, onTeamUpdate, pendingHumanAgents = [], pendingHumanDetails = [], inboxSummary = {}, sessionStats = {}, leadName = null, projectTodos = [] }: DashboardViewProps) {
   const members = team.config?.members ?? [];
   const [sortMode, setSortMode] = useState<SortMode>('default');
 
@@ -71,10 +74,10 @@ export default function DashboardView({ team, onTaskSelect, onAgentSelect, pendi
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       {/* Row 1: overview full-width */}
-      <TeamOverview team={team} />
+      <TeamOverview team={team} sessionStats={sessionStats} />
 
       {/* Row 2: agent roster full-width, wraps freely */}
-      {members.length > 0 && (
+      {members.length > 0 ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {/* Roster header with sort controls */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -82,16 +85,17 @@ export default function DashboardView({ team, onTaskSelect, onAgentSelect, pendi
               AGENT ROSTER // {members.length} UNIT{members.length !== 1 ? 'S' : ''}
             </span>
             <div style={{ display: 'flex', gap: '2px', alignItems: 'center' }}>
-              <span style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.1em', marginRight: '4px' }}>SORT</span>
+              <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em', marginRight: '4px' }}>SORT</span>
               {SORT_OPTS.map(opt => {
                 const isActive = sortMode === opt.id;
                 return (
                   <button
                     key={opt.id}
                     onClick={() => setSortMode(opt.id)}
+                    title={opt.tooltip}
                     style={{
                       padding: '2px 8px',
-                      fontSize: '8px', letterSpacing: '0.08em',
+                      fontSize: '9px', letterSpacing: '0.08em',
                       fontFamily: 'var(--font-mono)',
                       background: isActive ? 'var(--active-bg-med)' : 'transparent',
                       color: isActive ? 'var(--active-text)' : 'var(--text-muted)',
@@ -136,6 +140,10 @@ export default function DashboardView({ team, onTaskSelect, onAgentSelect, pendi
             })}
           </div>
         </div>
+      ) : (
+        <div style={{ background: 'var(--surface-0)', border: '1px solid var(--border)', borderRadius: '4px' }}>
+          <CRTEmptyState title="NO AGENTS" subtitle="Waiting for team members to connect..." />
+        </div>
       )}
 
       {/* Session todos — inline, only when there are sessions with items */}
@@ -149,7 +157,7 @@ export default function DashboardView({ team, onTaskSelect, onAgentSelect, pendi
       )}
 
       {/* Task list — full width */}
-      <TaskList tasks={team.tasks} members={members} onTaskSelect={onTaskSelect} />
+      <TaskList tasks={team.tasks} members={members} onTaskSelect={onTaskSelect} teamId={team.id} onTaskUpdated={onTeamUpdate} />
     </div>
   );
 }

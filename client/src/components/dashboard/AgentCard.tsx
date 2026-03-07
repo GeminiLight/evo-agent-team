@@ -56,8 +56,8 @@ export default function AgentCard({ member, tasks, onAgentSelect, sortRank, awai
     <div
       onClick={() => onAgentSelect(member.agentId)}
       style={{
-        background: isActive ? `${accent}08` : 'var(--surface-0)',
-        border: `1px solid ${isActive ? accentBorder : 'var(--border)'}`,
+        background: awaitingInput ? 'rgba(255,140,66,0.04)' : isActive ? `${accent}08` : 'var(--surface-0)',
+        border: `1px solid ${awaitingInput ? 'var(--amber-dim)' : isActive ? accentBorder : 'var(--border)'}`,
         borderRadius: '4px',
         padding: '14px',
         position: 'relative',
@@ -226,6 +226,42 @@ export default function AgentCard({ member, tasks, onAgentSelect, sortRank, awai
           {completedTasks.length}/{assignedTasks.length}
         </span>
       </div>
+
+      {/* Awaiting input urgency banner */}
+      {awaitingInput && (
+        <div style={{
+          marginTop: '2px',
+          padding: '6px 10px',
+          background: 'var(--amber-glow)',
+          border: '1px solid var(--amber-dim)',
+          borderRadius: '3px',
+          display: 'flex', alignItems: 'center', gap: '8px',
+        }}>
+          <span style={{
+            width: '6px', height: '6px', borderRadius: '50%',
+            background: 'var(--amber)',
+            boxShadow: '0 0 6px var(--amber)',
+            animation: 'status-pulse 1.5s ease-in-out infinite',
+            flexShrink: 0,
+          }} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{
+              fontSize: '9px', fontWeight: 700, color: 'var(--amber)',
+              letterSpacing: '0.1em',
+            }}>
+              AWAITING INPUT
+            </div>
+            {blockingTool && (
+              <div style={{
+                fontSize: '8px', color: 'var(--text-muted)',
+                letterSpacing: '0.06em', marginTop: '1px',
+              }}>
+                {blockingTool}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -18,8 +18,9 @@
 9. [skills/ — Reusable Skills](#9-skills--reusable-skills)
 10. [Other Directories](#10-other-directories)
 11. [Root-Level Files](#11-root-level-files)
-12. [Cross-Reference Map](#12-cross-reference-map)
-13. [Key Algorithms](#13-key-algorithms)
+12. [Team–Project Session Relationship](#12-teamproject-session-relationship)
+13. [Cross-Reference Map](#13-cross-reference-map)
+14. [Key Algorithms](#14-key-algorithms)
 
 ---
 
@@ -767,7 +768,111 @@ Aggregated usage statistics:
 
 ---
 
-## 12. Cross-Reference Map
+## 12. Team–Project Session Relationship
+
+### Overview
+
+The **team system** (`teams/`, `tasks/`) and the **project session system** (`projects/`) are stored in separate directory trees and keyed differently:
+
+| System | Directory | Primary Key | Format |
+|--------|-----------|-------------|--------|
+| Team | `teams/{teamName}/` | `teamName` (human-readable string) | Config, inboxes |
+| Tasks | `tasks/{teamName}/` | `teamName` | Numbered JSON files |
+| Sessions | `projects/{encodedCwd}/` | `sessionId` (UUID) | JSONL conversation logs |
+| Todos | `todos/` | `sessionId` | JSON arrays |
+| Debug | `debug/` | `sessionId` | Plain-text transcripts |
+| File edits | `file-history/` | `sessionId` | Versioned snapshots |
+
+The `leadSessionId` field in `teams/{teamName}/config.json` is the **primary bridge** connecting these two systems.
+
+### How the Bridge Works
+
+```
+teams/{teamName}/config.json
+│
+│  1. leadSessionId: "ad2c55f0-..."    ← UUID of the team lead's session
+│  2. members[].cwd: "/data/home/.../code/research"  ← working directory
+│
+│  Step A: Encode the CWD
+│  ──────────────────────
+│  cwdToProjectDir(cwd)  →  replace "/" with "-"
+│  "/data/home/.../code/research"  →  "-data-home-...-code-research"
+│
+│  Step B: Locate the project directory
+│  ────────────────────────────────────
+│  ~/.claude/projects/-data-home-...-code-research/
+│
+│  Step C: Find the lead session file
+│  ──────────────────────────────────
+│  ~/.claude/projects/-data-home-...-code-research/{leadSessionId}.jsonl
+│
+│  Step D: Find sub-agent sessions
+│  ───────────────────────────────
+│  Same project dir contains 0-byte .jsonl stubs for in-process agents,
+│  and {leadSessionId}/subagents/ for their conversation logs.
+```
+
+### Traversal: Team → Sessions
+
+Given a team name, to find all related session data:
+
+1. Read `teams/{teamName}/config.json` to get `leadSessionId` and `members[].cwd`
+2. For each unique `cwd`, compute `cwdToProjectDir(cwd)` to get the project directory
+3. In each project directory, the lead session is `{leadSessionId}.jsonl`
+4. Other `.jsonl` files in the same directory are sub-agent sessions (0-byte = in-process) or tool artifacts (first record = `file-history-snapshot`, skip)
+5. Sub-agent conversation logs live under `{leadSessionId}/subagents/agent-{hash}.jsonl`
+
+### Traversal: Session → Team
+
+Given a session ID, to find which team it belongs to:
+
+1. Scan all `teams/*/config.json` files
+2. Check if `leadSessionId` matches, OR
+3. Check if the session file exists in a project directory derived from any member's `cwd`
+
+### Server-Side Implementation
+
+The route handlers in the dashboard server use this relationship directly:
+
+**`GET /api/teams/:id/session-history`** — reads `leadSessionId` and `members[].cwd` from config, calls `getSessionHistory(memberCwds, leadSessionId)` which locates the JSONL file via `cwdToProjectDir()`.
+
+**`GET /api/teams/:id/todos`** — uses `leadSessionId` as the anchor session, then scans all real sessions in the project directory to collect todo files from `todos/{sessionId}-agent-{sessionId}.json`.
+
+**`GET /api/teams/:id/session-stats`** — extracts `leadSessionId` and lead name (via `leadAgentId.split('@')[0]`), passes them to `getSessionStatsForTeam()` which aggregates token usage from session JSONL files.
+
+### TypeScript Interfaces (server/src/types.ts)
+
+The relationship is modeled in the `TeamConfig` interface:
+
+```typescript
+interface TeamConfig {
+  name?: string;
+  leadAgentId?: string;      // "{name}@{teamName}" → extract name with .split('@')[0]
+  leadSessionId?: string;    // UUID → primary cross-reference to projects/
+  members: TeamMember[];     // each has .cwd → cwdToProjectDir() → projects/{dir}/
+}
+```
+
+And consumed in response types:
+
+```typescript
+interface SessionHistoryResponse {
+  teamId: string;            // the team name
+  sessionId: string | null;  // the leadSessionId (bridge key)
+  messages: SessionMessage[];
+}
+
+interface SessionTodo {
+  sessionId: string;
+  isLead: boolean;           // true when sessionId === leadSessionId
+  cwd: string;
+  items: TodoItem[];
+}
+```
+
+---
+
+## 13. Cross-Reference Map
 
 This diagram shows how the key files reference each other:
 
@@ -822,7 +927,7 @@ todos/{sessionId}-agent-{sessionId}.json
 
 ---
 
-## 13. Key Algorithms
+## 14. Key Algorithms
 
 ### cwdToProjectDir(cwd: string): string
 Convert a working directory path to its `projects/` subdirectory name:

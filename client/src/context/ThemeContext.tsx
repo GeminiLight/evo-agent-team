@@ -97,8 +97,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   });
 
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
+    // Enable transition for smooth theme switch, then remove
+    const el = document.documentElement;
+    el.setAttribute('data-theme-switching', '');
+    el.setAttribute('data-theme', theme);
     localStorage.setItem('agent-ctrl-theme', theme);
+    const tid = setTimeout(() => el.removeAttribute('data-theme-switching'), 300);
+    return () => clearTimeout(tid);
   }, [theme]);
 
   const setTheme = (id: ThemeId) => setThemeState(id);

@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
-import { LayoutDashboard, Network, MessageSquare, Clock, Download, Activity, ChevronLeft, ChevronRight, ScrollText } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { LayoutDashboard, Network, MessageSquare, Clock, Download, Activity, ChevronLeft, ChevronRight, ScrollText, DollarSign } from 'lucide-react';
 import type { TeamSummary, TeamDetail } from '../types';
 import ThemeSwitcher from './ThemeSwitcher';
 
-export type ViewType = 'dashboard' | 'graph' | 'commlog' | 'timeline' | 'history';
+export type ViewType = 'dashboard' | 'graph' | 'commlog' | 'timeline' | 'history' | 'cost';
 
 interface LayoutProps {
   teams: TeamSummary[];
@@ -21,6 +21,8 @@ interface LayoutProps {
   wsConnected?: boolean;
   pendingHumanCount?: number;
   pendingHumanAgents?: string[];
+  alertCount?: number;
+  criticalAlertCount?: number;
 }
 
 export default function Layout({
@@ -39,6 +41,8 @@ export default function Layout({
   wsConnected,
   pendingHumanCount = 0,
   pendingHumanAgents = [],
+  alertCount = 0,
+  criticalAlertCount = 0,
 }: LayoutProps) {
   const [time, setTime] = useState(() => new Date());
   const [navCollapsed, setNavCollapsed] = useState(false);
@@ -59,13 +63,17 @@ export default function Layout({
         position: 'sticky',
         top: 0,
         zIndex: 100,
+        /* overflow must be visible so dropdowns (ThemeSwitcher, ExportMenu) can escape */
       }}>
+        {/* Scrollable inner bar — only the bar scrolls, not the whole header */}
+        <div style={{ overflowX: 'auto', overflowY: 'visible' }}>
         <div style={{
           padding: '0 16px',
           height: '48px',
           display: 'flex',
           alignItems: 'center',
           gap: '12px',
+          minWidth: 'max-content',
         }}>
           {/* Logo — always visible */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
@@ -162,7 +170,7 @@ export default function Layout({
           <div style={{ flex: 1 }} />
 
           {/* Right cluster: status + view nav + theme + export */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
 
             {/* WS / connection indicator — standardized */}
             <StatusDot
@@ -172,7 +180,7 @@ export default function Layout({
             />
 
             {/* Clock */}
-            <span style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.12em', fontVariantNumeric: 'tabular-nums' }}>
+            <span style={{ fontSize: '11px', color: 'var(--text-muted)', letterSpacing: '0.12em', fontVariantNumeric: 'tabular-nums' }}>
               {timeStr}
             </span>
 
@@ -211,6 +219,30 @@ export default function Layout({
               </button>
             )}
 
+            {/* Alert count pill */}
+            {alertCount > 0 && (
+              <button
+                onClick={() => onViewChange('dashboard')}
+                title={`${alertCount} active alert${alertCount !== 1 ? 's' : ''}${criticalAlertCount > 0 ? ` (${criticalAlertCount} critical)` : ''}`}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '5px',
+                  padding: '3px 9px',
+                  background: criticalAlertCount > 0 ? 'rgba(255,68,102,0.12)' : 'rgba(245,166,35,0.1)',
+                  border: `1px solid ${criticalAlertCount > 0 ? 'var(--crimson, #ff4466)' : 'var(--amber)'}`,
+                  borderRadius: '3px',
+                  cursor: 'pointer',
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '9px', letterSpacing: '0.1em',
+                  color: criticalAlertCount > 0 ? 'var(--crimson, #ff4466)' : 'var(--amber)',
+                  animation: criticalAlertCount > 0 ? 'status-pulse 2s ease-in-out infinite' : 'none',
+                  flexShrink: 0,
+                }}
+              >
+                <span>●</span>
+                {alertCount} ALERT{alertCount !== 1 ? 'S' : ''}
+              </button>
+            )}
+
             <div style={{ width: '1px', height: '20px', background: 'var(--border)', flexShrink: 0 }} />
 
             {/* View toggle */}
@@ -226,7 +258,8 @@ export default function Layout({
               <ViewBtn active={view === 'graph'}     onClick={() => onViewChange('graph')}     icon={<Network size={12} />}          label="GRAPH" />
               <ViewBtn active={view === 'commlog'}   onClick={() => onViewChange('commlog')}   icon={<MessageSquare size={12} />}    label="COMMS" badge={pendingHumanCount > 0} />
               <ViewBtn active={view === 'timeline'}  onClick={() => onViewChange('timeline')}  icon={<Clock size={12} />}            label="LOG" />
-              <ViewBtn active={view === 'history'}   onClick={() => onViewChange('history')}   icon={<ScrollText size={12} />}       label="HIST" last />
+              <ViewBtn active={view === 'history'}   onClick={() => onViewChange('history')}   icon={<ScrollText size={12} />}       label="HIST" />
+              <ViewBtn active={view === 'cost'}      onClick={() => onViewChange('cost')}      icon={<DollarSign size={12} />}       label="COST" last />
             </nav>
 
             <ThemeSwitcher />
@@ -242,6 +275,7 @@ export default function Layout({
               />
             )}
           </div>
+        </div>
         </div>
       </header>
 
@@ -275,14 +309,23 @@ function StatusDot({ live, label, color }: { live: boolean; label: string; color
 
 // ─── Stat pill ──────────────────────────────────────────────────────────────
 function StatPill({ label, value, color, pulse }: { label: string; value: number; color: string; pulse?: boolean }) {
+  const TOOLTIPS: Record<string, string> = {
+    TOTAL: 'Total tasks in this team',
+    DONE: 'Completed tasks',
+    RUN: 'Currently running tasks',
+    WAIT: 'Pending tasks waiting for assignment',
+  };
   return (
-    <div style={{
-      display: 'flex', alignItems: 'baseline', gap: '3px',
-      padding: '2px 7px',
-      background: `${color}10`,
-      border: `1px solid ${color}28`,
-      borderRadius: '3px',
-    }}>
+    <div
+      title={TOOLTIPS[label] ?? label}
+      style={{
+        display: 'flex', alignItems: 'baseline', gap: '3px',
+        padding: '2px 7px',
+        background: `${color}10`,
+        border: `1px solid ${color}28`,
+        borderRadius: '3px',
+      }}
+    >
       <span style={{
         fontSize: '13px', fontWeight: 700, color,
         fontFamily: 'var(--font-mono)', lineHeight: 1,
@@ -290,7 +333,7 @@ function StatPill({ label, value, color, pulse }: { label: string; value: number
       }}>
         {value}
       </span>
-      <span style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>{label}</span>
+      <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>{label}</span>
     </div>
   );
 }
@@ -299,9 +342,18 @@ function StatPill({ label, value, color, pulse }: { label: string; value: number
 function ViewBtn({ active, onClick, icon, label, last = false, badge = false }: {
   active: boolean; onClick: () => void; icon: React.ReactNode; label: string; last?: boolean; badge?: boolean;
 }) {
+  const TOOLTIPS: Record<string, string> = {
+    MATRIX: 'Dashboard — agent roster, tasks, and overview',
+    GRAPH: 'Topology — visual graph of agents and task dependencies',
+    COMMS: 'Communications — agent message log',
+    LOG: 'Timeline — chronological task status changes',
+    HIST: 'History — lead agent session transcript',
+    COST: 'Cost — token usage and tool call analysis',
+  };
   return (
     <button
       onClick={onClick}
+      title={TOOLTIPS[label] ?? label}
       style={{
         display: 'flex', alignItems: 'center', gap: '5px',
         padding: '6px 11px',
@@ -343,6 +395,9 @@ function ExportMenu({ onExportPng, onExportJson, onExportCsv, canExportPng, view
   view: ViewType;
 }) {
   const [open, setOpen] = useState(false);
+  const [dropPos, setDropPos] = useState({ top: 0, right: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -351,15 +406,24 @@ function ExportMenu({ onExportPng, onExportJson, onExportCsv, canExportPng, view
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
 
+  function handleOpen() {
+    if (btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect();
+      setDropPos({ top: r.bottom + 4, right: window.innerWidth - r.right });
+    }
+    setOpen(o => !o);
+  }
+
   // Label for CSV changes by view
   const csvLabel = view === 'commlog' ? 'Export Comms CSV'
     : view === 'timeline' ? 'Export Timeline CSV'
     : 'Export Tasks CSV';
 
   return (
-    <div style={{ position: 'relative', flexShrink: 0 }} onMouseDown={e => e.stopPropagation()}>
+    <div ref={containerRef} style={{ position: 'relative', flexShrink: 0 }} onMouseDown={e => e.stopPropagation()}>
       <button
-        onClick={() => setOpen(o => !o)}
+        ref={btnRef}
+        onClick={handleOpen}
         title="Export data"
         style={{
           display: 'flex', alignItems: 'center', gap: '5px',
@@ -379,10 +443,12 @@ function ExportMenu({ onExportPng, onExportJson, onExportCsv, canExportPng, view
       </button>
       {open && (
         <div style={{
-          position: 'absolute', right: 0, top: 'calc(100% + 4px)',
+          position: 'fixed',
+          top: dropPos.top,
+          right: dropPos.right,
           background: 'var(--surface-1)',
           border: '1px solid var(--border-bright)',
-          borderRadius: '4px', overflow: 'hidden', zIndex: 200,
+          borderRadius: '4px', overflow: 'hidden', zIndex: 9999,
           minWidth: '160px',
           boxShadow: 'var(--shadow-lg)',
           animation: 'fade-up 0.12s ease-out',

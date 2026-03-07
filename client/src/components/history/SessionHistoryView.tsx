@@ -1,6 +1,8 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { Search, ChevronDown, ChevronRight } from 'lucide-react';
 import type { SessionMessage, SessionEntry } from '../../types';
+import CRTEmptyState from '../shared/CRTEmptyState';
+import MarkdownContent from '../shared/MarkdownContent';
 
 // ── Filter types ──────────────────────────────────────────────────────────────
 
@@ -67,11 +69,14 @@ interface SessionHistoryViewProps {
   loading: boolean;
 }
 
+type SortOrder = 'desc' | 'asc';
+
 export default function SessionHistoryView({ messages, sessionId, loading }: SessionHistoryViewProps) {
   const [roleFilter, setRoleFilter] = useState<RoleFilter>('all');
   const [kindFilters, setKindFilters] = useState<Set<KindFilter>>(new Set(['text', 'tool_use', 'tool_result']));
   const [search, setSearch] = useState('');
   const [toolFilter, setToolFilter] = useState<string>('all');
+  const [order, setOrder] = useState<SortOrder>('desc');
   const bottomRef = useRef<HTMLDivElement>(null);
 
   // All tool names seen
@@ -111,16 +116,18 @@ export default function SessionHistoryView({ messages, sessionId, loading }: Ses
     });
   }
 
-  // Group by date
+  // Group by date; in desc order both the group list and messages within are reversed
   const groups = useMemo(() => {
+    const ordered = order === 'desc' ? [...filtered].reverse() : filtered;
     const map = new Map<string, SessionMessage[]>();
-    for (const m of filtered) {
+    for (const m of ordered) {
       const date = fmtDate(m.timestamp);
       if (!map.has(date)) map.set(date, []);
       map.get(date)!.push(m);
     }
-    return [...map.entries()];
-  }, [filtered]);
+    const entries = [...map.entries()];
+    return order === 'desc' ? entries.reverse() : entries;
+  }, [filtered, order]);
 
   if (loading && messages.length === 0) {
     return (
@@ -132,8 +139,8 @@ export default function SessionHistoryView({ messages, sessionId, loading }: Ses
 
   if (!loading && messages.length === 0) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '300px', color: 'var(--text-muted)', fontSize: '11px', letterSpacing: '0.1em' }}>
-        — NO SESSION HISTORY — (no leadSessionId configured)
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '300px' }}>
+        <CRTEmptyState title="NO SESSION HISTORY" subtitle="No leadSessionId configured" />
       </div>
     );
   }
@@ -200,8 +207,13 @@ export default function SessionHistoryView({ messages, sessionId, loading }: Ses
           </>
         )}
 
-        {/* Search */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginLeft: 'auto' }}>
+        {/* Order toggle + Search */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: 'auto' }}>
+          <div style={{ display: 'flex', gap: '2px' }}>
+            <OrderBtn active={order === 'desc'} onClick={() => setOrder('desc')} title="Newest first">NEW→OLD</OrderBtn>
+            <OrderBtn active={order === 'asc'}  onClick={() => setOrder('asc')}  title="Oldest first">OLD→NEW</OrderBtn>
+          </div>
+          <div style={{ width: '1px', height: '16px', background: 'var(--border)' }} />
           <Search size={11} style={{ color: 'var(--text-muted)' }} />
           <input
             value={search}
@@ -312,13 +324,23 @@ function EntryBlock({ entry, search }: { entry: SessionEntry; search: string }) 
   const [expanded, setExpanded] = useState(false);
 
   if (entry.kind === 'text') {
+    const text = entry.text ?? '';
+    // Use markdown rendering if the text contains markdown patterns, otherwise plain text
+    const hasMarkdown = /[#*`\->\[\]|]/.test(text) && text.length > 0;
+    if (hasMarkdown && !search) {
+      return (
+        <div style={{ fontSize: '11px', lineHeight: 1.6, letterSpacing: '0.02em' }}>
+          <MarkdownContent content={text} />
+        </div>
+      );
+    }
     return (
       <div style={{
         fontSize: '11px', color: 'var(--text-primary)',
         lineHeight: 1.6, letterSpacing: '0.02em',
         whiteSpace: 'pre-wrap', wordBreak: 'break-word',
       }}>
-        {highlight(entry.text ?? '', search)}
+        {highlight(text, search)}
       </div>
     );
   }
@@ -442,6 +464,27 @@ function highlight(text: string, query: string): React.ReactNode {
 }
 
 // ── Small helpers ─────────────────────────────────────────────────────────────
+
+function OrderBtn({ active, onClick, title, children }: { active: boolean; onClick: () => void; title?: string; children: React.ReactNode }) {
+  return (
+    <button
+      onClick={onClick}
+      title={title}
+      style={{
+        padding: '2px 7px', fontSize: '8px', letterSpacing: '0.08em',
+        fontFamily: 'var(--font-mono)',
+        background: active ? 'var(--active-bg-med)' : 'transparent',
+        color: active ? 'var(--active-text)' : 'var(--text-muted)',
+        border: `1px solid ${active ? 'var(--active-border)' : 'transparent'}`,
+        borderRadius: '2px', cursor: 'pointer', transition: 'all 0.1s',
+      }}
+      onMouseEnter={e => { if (!active) e.currentTarget.style.color = 'var(--text-secondary)'; }}
+      onMouseLeave={e => { if (!active) e.currentTarget.style.color = active ? 'var(--active-text)' : 'var(--text-muted)'; }}
+    >
+      {children}
+    </button>
+  );
+}
 
 function FilterGroup({ label, children }: { label: string; children: React.ReactNode }) {
   return (

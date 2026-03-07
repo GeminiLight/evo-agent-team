@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
 import type { SessionMessage } from '../types';
 
-export function useSessionHistory(teamId: string | null): { messages: SessionMessage[]; sessionId: string | null; loading: boolean } {
+export function useSessionHistory(
+  teamId: string | null,
+  agentName?: string | null,
+): { messages: SessionMessage[]; sessionId: string | null; loading: boolean } {
   const [messages, setMessages] = useState<SessionMessage[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -13,7 +16,10 @@ export function useSessionHistory(teamId: string | null): { messages: SessionMes
     async function fetch_() {
       setLoading(true);
       try {
-        const res = await fetch(`/api/teams/${teamId}/session-history`);
+        const url = agentName
+          ? `/api/teams/${teamId}/session-history?agentName=${encodeURIComponent(agentName)}`
+          : `/api/teams/${teamId}/session-history`;
+        const res = await fetch(url);
         if (!res.ok) return;
         const json = await res.json() as { messages?: SessionMessage[]; sessionId?: string | null };
         if (!cancelled) {
@@ -27,7 +33,7 @@ export function useSessionHistory(teamId: string | null): { messages: SessionMes
     fetch_();
     const interval = setInterval(fetch_, 30000);
     return () => { cancelled = true; clearInterval(interval); };
-  }, [teamId]);
+  }, [teamId, agentName]);
 
   return { messages, sessionId, loading };
 }

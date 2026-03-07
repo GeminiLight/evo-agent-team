@@ -10,7 +10,7 @@ import path from 'path';
 import os from 'os';
 import readline from 'readline';
 import { cwdToProjectDir } from './humanInputDetector.js';
-import type { SessionMessage, SessionEntry } from './types.js';
+import type { SessionMessage, SessionEntry, AgentSessionInfo } from './types.js';
 
 const CLAUDE_PROJECTS_DIR = path.join(os.homedir(), '.claude', 'projects');
 
@@ -120,4 +120,61 @@ export async function getSessionHistory(
   }
 
   return messages;
+}
+
+/**
+ * B3: List all session files associated with a team and label each with the
+ * agent name inferred from the JSONL filename prefix matching config members.
+ *
+ * This is a lightweight scan — just counts message lines, no full parse.
+ */
+export async function listAvailableAgentSessions(
+  memberNames: string[],
+  memberCwds: string[],
+  leadSessionId?: string,
+  leadName?: string,
+): Promise<AgentSessionInfo[]> {
+  const uniqueCwds = [...new Set(memberCwds.filter(Boolean))];
+  const result: AgentSessionInfo[] = [];
+  const seenSessions = new Set<string>();
+
+  for (const cwd of uniqueCwds) {
+    const projectDir = path.join(CLAUDE_PROJECTS_DIR, cwdToProjectDir(cwd));
+    let entries: string[];
+    try { entries = await fs.readdir(projectDir); } catch { continue; }
+
+    for (const file of entries.filter(f => f.endsWith('.jsonl'))) {
+      const sessionId = file.replace('.jsonl', '');
+      if (seenSessions.has(sessionId)) continue;
+      seenSessions.add(sessionId);
+
+      const filePath = path.join(projectDir, file);
+      const isLead = sessionId === leadSessionId;
+      let agentName = isLead && leadName ? leadName : null;
+
+      if (!agentName) {
+        // Try inferring from filename prefix match against member names
+        const lower = sessionId.toLowerCase();
+        agentName = memberNames.find(n => lower.includes(n.toLowerCase())) ?? null;
+      }
+      if (!agentName) continue;
+
+      // Count messages quickly
+      let raw = '';
+      try { raw = await fs.readFile(filePath, 'utf-8'); } catch { continue; }
+      const messageCount = raw.split('\n').filter(l => {
+        if (!l.trim()) return false;
+        try {
+          const r = JSON.parse(l) as Record<string, unknown>;
+          return r.type === 'assistant';
+        } catch { return false; }
+      }).length;
+
+      if (messageCount === 0) continue;
+
+      result.push({ agentName, sessionId, messageCount, isLead });
+    }
+  }
+
+  return result;
 }

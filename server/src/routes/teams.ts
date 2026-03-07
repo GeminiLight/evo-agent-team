@@ -2,12 +2,13 @@ import { Router } from 'express';
 import fs from 'fs/promises';
 import path from 'path';
 import { config } from '../config.js';
-import { getDemoTeamSummary, getDemoTeamDetail, getDemoTimeline, getDemoTodos, getDemoSessionStats } from '../mockData.js';
+import { getDemoTeamSummary, getDemoTeamDetail, getDemoTimeline, getDemoTodos, getDemoSessionStats, getDemoAlerts, getDemoAgentSessions, getDemoCostData } from '../mockData.js';
 import { recordSnapshot, getTimeline } from '../changeTracker.js';
 import { detectHumanInputWaiters } from '../humanInputDetector.js';
 import { getTodosForTeam } from '../todoScanner.js';
 import { getSessionStatsForTeam } from '../sessionScanner.js';
-import { getSessionHistory } from '../sessionHistory.js';
+import { getSessionHistory, listAvailableAgentSessions } from '../sessionHistory.js';
+import { computeAlerts, DEFAULT_THRESHOLDS } from '../alertEngine.js';
 import type { Task, TeamConfig, TeamSummary, TeamDetail } from '../types.js';
 
 const router = Router();
@@ -182,6 +183,41 @@ router.get('/teams/:id', async (req, res) => {
   }
 });
 
+// PATCH /api/teams/:id/tasks/:taskId  — update task status
+router.patch('/teams/:id/tasks/:taskId', async (req, res) => {
+  const { id, taskId } = req.params;
+
+  if (id === 'demo-team') {
+    res.status(403).json({ error: 'Cannot modify demo team' });
+    return;
+  }
+
+  const { status } = req.body;
+  const VALID = new Set(['pending', 'in_progress', 'completed']);
+  if (!status || !VALID.has(status)) {
+    res.status(400).json({ error: 'status must be pending | in_progress | completed' });
+    return;
+  }
+
+  const taskPath = path.join(config.tasksDir, id, `${taskId}.json`);
+  const task = await readJsonFile<Task>(taskPath);
+  if (!task) {
+    res.status(404).json({ error: `Task ${taskId} not found` });
+    return;
+  }
+
+  task.status = status as Task['status'];
+  task.updatedAt = new Date().toISOString();
+
+  try {
+    await fs.writeFile(taskPath, JSON.stringify(task, null, 2), 'utf-8');
+    res.json({ ok: true, task });
+  } catch (err) {
+    console.error('Error writing task:', err);
+    res.status(500).json({ error: 'Failed to save task' });
+  }
+});
+
 // PATCH /api/teams/:id/members/:agentName/prompt
 router.patch('/teams/:id/members/:agentName/prompt', async (req, res) => {
   const { id, agentName } = req.params;
@@ -336,32 +372,193 @@ router.get('/teams/:id/session-stats', async (req, res) => {
   }
 });
 
-// GET /api/teams/:id/session-history
+// GET /api/teams/:id/session-history[?agentName=xxx]
 router.get('/teams/:id/session-history', async (req, res) => {
   const { id } = req.params;
+  const agentName = typeof req.query.agentName === 'string' ? req.query.agentName : null;
 
   if (id === 'demo-team') {
-    res.json({ teamId: id, sessionId: null, messages: [] });
+    res.json({ teamId: id, sessionId: null, agentName, messages: [] });
     return;
   }
 
   const configPath = path.join(config.teamsDir, id, 'config.json');
   const teamConfig = await readJsonFile<TeamConfig>(configPath);
-  const leadSessionId = teamConfig?.leadSessionId;
 
-  if (!leadSessionId) {
-    res.json({ teamId: id, sessionId: null, messages: [] });
+  // For B3: if agentName provided, find their sessionId from the session list
+  // For lead (no agentName), use leadSessionId as before
+  const memberCwds = (teamConfig?.members ?? []).map(m => m.cwd ?? '').filter(Boolean);
+
+  let targetSessionId: string | null = null;
+  if (agentName) {
+    const memberNames   = (teamConfig?.members ?? []).map(m => m.name);
+    const leadSessionId = teamConfig?.leadSessionId;
+    const leadName      = teamConfig?.members?.find(m => !m.backendType)?.name;
+    try {
+      const sessions = await listAvailableAgentSessions(memberNames, memberCwds, leadSessionId, leadName);
+      const found = sessions.find(s => s.agentName === agentName);
+      targetSessionId = found?.sessionId ?? null;
+    } catch { /* non-critical */ }
+  } else {
+    targetSessionId = teamConfig?.leadSessionId ?? null;
+  }
+
+  if (!targetSessionId) {
+    res.json({ teamId: id, sessionId: null, agentName, messages: [] });
     return;
   }
 
-  const memberCwds = (teamConfig?.members ?? []).map(m => m.cwd ?? '').filter(Boolean);
-
   try {
-    const messages = await getSessionHistory(memberCwds, leadSessionId);
-    res.json({ teamId: id, sessionId: leadSessionId, messages });
+    const messages = await getSessionHistory(memberCwds, targetSessionId);
+    res.json({ teamId: id, sessionId: targetSessionId, agentName, messages });
   } catch (err) {
     console.error(`Error reading session history for ${id}:`, err);
-    res.json({ teamId: id, sessionId: leadSessionId, messages: [] });
+    res.json({ teamId: id, sessionId: targetSessionId, agentName, messages: [] });
+  }
+});
+
+// GET /api/teams/:id/alerts  (B2)
+router.get('/teams/:id/alerts', async (req, res) => {
+  const { id } = req.params;
+
+  if (id === 'demo-team') {
+    res.json({ teamId: id, alerts: getDemoAlerts() });
+    return;
+  }
+
+  const configPath = path.join(config.teamsDir, id, 'config.json');
+  const teamConfig = await readJsonFile<TeamConfig>(configPath);
+
+  const taskDir = path.join(config.tasksDir, id);
+  const tasks: Task[] = [];
+  if (await dirExists(taskDir)) {
+    const files = await fs.readdir(taskDir);
+    for (const file of files.filter(f => f.endsWith('.json') && !isHiddenFile(f))) {
+      const task = await readJsonFile<Task>(path.join(taskDir, file));
+      if (task && task.metadata?._internal !== true) tasks.push(task);
+    }
+  }
+
+  const memberNames = teamConfig?.members.map(m => m.name) ?? [];
+  const memberCwds  = teamConfig?.members.map(m => m.cwd ?? '').filter(Boolean) ?? [];
+  const leadSessionId = teamConfig?.leadSessionId;
+  const leadName = teamConfig?.members.find(m => !m.backendType)?.name;
+
+  let sessionStats: import('../types.js').AgentSessionStats[] = [];
+  try {
+    sessionStats = await getSessionStatsForTeam(memberNames, memberCwds, leadSessionId, leadName);
+  } catch { /* non-critical */ }
+
+  let humanWaiters: string[] = [];
+  let humanDetails: Array<{ agentName: string; since?: string }> = [];
+  try {
+    const hw = await import('../humanInputDetector.js');
+    const status = await hw.detectHumanInputWaiters(memberNames, memberCwds, leadSessionId);
+    humanWaiters = status.waitingAgents;
+    humanDetails = (status.details ?? []).map((d: import('../humanInputDetector.js').WaitingAgent) => ({
+      agentName: d.name,
+      since: undefined,
+    }));
+  } catch { /* non-critical */ }
+
+  const alerts = computeAlerts(tasks, sessionStats, humanWaiters, humanDetails, DEFAULT_THRESHOLDS);
+  res.json({ teamId: id, alerts });
+});
+
+// GET /api/teams/:id/session-agents  (B3)
+router.get('/teams/:id/session-agents', async (req, res) => {
+  const { id } = req.params;
+
+  if (id === 'demo-team') {
+    res.json({ teamId: id, agents: getDemoAgentSessions() });
+    return;
+  }
+
+  const configPath = path.join(config.teamsDir, id, 'config.json');
+  const teamConfig = await readJsonFile<TeamConfig>(configPath);
+
+  if (!teamConfig?.members?.length) {
+    res.json({ teamId: id, agents: [] });
+    return;
+  }
+
+  const memberNames   = teamConfig.members.map(m => m.name);
+  const memberCwds    = teamConfig.members.map(m => m.cwd ?? '').filter(Boolean);
+  const leadSessionId = teamConfig.leadSessionId;
+  const leadName      = teamConfig.members.find(m => !m.backendType)?.name;
+
+  try {
+    const agents = await listAvailableAgentSessions(memberNames, memberCwds, leadSessionId, leadName);
+    res.json({ teamId: id, agents });
+  } catch (err) {
+    console.error(`Error listing agent sessions for ${id}:`, err);
+    res.json({ teamId: id, agents: [] });
+  }
+});
+
+// GET /api/teams/:id/cost  (B4)
+router.get('/teams/:id/cost', async (req, res) => {
+  const { id } = req.params;
+
+  if (id === 'demo-team') {
+    res.json(getDemoCostData());
+    return;
+  }
+
+  const configPath = path.join(config.teamsDir, id, 'config.json');
+  const teamConfig = await readJsonFile<TeamConfig>(configPath);
+
+  if (!teamConfig?.members?.length) {
+    res.json({ teamId: id, totals: { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0 }, byAgent: [], byTool: [], timeSeries: [] });
+    return;
+  }
+
+  const memberNames   = teamConfig.members.map(m => m.name);
+  const memberCwds    = teamConfig.members.map(m => m.cwd ?? '').filter(Boolean);
+  const leadSessionId = teamConfig.leadSessionId;
+  const leadName      = teamConfig.members.find(m => !m.backendType)?.name;
+
+  try {
+    const agents = await getSessionStatsForTeam(memberNames, memberCwds, leadSessionId, leadName);
+
+    const totals = agents.reduce(
+      (acc, a) => ({
+        inputTokens:     acc.inputTokens     + a.inputTokens,
+        outputTokens:    acc.outputTokens    + a.outputTokens,
+        cacheReadTokens: acc.cacheReadTokens + a.cacheReadTokens,
+      }),
+      { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0 },
+    );
+    const totalRaw = totals.inputTokens + totals.outputTokens;
+
+    const byAgent = agents.map(a => ({
+      agentName:       a.agentName,
+      inputTokens:     a.inputTokens,
+      outputTokens:    a.outputTokens,
+      cacheReadTokens: a.cacheReadTokens,
+      messageCount:    a.messageCount,
+      percentage:      totalRaw > 0 ? Math.round((a.inputTokens + a.outputTokens) / totalRaw * 100) : 0,
+    }));
+
+    // Aggregate tool calls across all agents
+    const toolTotals: Record<string, number> = {};
+    for (const a of agents) {
+      for (const [tool, count] of Object.entries(a.toolCallCounts ?? {})) {
+        toolTotals[tool] = (toolTotals[tool] ?? 0) + count;
+      }
+    }
+    const byTool = Object.entries(toolTotals)
+      .map(([toolName, callCount]) => ({ toolName, callCount }))
+      .sort((a, b) => b.callCount - a.callCount);
+
+    const timeSeries = agents
+      .filter(a => a.tokenTimeSeries?.length)
+      .map(a => ({ agentName: a.agentName, dataPoints: a.tokenTimeSeries! }));
+
+    res.json({ teamId: id, totals, byAgent, byTool, timeSeries });
+  } catch (err) {
+    console.error(`Error computing cost data for ${id}:`, err);
+    res.json({ teamId: id, totals: { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0 }, byAgent: [], byTool: [], timeSeries: [] });
   }
 });
 

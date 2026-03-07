@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { X } from 'lucide-react';
 import type { Task, TeamMember } from '../types';
 import { getTaskStatus, STATUS_COLORS } from '../utils/statusColors';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 interface TaskDetailPanelProps {
   task: Task | null;
@@ -27,6 +28,8 @@ function fmtDatetime(iso?: string): string | null {
 }
 
 export default function TaskDetailPanel({ task, allTasks, members, onClose }: TaskDetailPanelProps) {
+  const panelRef = useFocusTrap<HTMLDivElement>();
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -62,6 +65,7 @@ export default function TaskDetailPanel({ task, allTasks, members, onClose }: Ta
       {/* Backdrop */}
       <div
         onClick={onClose}
+        aria-hidden="true"
         style={{
           position: 'fixed',
           inset: 0,
@@ -71,12 +75,18 @@ export default function TaskDetailPanel({ task, allTasks, members, onClose }: Ta
       />
 
       {/* Panel */}
-      <div style={{
+      <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Task #${task.id}: ${task.subject}`}
+        style={{
         position: 'fixed',
         right: 0,
         top: 0,
         bottom: 0,
         width: '380px',
+        maxWidth: '100vw',
         zIndex: 100,
         background: 'var(--surface-0)',
         borderLeft: '1px solid var(--border-bright)',

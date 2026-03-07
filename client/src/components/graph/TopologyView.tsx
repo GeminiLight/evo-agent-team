@@ -16,6 +16,7 @@ import type { TeamDetail, Task } from '../../types';
 import { buildGraphElements, type LayoutMode } from './graphLayout';
 import { AgentNode } from './AgentNode';
 import { TaskNode } from './TaskNode';
+import CRTEmptyState from '../shared/CRTEmptyState';
 
 const nodeTypes: NodeTypes = {
   agentNode: AgentNode,
@@ -25,7 +26,10 @@ const nodeTypes: NodeTypes = {
 interface TopologyViewProps {
   team: TeamDetail;
   onTaskSelect: (taskId: string | null) => void;
+  onAgentSelect?: (agentId: string) => void;
   containerRef?: React.RefObject<HTMLDivElement>;
+  selectedAgentId?: string | null;
+  alertedAgentNames?: Set<string>;
 }
 
 function cssVar(name: string, fallback: string): string {
@@ -90,11 +94,31 @@ function LayoutToolbar({ layout, onChange }: { layout: LayoutMode; onChange: (m:
   );
 }
 
-function TopologyViewInner({ team, onTaskSelect, containerRef }: TopologyViewProps) {
+function TopologyViewInner({ team, onTaskSelect, onAgentSelect, containerRef, selectedAgentId, alertedAgentNames }: TopologyViewProps) {
   const [layout, setLayout] = useState<LayoutMode>('hierarchical');
   const { fitView } = useReactFlow();
 
-  const { nodes, edges } = useMemo(() => buildGraphElements(team, layout), [team, layout]);
+  const { nodes: rawNodes, edges } = useMemo(() => buildGraphElements(team, layout, selectedAgentId ?? undefined), [team, layout, selectedAgentId]);
+
+  // Inject isSelected, hasSelection, isAlerted into agent node data
+  const nodes = useMemo(() => {
+    const hasSelection = !!selectedAgentId;
+    return rawNodes.map(node => {
+      if (node.type === 'agentNode') {
+        const member = (node.data as { member: { agentId: string; name: string } }).member;
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            isSelected: hasSelection && member.agentId === selectedAgentId,
+            hasSelection,
+            isAlerted: alertedAgentNames ? alertedAgentNames.has(member.name) : false,
+          },
+        };
+      }
+      return node;
+    });
+  }, [rawNodes, selectedAgentId, alertedAgentNames]);
 
   const handleLayoutChange = useCallback((mode: LayoutMode) => {
     setLayout(mode);
@@ -108,7 +132,7 @@ function TopologyViewInner({ team, onTaskSelect, containerRef }: TopologyViewPro
       style={{
         width: '100%',
         height: 'calc(100vh - 100px)',
-        minHeight: '560px',
+        minHeight: '320px',
         borderRadius: '4px',
         overflow: 'hidden',
         border: '1px solid var(--border)',
@@ -147,6 +171,16 @@ function TopologyViewInner({ team, onTaskSelect, containerRef }: TopologyViewPro
 
       <LayoutToolbar layout={layout} onChange={handleLayoutChange} />
 
+      {nodes.length === 0 && (
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 5,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'var(--graph-bg)',
+        }}>
+          <CRTEmptyState title="NO TOPOLOGY" subtitle="Agent nodes will appear when the team forms" />
+        </div>
+      )}
+
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -160,6 +194,9 @@ function TopologyViewInner({ team, onTaskSelect, containerRef }: TopologyViewPro
         onNodeClick={(_event, node) => {
           if (node.type === 'taskNode') {
             onTaskSelect((node.data as { task: Task }).task.id);
+          } else if (node.type === 'agentNode') {
+            const member = (node.data as { member: { agentId: string } }).member;
+            onAgentSelect?.(member.agentId);
           }
         }}
       >
@@ -176,7 +213,12 @@ function TopologyViewInner({ team, onTaskSelect, containerRef }: TopologyViewPro
           pannable
           position="bottom-right"
           nodeColor={(node) => {
-            if (node.type === 'agentNode') return cssVar('--phosphor', '#39ff6a');
+            if (node.type === 'agentNode') {
+              const data = node.data as { isLead?: boolean; isAlerted?: boolean };
+              if (data.isAlerted) return cssVar('--crimson', '#ff4466');
+              if (data.isLead) return cssVar('--amber', '#f5a623');
+              return cssVar('--phosphor', '#39ff6a');
+            }
             const status = (node.data as { derivedStatus?: string })?.derivedStatus;
             if (status === 'completed')   return cssVar('--color-completed',   '#39ff6a');
             if (status === 'in_progress') return cssVar('--color-in-progress', '#f5a623');

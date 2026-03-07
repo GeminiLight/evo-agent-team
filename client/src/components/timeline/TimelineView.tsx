@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { TeamDetail, TimelineResponse, TaskChangeEvent } from '../../types';
 import TimelineEvent from './TimelineEvent';
+import CRTEmptyState from '../shared/CRTEmptyState';
 
 interface TimelineViewProps {
   teamId: string;
@@ -32,13 +33,19 @@ function useTimeline(teamId: string) {
   return { data, loading };
 }
 
+type SortOrder = 'desc' | 'asc';
+
 export default function TimelineView({ teamId, teamDetail, onEventsChange }: TimelineViewProps) {
   const { data, loading } = useTimeline(teamId);
+  const [order, setOrder] = useState<SortOrder>('desc');
 
   const teamName = teamDetail?.name ?? teamId;
   const events = data?.events ?? [];
-  // Oldest-first (natural reading order, newest at bottom)
-  const sorted = [...events].sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+  const sorted = [...events].sort((a, b) =>
+    order === 'asc'
+      ? a.timestamp.localeCompare(b.timestamp)
+      : b.timestamp.localeCompare(a.timestamp)
+  );
 
   // Expose events to parent for export
   useEffect(() => { onEventsChange?.(sorted); }, [sorted.length]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -59,26 +66,43 @@ export default function TimelineView({ teamId, teamDetail, onEventsChange }: Tim
 
   useEffect(() => {
     if (isFollowing && scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      if (order === 'desc') {
+        scrollRef.current.scrollTop = 0;
+      } else {
+        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      }
       setNewCount(0);
     }
-  }, [sorted.length, isFollowing]);
+  }, [sorted.length, isFollowing, order]);
 
   const handleScroll = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
-    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
-    if (distanceFromBottom > 60) {
-      setIsFollowing(false);
+    if (order === 'desc') {
+      if (el.scrollTop > 60) {
+        setIsFollowing(false);
+      } else {
+        setIsFollowing(true);
+        setNewCount(0);
+      }
     } else {
-      setIsFollowing(true);
-      setNewCount(0);
+      const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+      if (distanceFromBottom > 60) {
+        setIsFollowing(false);
+      } else {
+        setIsFollowing(true);
+        setNewCount(0);
+      }
     }
-  }, []);
+  }, [order]);
 
-  const jumpToBottom = () => {
+  const jumpToNewest = () => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+      if (order === 'desc') {
+        scrollRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+      }
     }
     setIsFollowing(true);
     setNewCount(0);
@@ -93,7 +117,7 @@ export default function TimelineView({ teamId, teamDetail, onEventsChange }: Tim
       display: 'flex',
       flexDirection: 'column',
       height: 'calc(100vh - 100px)',
-      maxHeight: '780px',
+      minHeight: '280px',
       position: 'relative',
     }}>
       {/* Header */}
@@ -108,9 +132,13 @@ export default function TimelineView({ teamId, teamDetail, onEventsChange }: Tim
           TIMELINE // {teamName.toUpperCase()}
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', gap: '2px' }}>
+            <OrderBtn active={order === 'desc'} onClick={() => { setOrder('desc'); setIsFollowing(true); }} title="Newest first">NEW→OLD</OrderBtn>
+            <OrderBtn active={order === 'asc'}  onClick={() => { setOrder('asc');  setIsFollowing(true); }} title="Oldest first">OLD→NEW</OrderBtn>
+          </div>
           {/* Follow toggle */}
           <button
-            onClick={() => { setIsFollowing(f => !f); if (!isFollowing) jumpToBottom(); }}
+            onClick={() => { setIsFollowing(f => !f); if (!isFollowing) jumpToNewest(); }}
             title={isFollowing ? 'Auto-scroll ON' : 'Auto-scroll OFF'}
             style={{
               display: 'flex', alignItems: 'center', gap: '5px',
@@ -154,9 +182,7 @@ export default function TimelineView({ teamId, teamDetail, onEventsChange }: Tim
           </div>
         )}
         {!loading && sorted.length === 0 && (
-          <div style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.1em', padding: '40px', textAlign: 'center' }}>
-            — NO EVENTS YET —
-          </div>
+          <CRTEmptyState title="NO EVENTS" subtitle="Activity will stream here in real-time" />
         )}
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           {sorted.map(event => (
@@ -168,7 +194,7 @@ export default function TimelineView({ teamId, teamDetail, onEventsChange }: Tim
       {/* Floating "N new" banner */}
       {!isFollowing && newCount > 0 && (
         <button
-          onClick={jumpToBottom}
+          onClick={jumpToNewest}
           style={{
             position: 'absolute',
             bottom: '20px',
@@ -188,9 +214,30 @@ export default function TimelineView({ teamId, teamDetail, onEventsChange }: Tim
             animation: 'fade-up 0.2s ease-out',
           }}
         >
-          ↓ {newCount} NEW EVENT{newCount !== 1 ? 'S' : ''}
+          {order === 'desc' ? '↑' : '↓'} {newCount} NEW EVENT{newCount !== 1 ? 'S' : ''}
         </button>
       )}
     </div>
+  );
+}
+
+function OrderBtn({ active, onClick, title, children }: { active: boolean; onClick: () => void; title?: string; children: React.ReactNode }) {
+  return (
+    <button
+      onClick={onClick}
+      title={title}
+      style={{
+        padding: '2px 7px', fontSize: '8px', letterSpacing: '0.08em',
+        fontFamily: 'var(--font-mono)',
+        background: active ? 'var(--active-bg-med)' : 'transparent',
+        color: active ? 'var(--active-text)' : 'var(--text-muted)',
+        border: `1px solid ${active ? 'var(--active-border)' : 'transparent'}`,
+        borderRadius: '2px', cursor: 'pointer', transition: 'all 0.1s',
+      }}
+      onMouseEnter={e => { if (!active) e.currentTarget.style.color = 'var(--text-secondary)'; }}
+      onMouseLeave={e => { if (!active) e.currentTarget.style.color = active ? 'var(--active-text)' : 'var(--text-muted)'; }}
+    >
+      {children}
+    </button>
   );
 }

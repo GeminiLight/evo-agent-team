@@ -712,6 +712,11 @@ body::after {
   50%       { box-shadow: 0 0 0 1px var(--border-bright), 0 0 30px var(--phosphor-glow-strong); }
 }
 
+@keyframes agent-alert-pulse {
+  0%, 100% { box-shadow: 0 0 6px var(--crimson-glow, rgba(255,68,102,0.4)),  0 0 0 1px rgba(255,68,102,0.4); }
+  50%       { box-shadow: 0 0 18px var(--crimson-glow, rgba(255,68,102,0.7)), 0 0 0 2px rgba(255,68,102,0.6); }
+}
+
 @keyframes spin-slow {
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
@@ -762,12 +767,23 @@ body::after {
   animation: status-dot-live 2s ease-in-out infinite !important;
 }
 
-/* Theme transition — smooth color changes */
-*, *::before, *::after {
+/* Theme transition — smooth color changes on theme switch only */
+html[data-theme-switching] *,
+html[data-theme-switching] *::before,
+html[data-theme-switching] *::after {
   transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease, box-shadow 0.25s ease;
 }
-/* But don't slow down animations */
-[style*="animation"] { transition: none !important; }
+
+/* Reduced motion — respect OS accessibility setting */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  body::before { display: none !important; }  /* scanlines */
+  body::after  { display: none !important; }  /* vignette */
+}
 
 
 /* ════════════════════════════════════════════

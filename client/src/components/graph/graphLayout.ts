@@ -85,6 +85,7 @@ function buildHierarchicalLayout(team: TeamDetail): { nodes: Node[]; edges: Edge
   const nodes: Node[] = [];
   const members = team.config?.members ?? [];
   const tasks = team.tasks;
+  const leadName = team.config?.leadAgentId?.split('@')[0] ?? null;
   const { inProgressByOwner, completedByOwner, taskCountByOwner } = buildAgentStats(tasks);
 
   const agentSpan = members.length * NODE_X_GAP;
@@ -100,6 +101,7 @@ function buildHierarchicalLayout(team: TeamDetail): { nodes: Node[]; edges: Edge
       data: {
         member,
         isActive,
+        isLead: member.name === leadName,
         taskCount: taskCountByOwner.get(member.name) ?? 0,
         inProgressCount: inProgressByOwner.get(member.name) ?? 0,
         completedCount: completedByOwner.get(member.name) ?? 0,
@@ -163,6 +165,7 @@ function buildCircularLayout(team: TeamDetail): { nodes: Node[]; edges: Edge[] }
   const nodes: Node[] = [];
   const members = team.config?.members ?? [];
   const tasks = team.tasks;
+  const leadName = team.config?.leadAgentId?.split('@')[0] ?? null;
   const { inProgressByOwner, completedByOwner, taskCountByOwner } = buildAgentStats(tasks);
   const allTaskSummary = tasks.map(t => ({ id: t.id, status: t.status }));
 
@@ -191,6 +194,7 @@ function buildCircularLayout(team: TeamDetail): { nodes: Node[]; edges: Edge[] }
         data: {
           member: m,
           isActive,
+          isLead: m.name === leadName,
           taskCount: taskCountByOwner.get(m.name) ?? 0,
           inProgressCount: inProgressByOwner.get(m.name) ?? 0,
           completedCount: completedByOwner.get(m.name) ?? 0,
@@ -212,10 +216,9 @@ function buildCircularLayout(team: TeamDetail): { nodes: Node[]; edges: Edge[] }
 
 // ─── Force-directed (approximated with grid + jitter, no physics lib needed) ──
 function buildForceLayout(team: TeamDetail): { nodes: Node[]; edges: Edge[] } {
-  // We do a simple spring-approximation: group connected components together.
-  // Agents are placed in a horizontal band, tasks fan out below their owners.
   const members = team.config?.members ?? [];
   const tasks = team.tasks;
+  const leadName = team.config?.leadAgentId?.split('@')[0] ?? null;
   const { inProgressByOwner, completedByOwner, taskCountByOwner } = buildAgentStats(tasks);
   const allTaskSummary = tasks.map(t => ({ id: t.id, status: t.status }));
   const nodes: Node[] = [];
@@ -223,7 +226,6 @@ function buildForceLayout(team: TeamDetail): { nodes: Node[]; edges: Edge[] } {
   const AGENT_SPREAD = 280;
   const centerX = (members.length * AGENT_SPREAD) / 2;
 
-  // Place agents in horizontal arc
   for (let i = 0; i < members.length; i++) {
     const m = members[i];
     const isActive = (inProgressByOwner.get(m.name) ?? 0) > 0;
@@ -236,6 +238,7 @@ function buildForceLayout(team: TeamDetail): { nodes: Node[]; edges: Edge[] } {
       data: {
         member: m,
         isActive,
+        isLead: m.name === leadName,
         taskCount: taskCountByOwner.get(m.name) ?? 0,
         inProgressCount: inProgressByOwner.get(m.name) ?? 0,
         completedCount: completedByOwner.get(m.name) ?? 0,
@@ -295,6 +298,7 @@ function buildForceLayout(team: TeamDetail): { nodes: Node[]; edges: Edge[] } {
 export function buildGraphElements(
   team: TeamDetail,
   layout: LayoutMode = 'hierarchical',
+  selectedAgentId?: string,
 ): { nodes: Node[]; edges: Edge[] } {
   if (layout === 'circular') return buildCircularLayout(team);
   if (layout === 'force') return buildForceLayout(team);

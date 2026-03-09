@@ -1,17 +1,180 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { AgentMessage } from '../../types';
 import { agentColor, agentInitials, agentAvatarStyle } from '../../utils/agentColors';
+import { useAgentRespond } from '../../hooks/useAgentRespond';
 
-const TYPE_BADGE: Record<string, { color: string; label: string; glow?: boolean }> = {
-  idle_notification:        { color: 'var(--text-muted)',    label: 'IDLE'           },
-  shutdown_request:         { color: 'var(--crimson)',       label: 'SHUTDOWN'       },
-  shutdown_response:        { color: 'var(--crimson)',       label: 'SHUTDOWN'       },
-  plan_approval_request:    { color: 'var(--amber)',         label: 'PLAN'           },
-  plan_approval_response:   { color: 'var(--amber)',         label: 'PLAN'           },
-  task_assignment:          { color: 'var(--ice)',           label: 'TASK'           },
-  broadcast:                { color: 'var(--phosphor)',      label: 'BROADCAST'      },
-  human_input_request:      { color: 'var(--amber)',         label: '⚠ NEEDS INPUT', glow: true },
-};
+// ─── sessionStorage helpers for dismissed human-input inline replies ──────────
+const DISMISS_KEY = 'dismissed-human-requests';
+function isDismissed(id: string): boolean {
+  try { return (JSON.parse(sessionStorage.getItem(DISMISS_KEY) ?? '[]') as string[]).includes(id); }
+  catch { return false; }
+}
+function setDismissed(id: string) {
+  try {
+    const arr: string[] = JSON.parse(sessionStorage.getItem(DISMISS_KEY) ?? '[]');
+    if (!arr.includes(id)) sessionStorage.setItem(DISMISS_KEY, JSON.stringify([...arr, id]));
+  } catch { /* ignore */ }
+}
+
+// ─── HumanResponseInline ──────────────────────────────────────────────────────
+interface HumanResponseInlineProps {
+  agentName: string;
+  messageId: string;
+  teamId: string;
+  pendingAgentNames: string[];
+}
+
+function HumanResponseInline({ agentName, messageId, teamId, pendingAgentNames }: HumanResponseInlineProps) {
+  const { t } = useTranslation();
+  const [dismissed, setDismissedLocal] = useState(() => isDismissed(messageId));
+  const [text, setText] = useState('');
+  const [sent, setSent] = useState(false);
+  const { respond, sending, error, clearError } = useAgentRespond(teamId);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const isDemo = teamId === 'demo-team';
+
+  // Reset sent→idle when agent unblocks (no longer in pending list)
+  useEffect(() => {
+    if (sent && !pendingAgentNames.includes(agentName)) {
+      setSent(false);
+      setText('');
+    }
+  }, [pendingAgentNames, agentName, sent]);
+
+  if (dismissed) return null;
+
+  const handleSend = async () => {
+    if (!text.trim() || sending || sent) return;
+    const ok = await respond(agentName, text);
+    if (ok) setSent(true);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') handleSend();
+  };
+
+  return (
+    <div
+      onClick={e => e.stopPropagation()}
+      style={{
+        marginTop: '8px',
+        padding: '10px 12px',
+        background: 'rgba(245,166,35,0.06)',
+        border: '1px solid rgba(245,166,35,0.28)',
+        borderRadius: '3px',
+      }}
+    >
+      {/* Title row */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+        <span style={{ fontSize: '9px', letterSpacing: '0.12em', color: 'var(--amber)', fontWeight: 700, textTransform: 'uppercase' }}>
+          {t('message.human_input')}
+        </span>
+        <button
+          onClick={() => { setDismissed(messageId); setDismissedLocal(true); }}
+          style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '11px', lineHeight: 1, padding: '0 2px' }}
+          title="Dismiss"
+          onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-secondary)')}
+          onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
+        >×</button>
+      </div>
+
+      {/* Demo warning */}
+      {isDemo && (
+        <div style={{ marginBottom: '8px', fontSize: '9px', color: 'var(--amber)', letterSpacing: '0.06em', opacity: 0.8 }}>
+          {t('agent_card.demo_unavailable')}
+        </div>
+      )}
+
+      {/* Textarea */}
+      <textarea
+        ref={textareaRef}
+        value={text}
+        onChange={e => { setText(e.target.value); clearError(); }}
+        onKeyDown={handleKeyDown}
+        disabled={sending || sent || isDemo}
+        placeholder={sent ? '✓ Response queued' : 'Type your response...  (Ctrl+Enter to send)'}
+        rows={3}
+        style={{
+          width: '100%',
+          background: 'var(--surface-2)',
+          border: `1px solid ${error ? 'var(--crimson)' : 'var(--border)'}`,
+          borderRadius: '3px',
+          color: sent ? 'var(--phosphor)' : 'var(--text-primary)',
+          fontFamily: 'var(--font-mono)',
+          fontSize: '10px',
+          padding: '6px 8px',
+          resize: 'vertical',
+          outline: 'none',
+          boxSizing: 'border-box',
+          opacity: (sending || isDemo) ? 0.6 : 1,
+          transition: 'border-color 0.15s',
+          minHeight: '56px',
+        }}
+        onFocus={e => { if (!error) e.target.style.borderColor = 'var(--phosphor)'; }}
+        onBlur={e => { if (!error) e.target.style.borderColor = error ? 'var(--crimson)' : 'var(--border)'; }}
+      />
+
+      {/* Error */}
+      {error && (
+        <div style={{ marginTop: '4px', fontSize: '9px', color: 'var(--crimson)', letterSpacing: '0.06em' }}>
+          {error}
+        </div>
+      )}
+
+      {/* Actions */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '8px' }}>
+        <span style={{ fontSize: '9px', letterSpacing: '0.08em', color: sent ? 'var(--phosphor)' : 'var(--text-muted)' }}>
+          {sent ? t('message.sent_status') : t('message.awaiting_status', { name: agentName })}
+        </span>
+        <div style={{ display: 'flex', gap: '6px' }}>
+          {error && (
+            <button
+              onClick={() => { clearError(); handleSend(); }}
+              style={{
+                padding: '3px 10px', fontSize: '8px', letterSpacing: '0.1em',
+                fontFamily: 'var(--font-mono)',
+                background: 'rgba(255,68,102,0.1)', color: 'var(--crimson)',
+                border: '1px solid rgba(255,68,102,0.4)', borderRadius: '2px', cursor: 'pointer',
+              }}
+            >
+              <span style={{ textTransform: 'uppercase' }}>{t('message.retry')}</span>
+            </button>
+          )}
+          {!sent && (
+            <button
+              onClick={handleSend}
+              disabled={!text.trim() || sending || isDemo}
+              style={{
+                padding: '3px 12px', fontSize: '8px', letterSpacing: '0.12em', fontWeight: 700,
+                fontFamily: 'var(--font-mono)',
+                background: 'rgba(57,255,106,0.1)', color: 'var(--phosphor)',
+                border: '1px solid var(--phosphor)', borderRadius: '2px',
+                cursor: (!text.trim() || sending || isDemo) ? 'default' : 'pointer',
+                opacity: (!text.trim() || sending || isDemo) ? 0.4 : 1,
+              }}
+            >
+              <span style={{ textTransform: 'uppercase' }}>{sending ? '...' : t('message.send')}</span>
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function buildTypeBadge(t: (key: string) => string): Record<string, { color: string; label: string; glow?: boolean }> {
+  return {
+    idle_notification:        { color: 'var(--text-muted)',    label: t('message.type_idle')           },
+    shutdown_request:         { color: 'var(--crimson)',       label: t('message.type_shutdown')       },
+    shutdown_response:        { color: 'var(--crimson)',       label: t('message.type_shutdown')       },
+    plan_approval_request:    { color: 'var(--amber)',         label: t('message.type_plan_approval')  },
+    plan_approval_response:   { color: 'var(--amber)',         label: t('message.type_plan_approval')  },
+    task_assignment:          { color: 'var(--ice)',           label: t('message.type_task_update')    },
+    broadcast:                { color: 'var(--phosphor)',      label: t('message.type_broadcast')      },
+    human_input_request:      { color: 'var(--amber)',         label: t('message.type_needs_input'),   glow: true },
+  };
+}
 
 function formatTs(ts: string): string {
   try {
@@ -26,10 +189,14 @@ interface MessageBubbleProps {
   message: AgentMessage;
   /** When true, omit the sender avatar (used for grouped follow-up messages) */
   compact?: boolean;
+  teamId?: string;
+  pendingAgentNames?: string[];
 }
 
-export default function MessageBubble({ message, compact = false }: MessageBubbleProps) {
+export default function MessageBubble({ message, compact = false, teamId, pendingAgentNames = [] }: MessageBubbleProps) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
+  const TYPE_BADGE = buildTypeBadge(t);
   const badge = message.parsedType ? TYPE_BADGE[message.parsedType] : undefined;
   const isHumanRequest = message.parsedType === 'human_input_request';
   const isLong = message.text.length > 120;
@@ -53,8 +220,8 @@ export default function MessageBubble({ message, compact = false }: MessageBubbl
         background: isHumanRequest ? 'var(--amber-glow)' : 'var(--surface-1)',
         marginBottom: '1px',
       }}
-      onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface-2)'; }}
-      onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface-1)'; }}
+      onMouseEnter={e => { e.currentTarget.style.background = isHumanRequest ? 'rgba(245,166,35,0.12)' : 'var(--surface-2)'; }}
+      onMouseLeave={e => { e.currentTarget.style.background = isHumanRequest ? 'var(--amber-glow)' : 'var(--surface-1)'; }}
     >
       {/* Avatar column */}
       <div style={{ flexShrink: 0, width: '22px', paddingTop: '1px' }}>
@@ -105,6 +272,7 @@ export default function MessageBubble({ message, compact = false }: MessageBubbl
                 opacity: 0.85,
                 boxShadow: badge.glow ? `0 0 6px ${badge.color}88` : 'none',
                 animation: badge.glow ? 'status-pulse 2s ease-in-out infinite' : 'none',
+                textTransform: 'uppercase',
               }}>
                 {badge.label}
               </span>
@@ -134,6 +302,7 @@ export default function MessageBubble({ message, compact = false }: MessageBubbl
                 fontSize: '8px', letterSpacing: '0.12em',
                 color: badge.color, border: `1px solid ${badge.color}`,
                 padding: '1px 5px', borderRadius: '2px', opacity: 0.85,
+                textTransform: 'uppercase',
               }}>
                 {badge.label}
               </span>
@@ -157,9 +326,19 @@ export default function MessageBubble({ message, compact = false }: MessageBubbl
         </div>
 
         {isLong && (
-          <div style={{ fontSize: '9px', color: 'var(--text-muted)', marginTop: '3px', letterSpacing: '0.08em' }}>
-            {expanded ? '▲ COLLAPSE' : '▼ EXPAND'}
+          <div style={{ fontSize: '9px', color: 'var(--text-muted)', marginTop: '3px', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+            {expanded ? t('commlog.collapse') : t('commlog.expand')}
           </div>
+        )}
+
+        {/* Inline reply for human_input_request messages */}
+        {isHumanRequest && !compact && teamId && (
+          <HumanResponseInline
+            agentName={message.sender}
+            messageId={message.id}
+            teamId={teamId}
+            pendingAgentNames={pendingAgentNames}
+          />
         )}
       </div>
     </div>

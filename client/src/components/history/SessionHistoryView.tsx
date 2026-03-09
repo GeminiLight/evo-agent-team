@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Search, ChevronDown, ChevronRight } from 'lucide-react';
 import type { SessionMessage, SessionEntry } from '../../types';
 import CRTEmptyState from '../shared/CRTEmptyState';
@@ -67,11 +68,14 @@ interface SessionHistoryViewProps {
   messages: SessionMessage[];
   sessionId: string | null;
   loading: boolean;
+  teamId?: string;
+  agentName?: string | null;
 }
 
 type SortOrder = 'desc' | 'asc';
 
-export default function SessionHistoryView({ messages, sessionId, loading }: SessionHistoryViewProps) {
+export default function SessionHistoryView({ messages, sessionId, loading, teamId, agentName }: SessionHistoryViewProps) {
+  const { t } = useTranslation();
   const [roleFilter, setRoleFilter] = useState<RoleFilter>('all');
   const [kindFilters, setKindFilters] = useState<Set<KindFilter>>(new Set(['text', 'tool_use', 'tool_result']));
   const [search, setSearch] = useState('');
@@ -169,7 +173,7 @@ export default function SessionHistoryView({ messages, sessionId, loading }: Ses
         <FilterGroup label="ROLE">
           {(['all', 'user', 'assistant'] as RoleFilter[]).map(r => (
             <FilterBtn key={r} active={roleFilter === r} onClick={() => setRoleFilter(r)}>
-              {r === 'all' ? 'ALL' : r === 'user' ? 'USER' : 'ASST'}
+              <span style={{ textTransform: 'uppercase' }}>{r === 'all' ? t('history.role_all') : r === 'user' ? t('history.role_user') : t('history.role_asst')}</span>
             </FilterBtn>
           ))}
         </FilterGroup>
@@ -180,7 +184,7 @@ export default function SessionHistoryView({ messages, sessionId, loading }: Ses
         <FilterGroup label="KIND">
           {(['text', 'tool_use', 'tool_result'] as KindFilter[]).map(k => (
             <FilterBtn key={k} active={kindFilters.has(k)} onClick={() => toggleKind(k)}>
-              {k === 'text' ? 'TEXT' : k === 'tool_use' ? 'TOOL' : 'RESULT'}
+              <span style={{ textTransform: 'uppercase' }}>{k === 'text' ? t('history.kind_text') : k === 'tool_use' ? t('history.kind_tool') : t('history.kind_result')}</span>
             </FilterBtn>
           ))}
         </FilterGroup>
@@ -218,7 +222,7 @@ export default function SessionHistoryView({ messages, sessionId, loading }: Ses
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="search..."
+            placeholder={t('history.search')}
             style={{
               background: 'var(--surface-1)', color: 'var(--text-primary)',
               border: '1px solid var(--border)', borderRadius: '2px',
@@ -252,6 +256,9 @@ export default function SessionHistoryView({ messages, sessionId, loading }: Ses
                 activeKinds={kindFilters}
                 toolFilter={toolFilter}
                 search={search}
+                teamId={teamId}
+                agentName={agentName}
+                sessionId={sessionId}
               />
             ))}
           </div>
@@ -264,14 +271,18 @@ export default function SessionHistoryView({ messages, sessionId, loading }: Ses
 
 // ── Message row ───────────────────────────────────────────────────────────────
 
-function MessageRow({ message, activeKinds, toolFilter, search }: {
+function MessageRow({ message, activeKinds, toolFilter, search, teamId, agentName, sessionId }: {
   message: SessionMessage;
   activeKinds: Set<KindFilter>;
   toolFilter: string;
   search: string;
+  teamId?: string;
+  agentName?: string | null;
+  sessionId?: string | null;
 }) {
   const isUser = message.role === 'user';
   const roleColor = isUser ? 'var(--ice)' : 'var(--phosphor)';
+  const [hovered, setHovered] = useState(false);
 
   const visibleEntries = message.entries.filter(e => {
     if (!activeKinds.has(e.kind)) return false;
@@ -287,11 +298,15 @@ function MessageRow({ message, activeKinds, toolFilter, search }: {
   if (visibleEntries.length === 0) return null;
 
   return (
-    <div style={{
-      display: 'flex', gap: '12px',
-      padding: '6px 0',
-      borderBottom: '1px solid var(--border)',
-    }}>
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: 'flex', gap: '12px',
+        padding: '6px 0',
+        borderBottom: '1px solid var(--border)',
+      }}
+    >
       {/* Role label */}
       <div style={{
         flexShrink: 0, width: '44px', paddingTop: '2px',
@@ -313,6 +328,16 @@ function MessageRow({ message, activeKinds, toolFilter, search }: {
         {visibleEntries.map((entry, idx) => (
           <EntryBlock key={idx} entry={entry} search={search} />
         ))}
+        {/* Feedback strip — only on assistant messages */}
+        {message.role === 'assistant' && teamId && agentName && (
+          <FeedbackStrip
+            teamId={teamId}
+            agentName={agentName}
+            messageUuid={message.uuid}
+            sessionId={sessionId ?? null}
+            rowHovered={hovered}
+          />
+        )}
       </div>
     </div>
   );
@@ -443,6 +468,167 @@ function EntryBlock({ entry, search }: { entry: SessionEntry; search: string }) 
   }
 
   return null;
+}
+
+// ── Feedback strip ────────────────────────────────────────────────────────────
+
+type FeedbackType = 'praise' | 'correction' | 'bookmark';
+
+interface FeedbackStripProps {
+  teamId: string;
+  agentName: string;
+  messageUuid: string;
+  sessionId: string | null;
+  rowHovered: boolean;
+}
+
+function FeedbackStrip({ teamId, agentName, messageUuid, sessionId, rowHovered }: FeedbackStripProps) {
+  const { t } = useTranslation();
+  const [submitted, setSubmitted] = useState<FeedbackType | null>(null);
+  const [correcting, setCorrecting] = useState(false);
+  const [note, setNote] = useState('');
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const isDemo = teamId === 'demo-team';
+  const show = rowHovered || correcting || !!submitted;
+
+  const submit = async (type: FeedbackType, content?: string) => {
+    if (sending || isDemo) return;
+    setSending(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/teams/${teamId}/feedback`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ agentName, messageUuid, sessionId, type, content }),
+      });
+      if (res.ok) {
+        setSubmitted(type);
+        setCorrecting(false);
+        setNote('');
+      } else {
+        const j = await res.json().catch(() => ({}));
+        setError((j as { error?: string }).error ?? 'Failed');
+      }
+    } catch {
+      setError('Network error');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const BTNS: { type: FeedbackType; icon: string; label: string; color: string; title: string }[] = [
+    { type: 'praise',     icon: '👍', label: t('history.good'),  color: 'var(--phosphor)', title: 'Mark as good — this approach worked well' },
+    { type: 'correction', icon: '👎', label: t('history.wrong'), color: 'var(--crimson)',  title: 'Correction — this needs rethinking' },
+    { type: 'bookmark',   icon: '📌', label: t('history.mark'),  color: 'var(--ice)',      title: 'Bookmark — worth remembering this pattern' },
+  ];
+
+  return (
+    <div style={{ marginTop: '2px', minHeight: '18px' }}>
+      {/* Button row — appears on row hover or when correcting/submitted */}
+      {show && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
+          {submitted ? (
+            <span style={{
+              fontSize: '8px', color: submitted === 'praise' ? 'var(--phosphor)' : submitted === 'correction' ? 'var(--crimson)' : 'var(--ice)',
+              letterSpacing: '0.1em', fontFamily: 'var(--font-mono)',
+              opacity: 0.7,
+            }}>
+              {submitted === 'praise' ? '👍 MARKED GOOD' : submitted === 'correction' ? '👎 CORRECTION SAVED' : '📌 BOOKMARKED'}
+            </span>
+          ) : (
+            <>
+              {BTNS.map(btn => (
+                <button
+                  key={btn.type}
+                  onClick={() => {
+                    if (btn.type === 'correction') { setCorrecting(c => !c); }
+                    else submit(btn.type);
+                  }}
+                  disabled={sending || isDemo}
+                  title={isDemo ? 'Not available in demo mode' : btn.title}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '3px',
+                    padding: '1px 6px',
+                    fontSize: '8px', letterSpacing: '0.08em',
+                    fontFamily: 'var(--font-mono)',
+                    background: correcting && btn.type === 'correction' ? `${btn.color}18` : 'transparent',
+                    color: isDemo ? 'var(--text-muted)' : (correcting && btn.type === 'correction' ? btn.color : 'var(--text-muted)'),
+                    border: `1px solid ${correcting && btn.type === 'correction' ? btn.color + '55' : 'var(--border)'}`,
+                    borderRadius: '2px',
+                    cursor: (sending || isDemo) ? 'default' : 'pointer',
+                    opacity: isDemo ? 0.4 : 1,
+                    transition: 'all 0.1s',
+                  }}
+                  onMouseEnter={e => { if (!sending && !isDemo) { e.currentTarget.style.color = btn.color; e.currentTarget.style.borderColor = btn.color + '55'; } }}
+                  onMouseLeave={e => { if (!(correcting && btn.type === 'correction')) { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.borderColor = 'var(--border)'; } }}
+                >
+                  <span style={{ fontSize: '9px' }}>{btn.icon}</span>
+                  {btn.label}
+                </button>
+              ))}
+              {sending && (
+                <span style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.08em', fontFamily: 'var(--font-mono)' }}>...</span>
+              )}
+              {error && (
+                <span style={{ fontSize: '8px', color: 'var(--crimson)', letterSpacing: '0.06em', fontFamily: 'var(--font-mono)' }}>{error}</span>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Correction note input */}
+      {correcting && !submitted && (
+        <div style={{ marginTop: '6px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <textarea
+            value={note}
+            onChange={e => { setNote(e.target.value); setError(null); }}
+            onKeyDown={e => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && note.trim()) submit('correction', note); }}
+            placeholder="What needs to change? (Ctrl+Enter to submit)"
+            rows={2}
+            autoFocus
+            style={{
+              width: '100%', boxSizing: 'border-box',
+              background: 'var(--surface-2)',
+              border: `1px solid ${error ? 'var(--crimson)' : 'var(--crimson)55'}`,
+              borderRadius: '3px',
+              color: 'var(--text-primary)',
+              fontFamily: 'var(--font-mono)',
+              fontSize: '10px', letterSpacing: '0.02em',
+              padding: '5px 8px', resize: 'vertical', outline: 'none',
+              minHeight: '48px',
+            }}
+            onFocus={e => { e.target.style.borderColor = 'var(--crimson)'; }}
+            onBlur={e => { e.target.style.borderColor = error ? 'var(--crimson)' : 'var(--crimson)55'; }}
+          />
+          <div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-end' }}>
+            <button
+              onClick={() => { setCorrecting(false); setNote(''); setError(null); }}
+              style={{
+                padding: '2px 10px', fontSize: '8px', letterSpacing: '0.08em',
+                fontFamily: 'var(--font-mono)',
+                background: 'transparent', color: 'var(--text-muted)',
+                border: '1px solid var(--border)', borderRadius: '2px', cursor: 'pointer',
+              }}
+            >CANCEL</button>
+            <button
+              onClick={() => note.trim() && submit('correction', note)}
+              disabled={!note.trim() || sending}
+              style={{
+                padding: '2px 10px', fontSize: '8px', letterSpacing: '0.08em', fontWeight: 700,
+                fontFamily: 'var(--font-mono)',
+                background: 'rgba(255,59,92,0.1)', color: 'var(--crimson)',
+                border: '1px solid var(--crimson)', borderRadius: '2px',
+                cursor: (!note.trim() || sending) ? 'default' : 'pointer',
+                opacity: (!note.trim() || sending) ? 0.4 : 1,
+              }}
+            >{sending ? '...' : 'SAVE'}</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 // ── Highlight matching search text ────────────────────────────────────────────

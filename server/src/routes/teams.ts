@@ -2,13 +2,14 @@ import { Router } from 'express';
 import fs from 'fs/promises';
 import path from 'path';
 import { config } from '../config.js';
-import { getDemoTeamSummary, getDemoTeamDetail, getDemoTimeline, getDemoTodos, getDemoSessionStats, getDemoAlerts, getDemoAgentSessions, getDemoCostData } from '../mockData.js';
+import { getDemoTeamSummary, getDemoTeamDetail, getDemoTimeline, getDemoTodos, getDemoSessionStats, getDemoAlerts, getDemoAgentSessions, getDemoCostData, getDemoExecSummary, getDemoFeedbackEntries, getDemoPreferences } from '../mockData.js';
 import { recordSnapshot, getTimeline } from '../changeTracker.js';
 import { detectHumanInputWaiters } from '../humanInputDetector.js';
 import { getTodosForTeam } from '../todoScanner.js';
 import { getSessionStatsForTeam } from '../sessionScanner.js';
 import { getSessionHistory, listAvailableAgentSessions } from '../sessionHistory.js';
 import { computeAlerts, DEFAULT_THRESHOLDS } from '../alertEngine.js';
+import { getSummary, invalidateSummary } from '../summaryEngine.js';
 import type { Task, TeamConfig, TeamSummary, TeamDetail } from '../types.js';
 
 const router = Router();
@@ -570,6 +571,319 @@ router.get('/teams/:id/timeline', async (req, res) => {
     return;
   }
   res.json({ teamId: id, events: getTimeline(id) });
+});
+
+// GET /api/teams/:id/feedback  — list all feedback entries across all agents
+router.get('/teams/:id/feedback', async (req, res) => {
+  const { id } = req.params;
+  if (id === 'demo-team') {
+    res.json({ teamId: id, entries: getDemoFeedbackEntries() });
+    return;
+  }
+
+  const feedbackDir = path.join(config.teamsDir, id, 'feedback');
+  const entries: unknown[] = [];
+
+  try {
+    const files = await fs.readdir(feedbackDir);
+    for (const file of files.filter(f => f.endsWith('.jsonl'))) {
+      const raw = await fs.readFile(path.join(feedbackDir, file), 'utf-8');
+      for (const line of raw.split('\n').filter(Boolean)) {
+        try { entries.push(JSON.parse(line)); } catch { /* skip bad lines */ }
+      }
+    }
+  } catch { /* dir may not exist yet */ }
+
+  // Sort newest first
+  entries.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  res.json({ teamId: id, entries });
+});
+
+// DELETE /api/teams/:id/feedback/:entryId  — delete a single feedback entry
+router.delete('/teams/:id/feedback/:entryId', async (req, res) => {
+  const { id, entryId } = req.params;
+  if (id === 'demo-team') {
+    res.status(403).json({ error: 'Not available in demo mode' });
+    return;
+  }
+
+  const feedbackDir = path.join(config.teamsDir, id, 'feedback');
+  let deleted = false;
+
+  try {
+    const files = await fs.readdir(feedbackDir);
+    for (const file of files.filter(f => f.endsWith('.jsonl'))) {
+      const filePath = path.join(feedbackDir, file);
+      const raw = await fs.readFile(filePath, 'utf-8');
+      const lines = raw.split('\n').filter(Boolean);
+      const filtered = lines.filter(line => {
+        try { return JSON.parse(line).id !== entryId; } catch { return true; }
+      });
+      if (filtered.length < lines.length) {
+        await fs.writeFile(filePath, filtered.map(l => l + '\n').join(''), 'utf-8');
+        deleted = true;
+        break;
+      }
+    }
+  } catch { /* ignore */ }
+
+  if (deleted) res.json({ ok: true });
+  else res.status(404).json({ error: 'Entry not found' });
+});
+
+// GET /api/teams/:id/preferences  — get per-agent preferences
+router.get('/teams/:id/preferences', async (req, res) => {
+  const { id } = req.params;
+  if (id === 'demo-team') {
+    res.json({ teamId: id, preferences: getDemoPreferences() });
+    return;
+  }
+
+  const prefPath = path.join(config.teamsDir, id, 'preferences.json');
+  const data = await readJsonFile<Record<string, string[]>>(prefPath) ?? {};
+  res.json({ teamId: id, preferences: data });
+});
+
+// PUT /api/teams/:id/preferences  — save preferences (full replace)
+router.put('/teams/:id/preferences', async (req, res) => {
+  const { id } = req.params;
+  if (id === 'demo-team') {
+    res.status(403).json({ error: 'Not available in demo mode' });
+    return;
+  }
+
+  const { preferences } = req.body as { preferences: Record<string, string[]> };
+  if (!preferences || typeof preferences !== 'object') {
+    res.status(400).json({ error: 'preferences must be an object' });
+    return;
+  }
+
+  const prefPath = path.join(config.teamsDir, id, 'preferences.json');
+  await fs.mkdir(path.dirname(prefPath), { recursive: true });
+  await fs.writeFile(prefPath, JSON.stringify(preferences, null, 2), 'utf-8');
+  res.json({ ok: true, preferences });
+});
+
+// POST /api/teams/:id/preferences/generate  — LLM: extract preferences from feedback
+router.post('/teams/:id/preferences/generate', async (req, res) => {
+  const { id } = req.params;
+  if (id === 'demo-team') {
+    res.status(403).json({ error: 'Not available in demo mode' });
+    return;
+  }
+
+  const feedbackDir = path.join(config.teamsDir, id, 'feedback');
+  const byAgent: Record<string, string[]> = {};
+
+  try {
+    const files = await fs.readdir(feedbackDir);
+    for (const file of files.filter(f => f.endsWith('.jsonl'))) {
+      const agentName = file.replace('.jsonl', '');
+      const raw = await fs.readFile(path.join(feedbackDir, file), 'utf-8');
+      const corrections: string[] = [];
+      for (const line of raw.split('\n').filter(Boolean)) {
+        try {
+          const entry = JSON.parse(line);
+          if ((entry.type === 'correction' || entry.type === 'bookmark') && entry.content) {
+            corrections.push(entry.content);
+          }
+        } catch { /* skip */ }
+      }
+      if (corrections.length > 0) byAgent[agentName] = corrections;
+    }
+  } catch {
+    res.json({ ok: true, preferences: {} });
+    return;
+  }
+
+  if (Object.keys(byAgent).length === 0) {
+    res.json({ ok: true, preferences: {} });
+    return;
+  }
+
+  const apiKey = process.env.LLM_API_KEY;
+  const baseURL = process.env.LLM_BASE_URL ?? 'http://v2.open.venus.oa.com/llmproxy/v1';
+  const model = process.env.LLM_MODEL ?? 'claude-sonnet-4-6';
+
+  const preferences: Record<string, string[]> = {};
+
+  if (apiKey) {
+    const OpenAI = (await import('openai')).default;
+    const client = new OpenAI({ baseURL, apiKey });
+
+    for (const [agentName, feedbacks] of Object.entries(byAgent)) {
+      const prompt = `You are analyzing user feedback about an AI agent named "${agentName}".
+
+User feedback entries:
+${feedbacks.map((f, i) => `${i + 1}. "${f}"`).join('\n')}
+
+Extract 3-6 concise behavioral preference rules from this feedback.
+Rules should be general principles, not one-off fixes.
+Format: one rule per line, starting with a verb (e.g. "Use natbib over biblatex", "Prefer modular file structure").
+Return ONLY the rules, one per line, no numbering or bullets.`;
+
+      try {
+        const completion = await client.chat.completions.create({
+          model,
+          messages: [{ role: 'user', content: prompt }],
+          max_tokens: 300,
+        });
+        const text = completion.choices[0]?.message?.content ?? '';
+        preferences[agentName] = text.split('\n').map(l => l.trim()).filter(Boolean);
+      } catch {
+        // Rule-based fallback: use feedback as-is (truncated)
+        preferences[agentName] = feedbacks.slice(0, 5).map(f => f.slice(0, 80));
+      }
+    }
+  } else {
+    // No LLM: use raw corrections truncated
+    for (const [agentName, feedbacks] of Object.entries(byAgent)) {
+      preferences[agentName] = feedbacks.slice(0, 5).map(f => f.slice(0, 80));
+    }
+  }
+
+  // Persist
+  const prefPath = path.join(config.teamsDir, id, 'preferences.json');
+  await fs.mkdir(path.dirname(prefPath), { recursive: true });
+  await fs.writeFile(prefPath, JSON.stringify(preferences, null, 2), 'utf-8');
+
+  res.json({ ok: true, preferences });
+});
+
+// POST /api/teams/:id/feedback  — append a feedback entry to feedback/{agentName}.jsonl
+router.post('/teams/:id/feedback', async (req, res) => {
+  const { id } = req.params;
+  if (id === 'demo-team') {
+    res.status(403).json({ error: 'Not available in demo mode' });
+    return;
+  }
+  const { agentName, messageUuid, sessionId, type, content, context } = req.body as {
+    agentName?: string;
+    messageUuid?: string;
+    sessionId?: string;
+    type?: string;
+    content?: string;
+    context?: Record<string, unknown>;
+  };
+  if (!agentName || !/^[\w-]+$/.test(agentName)) {
+    res.status(400).json({ error: 'Invalid agentName' });
+    return;
+  }
+  if (!type || !['praise', 'correction', 'bookmark'].includes(type)) {
+    res.status(400).json({ error: 'type must be praise | correction | bookmark' });
+    return;
+  }
+  if (type === 'correction' && (!content || !content.trim())) {
+    res.status(400).json({ error: 'correction requires content' });
+    return;
+  }
+
+  const feedbackDir = path.join(config.teamsDir, id, 'feedback');
+  await fs.mkdir(feedbackDir, { recursive: true });
+  const filePath = path.join(feedbackDir, `${agentName}.jsonl`);
+
+  const entry = {
+    id: `fb-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    sessionId: sessionId ?? null,
+    messageUuid: messageUuid ?? null,
+    agentName,
+    type,
+    content: content?.trim() ?? null,
+    context: context ?? null,
+    createdAt: new Date().toISOString(),
+  };
+
+  await fs.appendFile(filePath, JSON.stringify(entry) + '\n', 'utf-8');
+  res.json({ ok: true, id: entry.id });
+});
+
+// GET /api/teams/:id/summary  (D0)
+router.get('/teams/:id/summary', async (req, res) => {
+  const { id } = req.params;
+  const forceRefresh = req.query.refresh === '1';
+
+  if (id === 'demo-team') {
+    res.json(getDemoExecSummary());
+    return;
+  }
+
+  const configPath = path.join(config.teamsDir, id, 'config.json');
+  const teamConfig = await readJsonFile<TeamConfig>(configPath);
+
+  const teamName = teamConfig?.name ?? id;
+  const memberNames   = teamConfig?.members.map(m => m.name) ?? [];
+  const memberCwds    = teamConfig?.members.map(m => m.cwd ?? '').filter(Boolean) ?? [];
+  const leadSessionId = teamConfig?.leadSessionId;
+  const leadName      = teamConfig?.members.find(m => !m.backendType)?.name;
+
+  const taskDir = path.join(config.tasksDir, id);
+  const tasks: Task[] = [];
+  if (await dirExists(taskDir)) {
+    const files = await fs.readdir(taskDir);
+    for (const file of files.filter(f => f.endsWith('.json') && !isHiddenFile(f))) {
+      const task = await readJsonFile<Task>(path.join(taskDir, file));
+      if (task && task.metadata?._internal !== true) tasks.push(task);
+    }
+  }
+
+  let agentStats: import('../types.js').AgentSessionStats[] = [];
+  try {
+    agentStats = await getSessionStatsForTeam(memberNames, memberCwds, leadSessionId, leadName);
+  } catch { /* non-critical */ }
+
+  const events = getTimeline(id);
+
+  let sessionMessages: Array<{ role: string; entries: Array<{ kind: string; text?: string }> }> = [];
+  if (leadSessionId) {
+    try {
+      sessionMessages = await getSessionHistory(memberCwds, leadSessionId);
+    } catch { /* non-critical */ }
+  }
+
+  const result = await getSummary({ teamId: id, teamName, tasks, events, agentStats, sessionMessages, forceRefresh });
+  res.json(result);
+});
+
+// POST /api/teams/:id/summary/refresh  (D0)
+router.post('/teams/:id/summary/refresh', async (req, res) => {
+  const { id } = req.params;
+  if (id === 'demo-team') {
+    res.json(getDemoExecSummary());
+    return;
+  }
+  invalidateSummary(id);
+  // Redirect to GET with refresh=1
+  const configPath = path.join(config.teamsDir, id, 'config.json');
+  const teamConfig = await readJsonFile<TeamConfig>(configPath);
+  const teamName = teamConfig?.name ?? id;
+  const memberNames   = teamConfig?.members.map(m => m.name) ?? [];
+  const memberCwds    = teamConfig?.members.map(m => m.cwd ?? '').filter(Boolean) ?? [];
+  const leadSessionId = teamConfig?.leadSessionId;
+  const leadName      = teamConfig?.members.find(m => !m.backendType)?.name;
+
+  const taskDir = path.join(config.tasksDir, id);
+  const tasks: Task[] = [];
+  if (await dirExists(taskDir)) {
+    const files = await fs.readdir(taskDir);
+    for (const file of files.filter(f => f.endsWith('.json') && !isHiddenFile(f))) {
+      const task = await readJsonFile<Task>(path.join(taskDir, file));
+      if (task && task.metadata?._internal !== true) tasks.push(task);
+    }
+  }
+
+  let agentStats: import('../types.js').AgentSessionStats[] = [];
+  try {
+    agentStats = await getSessionStatsForTeam(memberNames, memberCwds, leadSessionId, leadName);
+  } catch { /* non-critical */ }
+
+  const events = getTimeline(id);
+  let sessionMessages: Array<{ role: string; entries: Array<{ kind: string; text?: string }> }> = [];
+  if (leadSessionId) {
+    try { sessionMessages = await getSessionHistory(memberCwds, leadSessionId); } catch { /* non-critical */ }
+  }
+
+  const result = await getSummary({ teamId: id, teamName, tasks, events, agentStats, sessionMessages, forceRefresh: true });
+  res.json(result);
 });
 
 // GET /api/config

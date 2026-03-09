@@ -1,4 +1,5 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { CheckCircle2, Loader2, Clock, Lock, ChevronRight, ExternalLink } from 'lucide-react';
 import type { Task, TeamMember } from '../../types';
 import { getTaskStatus, STATUS_COLORS, type StatusKey } from '../../utils/statusColors';
@@ -12,24 +13,158 @@ interface TaskListProps {
   onTaskUpdated?: (task: Task) => void;
 }
 
-const STATUS_LABELS: Record<StatusKey, string> = {
-  completed: 'DONE',
-  in_progress: 'ACTIVE',
-  pending: 'QUEUE',
-  blocked: 'BLOCKED',
-};
-
 const STATUS_CYCLE: Record<Task['status'], Task['status']> = {
   pending: 'in_progress',
   in_progress: 'completed',
   completed: 'pending',
 };
 
+// ─── StatusPopover ─────────────────────────────────────────────────────────────
+
+interface StatusPopoverProps {
+  currentStatus: Task['status'];
+  onSelect: (status: Task['status']) => void;
+  onClose: () => void;
+}
+
+function StatusPopover({ currentStatus, onSelect, onClose }: StatusPopoverProps) {
+  const { t } = useTranslation();
+  const ref = useRef<HTMLDivElement>(null);
+
+  const POPOVER_OPTIONS: { status: Task['status']; label: string; color: string }[] = [
+    { status: 'pending',     label: t('task_list.queue'),  color: '#4a6070' },
+    { status: 'in_progress', label: t('task_list.active'), color: 'var(--amber)' },
+    { status: 'completed',   label: t('task_list.done'),   color: 'var(--phosphor)' },
+  ];
+
+  useEffect(() => {
+    function handleMouseDown(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        onClose();
+      }
+    }
+    document.addEventListener('mousedown', handleMouseDown);
+    return () => document.removeEventListener('mousedown', handleMouseDown);
+  }, [onClose]);
+
+  return (
+    <div
+      ref={ref}
+      style={{
+        position: 'absolute',
+        top: 'calc(100% + 4px)',
+        right: 0,
+        zIndex: 200,
+        background: 'var(--surface-1)',
+        border: '1px solid var(--border)',
+        borderRadius: '3px',
+        padding: '4px 0',
+        minWidth: '110px',
+        fontFamily: 'var(--font-mono)',
+        boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
+      }}
+      onClick={e => e.stopPropagation()}
+    >
+      {POPOVER_OPTIONS.map(opt => {
+        const isCurrent = opt.status === currentStatus;
+        return (
+          <div
+            key={opt.status}
+            onClick={() => { if (!isCurrent) { onSelect(opt.status); onClose(); } }}
+            style={{
+              padding: '5px 12px',
+              fontSize: '9px',
+              letterSpacing: '0.1em',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '7px',
+              cursor: isCurrent ? 'default' : 'pointer',
+              color: isCurrent ? 'var(--text-muted)' : opt.color,
+              transition: 'background 0.1s',
+              textTransform: 'uppercase',
+            }}
+            onMouseEnter={e => { if (!isCurrent) e.currentTarget.style.background = 'var(--surface-2)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+          >
+            <span style={{ fontSize: '8px', opacity: isCurrent ? 1 : 0.5 }}>
+              {isCurrent ? '●' : '○'}
+            </span>
+            {opt.label}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── Main component ────────────────────────────────────────────────────────────
+
 export default function TaskList({ tasks, onTaskSelect, teamId, onTaskUpdated }: TaskListProps) {
+  const { t } = useTranslation();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [filter, setFilter] = useState<StatusKey | 'all'>('all');
   const [updatingId, setUpdatingId] = useState<string | null>(null);
-  const [undoToast, setUndoToast] = useState<{ taskId: string; prevStatus: Task['status']; subject: string; timer: ReturnType<typeof setTimeout> } | null>(null);
+  const [openPopoverId, setOpenPopoverId] = useState<string | null>(null);
+  const [undoToast, setUndoToast] = useState<{ taskId: string; prevStatus: Task['status']; nextStatus: Task['status']; subject: string } | null>(null);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const STATUS_LABELS: Record<StatusKey, string> = {
+    completed: t('task_list.done'),
+    in_progress: t('task_list.active'),
+    pending: t('task_list.queue'),
+    blocked: t('task_list.blocked'),
+  };
+
+  const FILTER_TOOLTIPS: Record<string, string> = {
+    all: t('task_list.all_tooltip'),
+    in_progress: t('task_list.active_tooltip'),
+    completed: t('task_list.completed_tooltip'),
+    pending: t('task_list.pending_tooltip'),
+    blocked: t('task_list.blocked_tooltip'),
+  };
+
+  const FILTER_LABELS: Record<string, string> = {
+    all: t('task_list.all'),
+    in_progress: t('task_list.active'),
+    completed: t('task_list.done'),
+    pending: t('task_list.queue'),
+    blocked: t('task_list.blocked'),
+  };
+
+  const patchStatus = useCallback(async (task: Task, next: Task['status']) => {
+    if (!teamId || updatingId) return;
+    const prevStatus = task.status;
+    setUpdatingId(task.id);
+    try {
+      const res = await fetch(`/api/teams/${teamId}/tasks/${task.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: next }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        onTaskUpdated?.(json.task);
+        if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+        const timer = setTimeout(() => setUndoToast(null), 5000);
+        toastTimerRef.current = timer;
+        setUndoToast({ taskId: task.id, prevStatus, nextStatus: next, subject: task.subject });
+      } else {
+        const json = await res.json().catch(() => ({}));
+        const msg = (json as { error?: string }).error ?? 'Failed to update';
+        if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+        const timer = setTimeout(() => setUndoToast(null), 4000);
+        toastTimerRef.current = timer;
+        setUndoToast({ taskId: task.id, prevStatus: task.status, nextStatus: task.status, subject: msg });
+      }
+    } catch {
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+      const timer = setTimeout(() => setUndoToast(null), 4000);
+      toastTimerRef.current = timer;
+      setUndoToast({ taskId: task.id, prevStatus: task.status, nextStatus: task.status, subject: 'Network error' });
+    } finally {
+      setUpdatingId(null);
+    }
+  }, [teamId, updatingId, onTaskUpdated]);
 
   const revertStatus = useCallback(async (taskId: string, prevStatus: Task['status']) => {
     if (!teamId) return;
@@ -46,29 +181,17 @@ export default function TaskList({ tasks, onTaskSelect, teamId, onTaskUpdated }:
     } catch { /* silent */ }
   }, [teamId, onTaskUpdated]);
 
-  const handleStatusCycle = useCallback(async (e: React.MouseEvent, task: Task) => {
+  const handleStatusClick = useCallback((e: React.MouseEvent, task: Task, status: StatusKey) => {
     e.stopPropagation();
-    if (!teamId || updatingId) return;
-    const prevStatus = task.status;
-    const next = STATUS_CYCLE[task.status];
-    setUpdatingId(task.id);
-    try {
-      const res = await fetch(`/api/teams/${teamId}/tasks/${task.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: next }),
-      });
-      if (res.ok) {
-        const json = await res.json();
-        onTaskUpdated?.(json.task);
-        // Show undo toast
-        if (undoToast) clearTimeout(undoToast.timer);
-        const timer = setTimeout(() => setUndoToast(null), 4000);
-        setUndoToast({ taskId: task.id, prevStatus, subject: task.subject, timer });
-      }
-    } catch { /* silent */ }
-    finally { setUpdatingId(null); }
-  }, [teamId, updatingId, onTaskUpdated, undoToast]);
+    if (!teamId || updatingId || status === 'blocked') return;
+    if (e.ctrlKey || e.metaKey) {
+      // Ctrl+Click: quick cycle, skip popover
+      setOpenPopoverId(null);
+      patchStatus(task, STATUS_CYCLE[task.status]);
+    } else {
+      setOpenPopoverId(prev => prev === task.id ? null : task.id);
+    }
+  }, [teamId, updatingId, patchStatus]);
 
   const allTasksSimple = tasks.map(t => ({ id: t.id, status: t.status }));
 
@@ -102,8 +225,8 @@ export default function TaskList({ tasks, onTaskSelect, teamId, onTaskUpdated }:
         justifyContent: 'space-between',
         background: 'var(--surface-1)',
       }}>
-        <span style={{ fontSize: '9px', letterSpacing: '0.15em', color: 'var(--text-muted)' }}>
-          TASK REGISTRY
+        <span style={{ fontSize: '9px', letterSpacing: '0.15em', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+          {t('task_list.registry')}
         </span>
 
         {/* Filter tabs */}
@@ -115,18 +238,11 @@ export default function TaskList({ tasks, onTaskSelect, teamId, onTaskUpdated }:
               : f === 'completed' ? 'var(--phosphor)'
               : f === 'blocked' ? 'var(--crimson)'
               : '#4a6070';
-            const tooltips: Record<string, string> = {
-              all: 'Show all tasks',
-              in_progress: 'Show actively running tasks',
-              completed: 'Show finished tasks',
-              pending: 'Show queued tasks',
-              blocked: 'Show blocked tasks waiting on dependencies',
-            };
             return (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
-                title={tooltips[f]}
+                title={FILTER_TOOLTIPS[f]}
                 style={{
                   padding: '3px 8px',
                   fontSize: '10px',
@@ -138,9 +254,10 @@ export default function TaskList({ tasks, onTaskSelect, teamId, onTaskUpdated }:
                   borderRadius: '2px',
                   cursor: 'pointer',
                   transition: 'all 0.15s',
+                  textTransform: 'uppercase',
                 }}
               >
-                {f === 'all' ? 'ALL' : f === 'in_progress' ? 'ACTIVE' : f.toUpperCase()}
+                {FILTER_LABELS[f]}
                 <span style={{ marginLeft: '4px', opacity: 0.7 }}>{counts[f]}</span>
               </button>
             );
@@ -149,11 +266,11 @@ export default function TaskList({ tasks, onTaskSelect, teamId, onTaskUpdated }:
       </div>
 
       {/* Task list */}
-      <div style={{ maxHeight: '60vh', overflowY: 'auto' }}>
+      <div style={{ maxHeight: '60vh', overflowY: 'auto', overflowX: 'visible' }}>
         {filtered.length === 0 && (
           <CRTEmptyState
-            title={filter !== 'all' ? 'NO MATCHING TASKS' : 'NO TASKS'}
-            subtitle={filter !== 'all' ? 'Try adjusting filters to see more tasks' : undefined}
+            title={filter !== 'all' ? t('task_list.no_matching') : t('task_list.no_tasks')}
+            subtitle={filter !== 'all' ? t('task_list.no_matching_sub') : undefined}
           />
         )}
         {filtered.map((task, idx) => {
@@ -258,31 +375,56 @@ export default function TaskList({ tasks, onTaskSelect, teamId, onTaskUpdated }:
                   </span>
                 )}
 
-                {/* Clickable status label — cycles pending→active→done */}
-                <button
-                  onClick={e => handleStatusCycle(e, task)}
-                  title={teamId ? `Click to cycle status (current: ${status})` : undefined}
-                  style={{
-                    fontSize: '9px',
-                    color: colors.text,
-                    background: updatingId === task.id ? 'var(--surface-2)' : colors.bg,
-                    border: `1px solid ${colors.border}40`,
-                    borderRadius: '2px',
-                    padding: '2px 6px',
-                    letterSpacing: '0.1em',
-                    minWidth: '52px',
-                    textAlign: 'center',
-                    flexShrink: 0,
-                    fontFamily: 'var(--font-mono)',
-                    cursor: teamId ? 'pointer' : 'default',
-                    transition: 'opacity 0.15s',
-                    opacity: updatingId === task.id ? 0.5 : 1,
-                  }}
-                  onMouseEnter={e => { if (teamId && updatingId !== task.id) e.currentTarget.style.opacity = '0.75'; }}
-                  onMouseLeave={e => { if (updatingId !== task.id) e.currentTarget.style.opacity = '1'; }}
-                >
-                  {STATUS_LABELS[status]}
-                </button>
+                {/* Clickable status label — popover or Ctrl+Click cycle */}
+                <div style={{ position: 'relative', flexShrink: 0 }}>
+                  <button
+                    onClick={e => handleStatusClick(e, task, status)}
+                    title={
+                      !teamId ? undefined
+                      : status === 'blocked' ? t('task_list.blocked_hint')
+                      : t('task_list.status_hint', { status })
+                    }
+                    style={{
+                      fontSize: '9px',
+                      color: colors.text,
+                      background: updatingId === task.id ? 'var(--surface-2)' : colors.bg,
+                      border: `1px solid ${colors.border}40`,
+                      borderRadius: '2px',
+                      padding: '2px 6px',
+                      letterSpacing: '0.1em',
+                      minWidth: '52px',
+                      textAlign: 'center',
+                      fontFamily: 'var(--font-mono)',
+                      cursor: (!teamId || status === 'blocked') ? 'default' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '3px',
+                      transition: 'opacity 0.15s',
+                      opacity: updatingId === task.id ? 0.5 : 1,
+                      textTransform: 'uppercase',
+                    }}
+                    onMouseEnter={e => { if (teamId && updatingId !== task.id && status !== 'blocked') e.currentTarget.style.opacity = '0.75'; }}
+                    onMouseLeave={e => { if (updatingId !== task.id) e.currentTarget.style.opacity = '1'; }}
+                  >
+                    {updatingId === task.id
+                      ? <Loader2 size={10} style={{ animation: 'spin-slow 1s linear infinite' }} />
+                      : <>
+                          {STATUS_LABELS[status]}
+                          {teamId && status !== 'blocked' && (
+                            <span style={{ fontSize: '7px', opacity: 0.55, marginLeft: '1px' }}>▾</span>
+                          )}
+                        </>
+                    }
+                  </button>
+                  {openPopoverId === task.id && (
+                    <StatusPopover
+                      currentStatus={task.status}
+                      onSelect={next => patchStatus(task, next)}
+                      onClose={() => setOpenPopoverId(null)}
+                    />
+                  )}
+                </div>
 
                 {/* Open detail button */}
                 <button
@@ -340,7 +482,7 @@ export default function TaskList({ tasks, onTaskSelect, teamId, onTaskUpdated }:
                     }}>
                       {task.createdAt && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>CREATED</span>
+                          <span style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{t('task_list.created')}</span>
                           <span style={{ fontSize: '9px', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', letterSpacing: '0.04em' }}>
                             {fmtAbsoluteTime(task.createdAt)}
                           </span>
@@ -348,7 +490,7 @@ export default function TaskList({ tasks, onTaskSelect, teamId, onTaskUpdated }:
                       )}
                       {task.updatedAt && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>UPDATED</span>
+                          <span style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{t('task_list.updated')}</span>
                           <span style={{ fontSize: '9px', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', letterSpacing: '0.04em' }}>
                             {fmtAbsoluteTime(task.updatedAt)}
                           </span>
@@ -356,7 +498,7 @@ export default function TaskList({ tasks, onTaskSelect, teamId, onTaskUpdated }:
                       )}
                       {task.createdAt && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>DURATION</span>
+                          <span style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{t('task_list.duration')}</span>
                           <span style={{ fontSize: '9px', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', letterSpacing: '0.04em' }}>
                             {durationSince(task.createdAt)}
                           </span>
@@ -367,13 +509,13 @@ export default function TaskList({ tasks, onTaskSelect, teamId, onTaskUpdated }:
 
                   <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
                     {task.blockedBy.length > 0 && (
-                      <span style={{ fontSize: '10px', color: 'var(--crimson)', letterSpacing: '0.06em' }}>
-                        BLOCKED BY: {task.blockedBy.map(id => `#${id}`).join(', ')}
+                      <span style={{ fontSize: '10px', color: 'var(--crimson)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                        {t('task_list.blocked_by')} {task.blockedBy.map(id => `#${id}`).join(', ')}
                       </span>
                     )}
                     {task.blocks.length > 0 && (
-                      <span style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.06em' }}>
-                        BLOCKS: {task.blocks.map(id => `#${id}`).join(', ')}
+                      <span style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                        {t('task_list.blocks')} {task.blocks.map(id => `#${id}`).join(', ')}
                       </span>
                     )}
                   </div>
@@ -405,12 +547,12 @@ export default function TaskList({ tasks, onTaskSelect, teamId, onTaskUpdated }:
         animation: 'fade-up 0.2s ease-out',
       }}>
         <span style={{ fontSize: '10px', color: 'var(--text-secondary)', letterSpacing: '0.04em', maxWidth: '240px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          Status changed: #{undoToast.taskId}
+          ✓ #{undoToast.taskId} → {STATUS_LABELS[undoToast.nextStatus] ?? '...'}
         </span>
         <button
           onClick={() => {
             revertStatus(undoToast.taskId, undoToast.prevStatus);
-            clearTimeout(undoToast.timer);
+            if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
             setUndoToast(null);
           }}
           style={{
@@ -425,13 +567,14 @@ export default function TaskList({ tasks, onTaskSelect, teamId, onTaskUpdated }:
             borderRadius: '2px',
             cursor: 'pointer',
             flexShrink: 0,
+            textTransform: 'uppercase',
           }}
         >
-          UNDO
+          {t('task_list.undo')}
         </button>
         <button
           onClick={() => {
-            clearTimeout(undoToast.timer);
+            if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
             setUndoToast(null);
           }}
           style={{

@@ -16,6 +16,8 @@ import CommLogView from './components/commlog/CommLogView';
 import TimelineView from './components/timeline/TimelineView';
 import SessionHistoryContainer from './components/history/SessionHistoryContainer';
 import CostView from './components/cost/CostView';
+import ReviewView from './components/review/ReviewView';
+import SettingsView from './components/settings/SettingsView';
 import AlertBanner from './components/alerts/AlertBanner';
 import { exportGraphAsPng, exportTeamAsJson, exportTasksCsv, exportCommLogCsv, exportTimelineCsv } from './utils/exportUtils';
 import type { AgentMessage, TaskChangeEvent, Task } from './types';
@@ -134,6 +136,8 @@ export default function App() {
           <AlertBanner
             alerts={visibleAlerts}
             onDismiss={id => setDismissedAlerts(prev => new Set([...prev, id]))}
+            teamId={selectedTeamId ?? undefined}
+            pendingHumanDetails={pendingHuman.details}
           />
         )}
 
@@ -149,6 +153,7 @@ export default function App() {
             sessionStats={sessionStats}
             leadName={leadName}
             projectTodos={projectTodos}
+            teamId={selectedTeamId ?? undefined}
           />
         )}
         {view === 'graph' && teamDetail && (
@@ -159,6 +164,7 @@ export default function App() {
             teamId={selectedTeamId}
             teamDetail={teamDetail}
             onMessagesChange={msgs => { commMessagesRef.current = msgs; }}
+            pendingHumanRequests={pendingHuman}
           />
         )}
         {view === 'timeline' && selectedTeamId && (
@@ -180,6 +186,16 @@ export default function App() {
             data={costData}
             loading={costLoading}
           />
+        )}
+        {view === 'review' && selectedTeamId && (
+          <ReviewView
+            teamId={selectedTeamId}
+            agentNames={teamDetail?.config?.members.map(m => m.name) ?? []}
+            isDemoMode={isDemoMode}
+          />
+        )}
+        {view === 'settings' && (
+          <SettingsView teamId={selectedTeamId} wsConnected={wsConnected} />
         )}
         {!teamDetail && (
           <div style={{

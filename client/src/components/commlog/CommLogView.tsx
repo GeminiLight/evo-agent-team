@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { TeamDetail, AgentMessage, CommLogResponse } from '../../types';
+import type { PendingHumanRequests } from '../../hooks/usePendingHumanRequests';
 import MessageBubble from './MessageBubble';
+import RespondModal from '../shared/RespondModal';
 import { agentColor } from '../../utils/agentColors';
 import CRTEmptyState from '../shared/CRTEmptyState';
 
@@ -32,16 +35,18 @@ function useCommLog(teamId: string) {
 // ─── Message type filter options ──────────────────────────────────────────────
 type TypeFilter = 'all' | 'human' | 'message' | 'plan' | 'task' | 'shutdown' | 'broadcast' | 'idle';
 
-const TYPE_FILTER_OPTS: { id: TypeFilter; label: string; color: string; parsedTypes: string[] }[] = [
-  { id: 'all',      label: 'ALL',       color: 'var(--text-secondary)', parsedTypes: [] },
-  { id: 'human',    label: '⚠ HUMAN',  color: 'var(--amber)',          parsedTypes: ['human_input_request'] },
-  { id: 'message',  label: 'MSG',       color: 'var(--ice)',            parsedTypes: ['message', ''] },
-  { id: 'plan',     label: 'PLAN',      color: 'var(--amber)',          parsedTypes: ['plan_approval_request', 'plan_approval_response'] },
-  { id: 'task',     label: 'TASK',      color: 'var(--ice)',            parsedTypes: ['task_assignment'] },
-  { id: 'shutdown', label: 'SHUTDOWN',  color: 'var(--crimson)',        parsedTypes: ['shutdown_request', 'shutdown_response'] },
-  { id: 'broadcast',label: 'BROADCAST', color: 'var(--phosphor)',       parsedTypes: ['broadcast'] },
-  { id: 'idle',     label: 'IDLE',      color: 'var(--text-muted)',     parsedTypes: ['idle_notification'] },
-];
+function buildTypeFilterOpts(t: (key: string) => string): { id: TypeFilter; label: string; color: string; parsedTypes: string[] }[] {
+  return [
+    { id: 'all',      label: t('commlog.type_all'),       color: 'var(--text-secondary)', parsedTypes: [] },
+    { id: 'human',    label: t('commlog.type_human'),      color: 'var(--amber)',          parsedTypes: ['human_input_request'] },
+    { id: 'message',  label: t('commlog.type_message'),    color: 'var(--ice)',            parsedTypes: ['message', ''] },
+    { id: 'plan',     label: t('commlog.type_plan'),       color: 'var(--amber)',          parsedTypes: ['plan_approval_request', 'plan_approval_response'] },
+    { id: 'task',     label: t('commlog.type_task'),       color: 'var(--ice)',            parsedTypes: ['task_assignment'] },
+    { id: 'shutdown', label: t('commlog.type_shutdown'),   color: 'var(--crimson)',        parsedTypes: ['shutdown_request', 'shutdown_response'] },
+    { id: 'broadcast',label: t('commlog.type_broadcast'),  color: 'var(--phosphor)',       parsedTypes: ['broadcast'] },
+    { id: 'idle',     label: t('commlog.type_idle'),       color: 'var(--text-muted)',     parsedTypes: ['idle_notification'] },
+  ];
+}
 
 // ─── Threading: group consecutive messages from same sender to same recipient ─
 interface MessageGroup {
@@ -72,13 +77,14 @@ function groupMessages(msgs: AgentMessage[]): MessageGroup[] {
 }
 
 // ─── Thread component ──────────────────────────────────────────────────────────
-function MessageThread({ group }: { group: MessageGroup }) {
+function MessageThread({ group, teamId, pendingAgentNames }: { group: MessageGroup; teamId: string; pendingAgentNames: string[] }) {
+  const { t } = useTranslation();
   const [collapsed, setCollapsed] = useState(group.messages.length > 3);
   const isMulti = group.messages.length > 1;
   const senderColor = agentColor(group.sender);
 
   if (!isMulti) {
-    return <MessageBubble message={group.messages[0]} />;
+    return <MessageBubble message={group.messages[0]} teamId={teamId} pendingAgentNames={pendingAgentNames} />;
   }
 
   const head = group.messages[0];
@@ -95,7 +101,7 @@ function MessageThread({ group }: { group: MessageGroup }) {
       overflow: 'hidden',
     }}>
       {/* Always show first message */}
-      <MessageBubble message={head} />
+      <MessageBubble message={head} teamId={teamId} pendingAgentNames={pendingAgentNames} />
 
       {/* Collapsed: show "N more" toggle */}
       {collapsed ? (
@@ -117,12 +123,12 @@ function MessageThread({ group }: { group: MessageGroup }) {
           onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
         >
           <span style={{ opacity: 0.6 }}>▶</span>
-          {hiddenCount} MORE MESSAGE{hiddenCount !== 1 ? 'S' : ''}
+          <span style={{ textTransform: 'uppercase' }}>{t('commlog.more_message', { count: hiddenCount })}</span>
         </button>
       ) : (
         <>
           {tail.map(msg => (
-            <MessageBubble key={msg.id} message={msg} compact />
+            <MessageBubble key={msg.id} message={msg} compact teamId={teamId} pendingAgentNames={pendingAgentNames} />
           ))}
           <button
             onClick={() => setCollapsed(true)}
@@ -142,7 +148,7 @@ function MessageThread({ group }: { group: MessageGroup }) {
             onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
           >
             <span style={{ opacity: 0.6 }}>▲</span>
-            COLLAPSE
+            <span style={{ textTransform: 'uppercase' }}>{t('commlog.collapse')}</span>
           </button>
         </>
       )}
@@ -177,17 +183,20 @@ interface CommLogViewProps {
   teamId: string;
   teamDetail: TeamDetail | null;
   onMessagesChange?: (messages: AgentMessage[]) => void;
+  pendingHumanRequests?: PendingHumanRequests;
 }
 
 type SortOrder = 'desc' | 'asc';
 
-export default function CommLogView({ teamId, teamDetail, onMessagesChange }: CommLogViewProps) {
+export default function CommLogView({ teamId, teamDetail, onMessagesChange, pendingHumanRequests }: CommLogViewProps) {
+  const { t } = useTranslation();
   const { data, loading } = useCommLog(teamId);
 
   const [activeAgent, setActiveAgent] = useState<string>('ALL');
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [order, setOrder] = useState<SortOrder>('desc');
+  const [respondingAgent, setRespondingAgent] = useState<string | null>(null);
 
   // Auto-scroll state
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -199,6 +208,7 @@ export default function CommLogView({ teamId, teamDetail, onMessagesChange }: Co
   const teamName = teamDetail?.name ?? teamId;
   const agentNames = data?.agentNames ?? [];
   const allMessages: AgentMessage[] = data?.messages ?? [];
+  const TYPE_FILTER_OPTS = buildTypeFilterOpts(t);
 
   // Sort by order preference
   const sorted = [...allMessages].sort((a, b) =>
@@ -235,11 +245,6 @@ export default function CommLogView({ teamId, teamDetail, onMessagesChange }: Co
   });
 
   const groups = groupMessages(filtered);
-
-  // Unread human-input requests across ALL messages (not just filtered)
-  const pendingHumanRequests = allMessages.filter(
-    m => m.parsedType === 'human_input_request' && !m.read
-  );
 
   // Expose current filtered messages to parent for export
   useEffect(() => { onMessagesChange?.(filtered); }, [filtered.length]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -302,6 +307,7 @@ export default function CommLogView({ teamId, teamDetail, onMessagesChange }: Co
   };
 
   return (
+    <>
     <div style={{
       display: 'grid',
       gridTemplateColumns: 'minmax(120px, 160px) 1fr',
@@ -322,8 +328,9 @@ export default function CommLogView({ teamId, teamDetail, onMessagesChange }: Co
           padding: '10px 12px',
           borderBottom: '1px solid var(--border)',
           fontSize: '8px', letterSpacing: '0.18em', color: 'var(--text-muted)',
+          textTransform: 'uppercase',
         }}>
-          AGENTS
+          {t('commlog.agents')}
         </div>
         <div style={{ overflowY: 'auto', padding: '6px' }}>
           {['ALL', ...agentNames].map(agent => {
@@ -382,13 +389,13 @@ export default function CommLogView({ teamId, teamDetail, onMessagesChange }: Co
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           flexShrink: 0,
         }}>
-          <span style={{ fontSize: '9px', letterSpacing: '0.15em', color: 'var(--text-muted)' }}>
-            COMMS // {teamName.toUpperCase()}
+          <span style={{ fontSize: '9px', letterSpacing: '0.15em', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+            {t('commlog.comms', { name: teamName.toUpperCase() })}
           </span>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{ display: 'flex', gap: '2px' }}>
-            <OrderBtn active={order === 'desc'} onClick={() => { setOrder('desc'); setIsFollowing(true); }} title="Newest first">NEW→OLD</OrderBtn>
-            <OrderBtn active={order === 'asc'}  onClick={() => { setOrder('asc');  setIsFollowing(true); }} title="Oldest first">OLD→NEW</OrderBtn>
+            <OrderBtn active={order === 'desc'} onClick={() => { setOrder('desc'); setIsFollowing(true); }} title="Newest first"><span style={{ textTransform: 'uppercase' }}>{t('commlog.new_old')}</span></OrderBtn>
+            <OrderBtn active={order === 'asc'}  onClick={() => { setOrder('asc');  setIsFollowing(true); }} title="Oldest first"><span style={{ textTransform: 'uppercase' }}>{t('commlog.old_new')}</span></OrderBtn>
           </div>
           {/* Follow toggle */}
             <button
@@ -414,11 +421,11 @@ export default function CommLogView({ teamId, teamDetail, onMessagesChange }: Co
                 animation: isFollowing ? 'status-pulse 2s ease-in-out infinite' : 'none',
                 display: 'inline-block',
               }} />
-              FOLLOW
+              <span style={{ textTransform: 'uppercase' }}>{t('commlog.follow')}</span>
             </button>
             {!loading && (
-              <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>
-                {filtered.length} MSG{filtered.length !== 1 ? 'S' : ''}
+              <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                {t('commlog.msg', { count: filtered.length })}
               </span>
             )}
           </div>
@@ -438,7 +445,7 @@ export default function CommLogView({ teamId, teamDetail, onMessagesChange }: Co
             }}>⌕</span>
             <input
               type="text"
-              placeholder="SEARCH MESSAGES..."
+              placeholder={t('commlog.search')}
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               style={{
@@ -500,6 +507,7 @@ export default function CommLogView({ teamId, teamDetail, onMessagesChange }: Co
                   whiteSpace: 'nowrap',
                   transition: 'all 0.15s',
                   boxShadow: isActive ? `0 0 6px ${opt.color}33` : 'none',
+                  textTransform: 'uppercase',
                 }}
                 onMouseEnter={e => { if (!isActive) e.currentTarget.style.color = 'var(--text-secondary)'; }}
                 onMouseLeave={e => { if (!isActive) e.currentTarget.style.color = 'var(--text-muted)'; }}
@@ -510,30 +518,39 @@ export default function CommLogView({ teamId, teamDetail, onMessagesChange }: Co
           })}
         </div>
 
-        {/* Human-input alert banner */}
-        {pendingHumanRequests.length > 0 && (
+        {/* Human-input alert banner — driven by usePendingHumanRequests */}
+        {(pendingHumanRequests?.count ?? 0) > 0 && (
           <div
-            onClick={() => setTypeFilter('human')}
             style={{
               display: 'flex', alignItems: 'center', gap: '10px',
               padding: '8px 14px',
               background: 'var(--amber-glow)',
               borderBottom: '1px solid var(--amber-dim)',
-              cursor: 'pointer',
               flexShrink: 0,
-              animation: 'status-pulse 2s ease-in-out infinite',
             }}
           >
             <span style={{ fontSize: '13px', lineHeight: 1 }}>⚠</span>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <span style={{ fontSize: '9px', color: 'var(--amber)', letterSpacing: '0.12em', fontWeight: 700 }}>
-                {pendingHumanRequests.length} AGENT{pendingHumanRequests.length !== 1 ? 'S' : ''} AWAITING YOUR INPUT
+              <span style={{ fontSize: '9px', color: 'var(--amber)', letterSpacing: '0.12em', fontWeight: 700, textTransform: 'uppercase' }}>
+                {t('commlog.pending_alert', { count: pendingHumanRequests!.count })}
               </span>
               <div style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.06em', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {pendingHumanRequests.map(m => m.sender).join(', ')}
+                {pendingHumanRequests!.agentNames.join(', ')}
               </div>
             </div>
-            <span style={{ fontSize: '8px', color: 'var(--amber)', letterSpacing: '0.1em', flexShrink: 0 }}>VIEW →</span>
+            <button
+              onClick={() => setRespondingAgent(pendingHumanRequests!.agentNames[0] ?? null)}
+              style={{
+                padding: '4px 12px', fontSize: '8px', letterSpacing: '0.12em', fontWeight: 700,
+                fontFamily: 'var(--font-mono)',
+                background: 'rgba(245,166,35,0.15)', color: 'var(--amber)',
+                border: '1px solid var(--amber-dim)', borderRadius: '2px', cursor: 'pointer',
+                flexShrink: 0,
+                animation: 'status-pulse 2s ease-in-out infinite',
+              }}
+            >
+              <span style={{ textTransform: 'uppercase' }}>{t('alert.respond')}</span>
+            </button>
           </div>
         )}
 
@@ -544,23 +561,23 @@ export default function CommLogView({ teamId, teamDetail, onMessagesChange }: Co
           style={{ flex: 1, overflowY: 'auto', padding: '8px', position: 'relative' }}
         >
           {loading && (
-            <div style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.1em', padding: '40px', textAlign: 'center' }}>
-              LOADING...
+            <div style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.1em', padding: '40px', textAlign: 'center', textTransform: 'uppercase' }}>
+              {t('common.loading')}
             </div>
           )}
           {!loading && filtered.length === 0 && (
             <CRTEmptyState
               title={searchQuery || typeFilter !== 'all' || activeAgent !== 'ALL'
-                ? 'NO MATCHING MESSAGES'
-                : 'NO MESSAGES'}
+                ? t('commlog.no_matching')
+                : t('commlog.no_messages')}
               subtitle={searchQuery || typeFilter !== 'all' || activeAgent !== 'ALL'
-                ? 'Try adjusting your filters or search query'
-                : 'Messages will appear here as agents communicate'}
+                ? t('commlog.no_messages_sub_filter')
+                : t('commlog.no_messages_sub')}
             />
           )}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
             {groups.map(group => (
-              <MessageThread key={group.key} group={group} />
+              <MessageThread key={group.key} group={group} teamId={teamId} pendingAgentNames={pendingHumanRequests?.agentNames ?? []} />
             ))}
           </div>
         </div>
@@ -588,10 +605,22 @@ export default function CommLogView({ teamId, teamDetail, onMessagesChange }: Co
               animation: 'fade-up 0.2s ease-out',
             }}
           >
-            {order === 'desc' ? '↑' : '↓'} {newCount} NEW MESSAGE{newCount !== 1 ? 'S' : ''}
+            {order === 'desc' ? '↑' : '↓'} <span style={{ textTransform: 'uppercase' }}>{t('commlog.new_message', { count: newCount })}</span>
           </button>
         )}
       </div>
     </div>
+
+    {/* Respond modal — opened from pending bar */}
+    {respondingAgent && (
+      <RespondModal
+        agentName={respondingAgent}
+        toolName={pendingHumanRequests?.details.find(d => d.name === respondingAgent)?.blocking.toolName}
+        detail={pendingHumanRequests?.details.find(d => d.name === respondingAgent)?.blocking.detail}
+        teamId={teamId}
+        onClose={() => setRespondingAgent(null)}
+      />
+    )}
+    </>
   );
 }

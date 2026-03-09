@@ -218,6 +218,15 @@ export interface TimelineResponse {
   events: TaskChangeEvent[];
 }
 
+// D0: Executive Summary
+export interface ExecSummaryResponse {
+  teamId: string;
+  summary: string;
+  generatedAt: string;
+  isAIGenerated: boolean;
+  isStale: boolean;
+}
+
 // Session history (from ~/.claude/projects/{proj}/{leadSessionId}.jsonl)
 export type SessionMessageRole = 'user' | 'assistant';
 export type SessionEntryKind = 'text' | 'tool_use' | 'tool_result';

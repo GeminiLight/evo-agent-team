@@ -126,4 +126,56 @@ router.get('/teams/:id/inbox-summary', async (req, res) => {
   res.json({ teamId: id, agents } satisfies InboxSummaryResponse);
 });
 
+// POST /api/teams/:id/agents/:name/respond
+// Body: { message: string }
+// Appends a human response entry to ~/.claude/teams/{id}/inboxes/{name}.json
+router.post('/teams/:id/agents/:name/respond', async (req, res) => {
+  const { id, name } = req.params;
+
+  if (id === 'demo-team') {
+    res.status(403).json({ error: 'Cannot write to demo team' });
+    return;
+  }
+
+  // Security: reject path-traversal in agent name
+  if (!/^[\w-]+$/.test(name)) {
+    res.status(400).json({ error: 'Invalid agent name' });
+    return;
+  }
+
+  const { message } = req.body;
+  if (typeof message !== 'string' || message.trim().length === 0) {
+    res.status(400).json({ error: 'message must be a non-empty string' });
+    return;
+  }
+
+  const inboxesDir = path.join(config.teamsDir, id, 'inboxes');
+  const inboxPath = path.join(inboxesDir, `${name}.json`);
+
+  await fs.mkdir(inboxesDir, { recursive: true });
+
+  let inbox: Array<Record<string, unknown>> = [];
+  try {
+    const raw = await fs.readFile(inboxPath, 'utf-8');
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) inbox = parsed;
+  } catch { /* file doesn't exist yet — start fresh */ }
+
+  inbox.push({
+    from: 'human',
+    text: message.trim(),
+    timestamp: new Date().toISOString(),
+    read: false,
+    type: 'human_response',
+  });
+
+  try {
+    await fs.writeFile(inboxPath, JSON.stringify(inbox, null, 2), 'utf-8');
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Error writing inbox:', err);
+    res.status(500).json({ error: 'Failed to write response' });
+  }
+});
+
 export default router;

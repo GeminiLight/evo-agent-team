@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 import type { Task, TeamMember } from '../types';
 import { getTaskStatus, STATUS_COLORS } from '../utils/statusColors';
@@ -28,6 +29,7 @@ function fmtDatetime(iso?: string): string | null {
 }
 
 export default function TaskDetailPanel({ task, allTasks, members, onClose }: TaskDetailPanelProps) {
+  const { t } = useTranslation();
   const panelRef = useFocusTrap<HTMLDivElement>();
 
   useEffect(() => {
@@ -109,8 +111,9 @@ export default function TaskDetailPanel({ task, allTasks, members, onClose }: Ta
             color: 'var(--text-muted)',
             letterSpacing: '0.15em',
             fontFamily: 'var(--font-mono)',
+            textTransform: 'uppercase',
           }}>
-            TASK // #{task.id}
+            {t('panel.task_detail', { id: task.id })}
           </span>
           <button
             onClick={onClose}
@@ -171,8 +174,9 @@ export default function TaskDetailPanel({ task, allTasks, members, onClose }: Ta
               letterSpacing: '0.15em',
               marginBottom: '8px',
               fontFamily: 'var(--font-mono)',
+              textTransform: 'uppercase',
             }}>
-              DESCRIPTION
+              {t('panel.description')}
             </div>
             {task.description ? (
               <p style={{
@@ -186,7 +190,7 @@ export default function TaskDetailPanel({ task, allTasks, members, onClose }: Ta
               </p>
             ) : (
               <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: 0 }}>
-                — NO DESCRIPTION —
+                {t('panel.no_description')}
               </p>
             )}
           </div>
@@ -199,8 +203,9 @@ export default function TaskDetailPanel({ task, allTasks, members, onClose }: Ta
               letterSpacing: '0.15em',
               marginBottom: '8px',
               fontFamily: 'var(--font-mono)',
+              textTransform: 'uppercase',
             }}>
-              OWNER
+              {t('panel.owner')}
             </div>
             {task.owner ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -238,7 +243,7 @@ export default function TaskDetailPanel({ task, allTasks, members, onClose }: Ta
                 letterSpacing: '0.08em',
                 fontFamily: 'var(--font-mono)',
               }}>
-                — UNASSIGNED —
+                {t('panel.no_owner')}
               </span>
             )}
           </div>
@@ -246,8 +251,8 @@ export default function TaskDetailPanel({ task, allTasks, members, onClose }: Ta
           {/* Timing */}
           {(task.createdAt || task.updatedAt) && (
             <div>
-              <div style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.15em', marginBottom: '8px', fontFamily: 'var(--font-mono)' }}>
-                TIMING
+              <div style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.15em', marginBottom: '8px', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>
+                {t('panel.timing')}
               </div>
               <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: '3px', padding: '4px 12px' }}>
                 {task.createdAt && (
@@ -280,8 +285,9 @@ export default function TaskDetailPanel({ task, allTasks, members, onClose }: Ta
               letterSpacing: '0.15em',
               marginBottom: '8px',
               fontFamily: 'var(--font-mono)',
+              textTransform: 'uppercase',
             }}>
-              DEPENDENCIES
+              {t('panel.dependencies')}
             </div>
             {!hasBlockedBy && !hasBlocks ? (
               <span style={{
@@ -290,7 +296,7 @@ export default function TaskDetailPanel({ task, allTasks, members, onClose }: Ta
                 letterSpacing: '0.08em',
                 fontFamily: 'var(--font-mono)',
               }}>
-                — NO DEPENDENCIES —
+                {t('panel.no_dependencies')}
               </span>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -390,8 +396,9 @@ export default function TaskDetailPanel({ task, allTasks, members, onClose }: Ta
                 letterSpacing: '0.15em',
                 marginBottom: '8px',
                 fontFamily: 'var(--font-mono)',
+                textTransform: 'uppercase',
               }}>
-                METADATA
+                {t('panel.metadata')}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 {metadataEntries.map(([key, value]) => (

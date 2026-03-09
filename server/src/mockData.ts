@@ -1,4 +1,4 @@
-import type { TeamConfig, Task, TeamSummary, TeamDetail, TimelineResponse, CommLogResponse, ProjectTodosResponse, InboxSummaryResponse, SessionStatsResponse, Alert, CostData, AgentSessionInfo, TokenDataPoint } from './types.js';
+import type { TeamConfig, Task, TeamSummary, TeamDetail, TimelineResponse, CommLogResponse, ProjectTodosResponse, InboxSummaryResponse, SessionStatsResponse, Alert, CostData, AgentSessionInfo, TokenDataPoint, ExecSummaryResponse } from './types.js';
 
 const mockConfig: TeamConfig = {
   name: 'demo-team',
@@ -330,6 +330,16 @@ export function getDemoAgentSessions(): AgentSessionInfo[] {
   ];
 }
 
+export function getDemoExecSummary(): ExecSummaryResponse {
+  return {
+    teamId: 'demo-team',
+    summary: `- **Overall:** 4 of 6 tasks completed (67%), 1 in progress, 1 pending — team is on track\n- **Completed:** Architecture design, frontend UI implementation, backend REST API — all core features delivered\n- **Active:** Integration testing underway (tester) — CI environment issue blocking test runs\n- **Blockers:** \`/api/teams\` returns 404 in CI; environment variables on CI runner need verification\n- **Attention:** frontend-dev awaiting human input on WCAG vs phosphor aesthetic decision (25 min)\n- **Token usage:** 174k total across 4 agents (167 messages) — backend-dev highest consumer at ~38%`,
+    generatedAt: new Date().toISOString(),
+    isAIGenerated: false,
+    isStale: false,
+  };
+}
+
 export function getDemoCostData(): CostData {
   const base = new Date('2026-03-07T09:00:00Z');
   const t = (offsetMinutes: number) => new Date(base.getTime() + offsetMinutes * 60000).toISOString();
@@ -374,5 +384,26 @@ export function getDemoCostData(): CostData {
       { agentName: 'backend-dev',  dataPoints: makeSeries(9, 2)  },
       { agentName: 'tester',       dataPoints: makeSeries(5, 10) },
     ],
+  };
+}
+
+export function getDemoFeedbackEntries(): object[] {
+  const now = Date.now();
+  const t = (offsetHours: number) => new Date(now - offsetHours * 3600000).toISOString();
+  return [
+    { id: 'fb-001', agentName: 'backend-dev',  type: 'correction', content: 'Error handling should use Result<T,E> pattern instead of try-catch everywhere', sessionId: 'demo-lead-session-id', messageUuid: 'uuid-001', createdAt: t(1)  },
+    { id: 'fb-002', agentName: 'frontend-dev', type: 'praise',     content: null, sessionId: 'demo-lead-session-id', messageUuid: 'uuid-002', createdAt: t(3)  },
+    { id: 'fb-003', agentName: 'tester',       type: 'bookmark',   content: 'Good pattern: testing API + UI integration together in the same test file', sessionId: 'demo-lead-session-id', messageUuid: 'uuid-003', createdAt: t(5)  },
+    { id: 'fb-004', agentName: 'backend-dev',  type: 'correction', content: 'Always validate request body against a schema before processing — no raw access', sessionId: 'demo-lead-session-id', messageUuid: 'uuid-004', createdAt: t(8)  },
+    { id: 'fb-005', agentName: 'frontend-dev', type: 'bookmark',   content: 'CRT aesthetic hover pattern: use onMouseEnter/Leave with inline style mutations', sessionId: 'demo-lead-session-id', messageUuid: 'uuid-005', createdAt: t(12) },
+    { id: 'fb-006', agentName: 'team-lead',    type: 'praise',     content: null, sessionId: 'demo-lead-session-id', messageUuid: 'uuid-006', createdAt: t(20) },
+  ];
+}
+
+export function getDemoPreferences(): Record<string, string[]> {
+  return {
+    'backend-dev':  ['Use Result<T,E> for error handling over try-catch', 'Validate all request bodies against a schema before processing', 'Prefer explicit return types on all functions'],
+    'frontend-dev': ['Apply CRT aesthetic: onMouseEnter/Leave inline style mutations', 'Use var(--css-vars) for all colors — no hardcoded hex', 'Keep component files under 200 lines, extract sub-components'],
+    'tester':       ['Co-locate API and UI integration tests in the same file', 'Write test descriptions in plain English, not camelCase'],
   };
 }

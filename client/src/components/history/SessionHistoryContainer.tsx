@@ -5,6 +5,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { TeamDetail } from '../../types';
 import { useSessionHistory } from '../../hooks/useSessionHistory';
 import { useAgentSessions } from '../../hooks/useAgentSessions';
@@ -16,6 +17,7 @@ interface SessionHistoryContainerProps {
 }
 
 export default function SessionHistoryContainer({ teamId, teamDetail }: SessionHistoryContainerProps) {
+  const { t } = useTranslation();
   const { agents, loading: agentsLoading } = useAgentSessions(teamId);
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
 
@@ -44,8 +46,8 @@ export default function SessionHistoryContainer({ teamId, teamDetail }: SessionH
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         flexShrink: 0, flexWrap: 'wrap', gap: '8px',
       }}>
-        <span style={{ fontSize: '9px', letterSpacing: '0.15em', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
-          HISTORY // {teamName.toUpperCase()}
+        <span style={{ fontSize: '9px', letterSpacing: '0.15em', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>
+          {t('history.title', { name: teamName })}
         </span>
 
         {/* Agent selector */}
@@ -53,7 +55,7 @@ export default function SessionHistoryContainer({ teamId, teamDetail }: SessionH
           <div style={{ display: 'flex', gap: '2px', flexWrap: 'wrap' }}>
             {/* "LEAD" = null (default lead session) */}
             <AgentTab
-              label="LEAD"
+              label={t('history.lead')}
               active={selectedAgent === null}
               isLead={true}
               msgCount={agents.find(a => a.isLead)?.messageCount}
@@ -73,8 +75,8 @@ export default function SessionHistoryContainer({ teamId, teamDetail }: SessionH
         )}
 
         {agentsLoading && agents.length === 0 && (
-          <span style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.1em', fontFamily: 'var(--font-mono)' }}>
-            SCANNING SESSIONS...
+          <span style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.1em', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>
+            {t('history.scanning')}
           </span>
         )}
       </div>
@@ -85,6 +87,8 @@ export default function SessionHistoryContainer({ teamId, teamDetail }: SessionH
           messages={messages}
           sessionId={sessionId}
           loading={loading}
+          teamId={teamId}
+          agentName={selectedAgent ?? agents.find(a => a.isLead)?.agentName ?? null}
         />
       </div>
     </div>

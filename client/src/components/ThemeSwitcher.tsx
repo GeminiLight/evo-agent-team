@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Palette } from 'lucide-react';
 import { THEMES, useTheme, type ThemeId } from '../context/ThemeContext';
 
 export default function ThemeSwitcher() {
+  const { t } = useTranslation();
   const { theme, setTheme } = useTheme();
   const [open, setOpen] = useState(false);
   const [dropPos, setDropPos] = useState({ top: 0, right: 0 });
@@ -26,14 +28,14 @@ export default function ThemeSwitcher() {
     setOpen(o => !o);
   }
 
-  const current = THEMES.find(t => t.id === theme)!;
+  const current = THEMES.find(th => th.id === theme)!;
 
   return (
     <div ref={ref} style={{ position: 'relative' }}>
       <button
         ref={btnRef}
         onClick={handleOpen}
-        title="Change theme"
+        title={t('theme.change')}
         aria-expanded={open}
         aria-controls="theme-menu"
         aria-haspopup="true"
@@ -49,6 +51,7 @@ export default function ThemeSwitcher() {
           fontSize: '9px',
           letterSpacing: '0.1em',
           transition: 'border-color 0.15s, color 0.15s',
+          textTransform: 'uppercase',
         }}
         onMouseEnter={e => {
           e.currentTarget.style.borderColor = 'var(--border-bright)';
@@ -68,7 +71,7 @@ export default function ThemeSwitcher() {
           display: 'inline-block',
         }} />
         <Palette size={10} />
-        THEME
+        {t('theme.button')}
       </button>
 
       {open && (
@@ -95,8 +98,9 @@ export default function ThemeSwitcher() {
             borderBottom: '1px solid var(--border)',
             fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.18em',
             fontFamily: 'var(--font-mono)',
+            textTransform: 'uppercase',
           }}>
-            SELECT THEME
+            {t('theme.select')}
           </div>
 
           {/* 2-column grid of theme options */}
@@ -106,18 +110,18 @@ export default function ThemeSwitcher() {
             gap: '1px',
             background: 'var(--border)',
           }}>
-            {THEMES.map((t) => {
-              const isActive = theme === t.id;
+            {THEMES.map((themeItem) => {
+              const isActive = theme === themeItem.id;
               return (
                 <button
-                  key={t.id}
+                  key={themeItem.id}
                   role="menuitem"
                   aria-current={isActive ? 'true' : undefined}
-                  onClick={() => { setTheme(t.id as ThemeId); setOpen(false); }}
+                  onClick={() => { setTheme(themeItem.id as ThemeId); setOpen(false); }}
                   style={{
                     display: 'flex', alignItems: 'center', gap: '8px',
                     padding: '10px 10px',
-                    background: isActive ? `${t.accent}14` : 'var(--surface-1)',
+                    background: isActive ? `${themeItem.accent}14` : 'var(--surface-1)',
                     border: 'none',
                     cursor: 'pointer',
                     textAlign: 'left',
@@ -135,45 +139,46 @@ export default function ThemeSwitcher() {
                   {isActive && (
                     <div style={{
                       position: 'absolute', left: 0, top: 0, bottom: 0, width: '2px',
-                      background: t.accent,
-                      boxShadow: `0 0 6px ${t.accent}`,
+                      background: themeItem.accent,
+                      boxShadow: `0 0 6px ${themeItem.accent}`,
                     }} />
                   )}
 
                   {/* Mini preview card */}
                   <div style={{
                     width: '32px', height: '22px', borderRadius: '2px', flexShrink: 0,
-                    background: t.bg,
-                    border: `1px solid ${isActive ? t.accent : 'rgba(255,255,255,0.08)'}`,
+                    background: themeItem.bg,
+                    border: `1px solid ${isActive ? themeItem.accent : 'rgba(255,255,255,0.08)'}`,
                     display: 'flex', flexDirection: 'column',
                     justifyContent: 'center', alignItems: 'flex-start',
                     gap: '2px', padding: '3px',
                     overflow: 'hidden',
                   }}>
-                    <div style={{ width: '80%', height: '2px', background: t.accent, borderRadius: '1px', opacity: 0.9 }} />
-                    <div style={{ width: '55%', height: '1px', background: t.accent, borderRadius: '1px', opacity: 0.45 }} />
-                    <div style={{ width: '35%', height: '1px', background: t.accent, borderRadius: '1px', opacity: 0.22 }} />
+                    <div style={{ width: '80%', height: '2px', background: themeItem.accent, borderRadius: '1px', opacity: 0.9 }} />
+                    <div style={{ width: '55%', height: '1px', background: themeItem.accent, borderRadius: '1px', opacity: 0.45 }} />
+                    <div style={{ width: '35%', height: '1px', background: themeItem.accent, borderRadius: '1px', opacity: 0.22 }} />
                   </div>
 
                   {/* Label + description */}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{
                       fontSize: '10px', fontWeight: 600, letterSpacing: '0.06em',
-                      color: isActive ? t.accent : 'var(--text-primary)',
+                      color: isActive ? themeItem.accent : 'var(--text-primary)',
                       fontFamily: 'var(--font-mono)',
                       marginBottom: '1px',
                       whiteSpace: 'nowrap',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
+                      textTransform: 'uppercase',
                     }}>
-                      {t.label}
+                      {t(`theme.${themeItem.id}.label`)}
                     </div>
                     <div style={{
                       fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.03em',
                       fontFamily: 'var(--font-mono)',
                       whiteSpace: 'nowrap',
                     }}>
-                      {t.description}
+                      {t(`theme.${themeItem.id}.desc`)}
                     </div>
                   </div>
 
@@ -181,8 +186,8 @@ export default function ThemeSwitcher() {
                   {isActive && (
                     <div style={{
                       width: '5px', height: '5px', borderRadius: '50%', flexShrink: 0,
-                      background: t.accent,
-                      boxShadow: `0 0 5px ${t.accent}`,
+                      background: themeItem.accent,
+                      boxShadow: `0 0 5px ${themeItem.accent}`,
                     }} />
                   )}
                 </button>

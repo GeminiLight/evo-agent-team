@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { CostData, AgentCostSummary, ToolCostSummary, AgentTimeSeries } from '../../types';
 import CRTEmptyState from '../shared/CRTEmptyState';
 
@@ -84,6 +84,7 @@ function TokenBar({ agent, maxTokens, index }: { agent: AgentCostSummary; maxTok
 
 // Chart with X-axis time labels and Y-axis token scale
 function TokenSparkline({ series, allAgents }: { series: AgentTimeSeries[]; allAgents: AgentCostSummary[] }) {
+  const { t } = useTranslation();
   if (!series.length) return null;
 
   // Layout constants (SVG user units)
@@ -152,8 +153,8 @@ function TokenSparkline({ series, allAgents }: { series: AgentTimeSeries[]; allA
 
   return (
     <div style={{ marginTop: '8px' }}>
-      <div style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.12em', marginBottom: '6px', fontFamily: 'var(--font-mono)' }}>
-        CUMULATIVE TOKEN USAGE
+      <div style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.12em', marginBottom: '6px', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>
+        {t('cost.cumulative')}
       </div>
       <svg
         viewBox={`0 0 ${TOTAL_W} ${TOTAL_H}`}
@@ -309,8 +310,7 @@ function ToolChart({ tools }: { tools: ToolCostSummary[] }) {
 type CostTab = 'overview' | 'tools' | 'trends';
 
 export default function CostView({ teamId, data, loading }: CostViewProps) {
-  const [tab, setTab] = useState<CostTab>('overview');
-
+  const { t } = useTranslation();
   const teamName = data?.teamId ?? teamId;
 
   return (
@@ -329,58 +329,38 @@ export default function CostView({ teamId, data, loading }: CostViewProps) {
         padding: '10px 20px',
         borderBottom: '1px solid var(--border)',
         background: 'var(--surface-1)',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         flexShrink: 0,
       }}>
-        <span style={{ fontSize: '9px', letterSpacing: '0.15em', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
-          COST // {teamName.toUpperCase()}
+        <span style={{ fontSize: '9px', letterSpacing: '0.15em', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>
+          {t('cost.title', { name: teamName.toUpperCase() })}
         </span>
-
-        {/* Tab nav */}
-        <div style={{ display: 'flex', gap: '2px' }}>
-          {(['overview', 'tools', 'trends'] as CostTab[]).map(t => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              style={{
-                padding: '2px 8px', fontSize: '8px', letterSpacing: '0.1em',
-                fontFamily: 'var(--font-mono)',
-                background: tab === t ? 'var(--active-bg-med)' : 'transparent',
-                color: tab === t ? 'var(--active-text)' : 'var(--text-muted)',
-                border: `1px solid ${tab === t ? 'var(--active-border)' : 'transparent'}`,
-                borderRadius: '2px', cursor: 'pointer', transition: 'all 0.1s',
-              }}
-              onMouseEnter={e => { if (tab !== t) e.currentTarget.style.color = 'var(--text-secondary)'; }}
-              onMouseLeave={e => { if (tab !== t) e.currentTarget.style.color = 'var(--text-muted)'; }}
-            >
-              {t.toUpperCase()}
-            </button>
-          ))}
-        </div>
       </div>
 
       {/* Content */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}>
         {loading && (
-          <div style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.1em', padding: '40px', textAlign: 'center', fontFamily: 'var(--font-mono)' }}>
-            LOADING...
+          <div style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.1em', padding: '40px', textAlign: 'center', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>
+            {t('cost.loading')}
           </div>
         )}
 
         {!loading && !data && (
-          <CRTEmptyState title="NO COST DATA" subtitle="Token usage will appear when agents are active" />
+          <CRTEmptyState title={t('cost.no_cost')} subtitle={t('cost.no_cost_sub')} />
         )}
 
-        {!loading && data && tab === 'overview' && (
-          <OverviewTab data={data} />
-        )}
+        {!loading && data && (
+          <>
+            <TotalsRow data={data} />
 
-        {!loading && data && tab === 'tools' && (
-          <ToolsTab data={data} />
-        )}
+            <SectionLabel label={t('cost.usage_by_agent')} />
+            <AgentSection data={data} />
 
-        {!loading && data && tab === 'trends' && (
-          <TrendsTab data={data} />
+            <SectionLabel label={t('cost.tool_distribution')} />
+            <ToolsSection data={data} />
+
+            <SectionLabel label={t('cost.token_burn')} />
+            <TrendsSection data={data} />
+          </>
         )}
       </div>
     </div>
@@ -390,24 +370,29 @@ export default function CostView({ teamId, data, loading }: CostViewProps) {
 function SectionLabel({ label }: { label: string }) {
   return (
     <div style={{
-      fontSize: '8px', letterSpacing: '0.18em', color: 'var(--text-muted)',
-      fontFamily: 'var(--font-mono)', marginBottom: '10px', marginTop: '16px',
+      display: 'flex', alignItems: 'center', gap: '10px',
+      marginBottom: '12px', marginTop: '28px',
     }}>
-      {label}
+      <span style={{
+        fontSize: '8px', letterSpacing: '0.18em', color: 'var(--text-muted)',
+        fontFamily: 'var(--font-mono)', flexShrink: 0, textTransform: 'uppercase',
+      }}>{label}</span>
+      <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
     </div>
   );
 }
 
 function TotalsRow({ data }: { data: CostData }) {
+  const { t } = useTranslation();
   const { totals } = data;
   const grand = totals.inputTokens + totals.outputTokens + totals.cacheReadTokens;
   const cells = [
-    { label: 'TOTAL', value: fmtK(grand), color: 'var(--text-primary)' },
-    { label: 'INPUT',  value: fmtK(totals.inputTokens),     color: 'var(--phosphor, #39ff6a)' },
-    { label: 'OUTPUT', value: fmtK(totals.outputTokens),    color: 'var(--ice, #7eb8f7)' },
-    { label: 'CACHE',  value: fmtK(totals.cacheReadTokens), color: 'var(--amber, #f5a623)' },
-    { label: 'AGENTS', value: String(data.byAgent.length),  color: 'var(--text-secondary)' },
-    { label: 'MSGS',   value: String(data.byAgent.reduce((s, a) => s + a.messageCount, 0)), color: 'var(--text-secondary)' },
+    { label: t('cost.total'),  value: fmtK(grand), color: 'var(--text-primary)' },
+    { label: t('cost.input'),  value: fmtK(totals.inputTokens),     color: 'var(--phosphor, #39ff6a)' },
+    { label: t('cost.output'), value: fmtK(totals.outputTokens),    color: 'var(--ice, #7eb8f7)' },
+    { label: t('cost.cache'),  value: fmtK(totals.cacheReadTokens), color: 'var(--amber, #f5a623)' },
+    { label: t('cost.agents'), value: String(data.byAgent.length),  color: 'var(--text-secondary)' },
+    { label: t('cost.msgs'),   value: String(data.byAgent.reduce((s, a) => s + a.messageCount, 0)), color: 'var(--text-secondary)' },
   ];
 
   return (
@@ -421,38 +406,35 @@ function TotalsRow({ data }: { data: CostData }) {
           borderRadius: '3px',
         }}>
           <span style={{ fontSize: '14px', fontWeight: 700, color: c.color, fontFamily: 'var(--font-mono)', lineHeight: 1 }}>{c.value}</span>
-          <span style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.1em', fontFamily: 'var(--font-mono)' }}>{c.label}</span>
+          <span style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.1em', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>{c.label}</span>
         </div>
       ))}
     </div>
   );
 }
 
-function OverviewTab({ data }: { data: CostData }) {
+function AgentSection({ data }: { data: CostData }) {
+  const { t } = useTranslation();
   const maxTokens = Math.max(...data.byAgent.map(a => a.inputTokens + a.outputTokens + a.cacheReadTokens), 1);
 
   return (
     <div>
-      <TotalsRow data={data} />
-
-      <SectionLabel label="USAGE BY AGENT" />
-
       {/* Legend */}
       <div style={{ display: 'flex', gap: '16px', marginBottom: '8px' }}>
         {[
-          { color: 'var(--phosphor, #39ff6a)', opacity: '0.9', label: 'INPUT' },
-          { color: 'var(--phosphor, #39ff6a)', opacity: '0.5', label: 'OUTPUT' },
-          { color: 'var(--phosphor, #39ff6a)', opacity: '0.2', label: 'CACHE' },
+          { color: 'var(--phosphor, #39ff6a)', opacity: '0.9', label: t('cost.input') },
+          { color: 'var(--phosphor, #39ff6a)', opacity: '0.5', label: t('cost.output') },
+          { color: 'var(--phosphor, #39ff6a)', opacity: '0.2', label: t('cost.cache') },
         ].map(l => (
           <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
             <div style={{ width: '12px', height: '6px', background: l.color, opacity: parseFloat(l.opacity), borderRadius: '1px' }} />
-            <span style={{ fontSize: '8px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}>{l.label}</span>
+            <span style={{ fontSize: '8px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{l.label}</span>
           </div>
         ))}
       </div>
 
       {data.byAgent.length === 0 ? (
-        <CRTEmptyState title="NO AGENT DATA" subtitle="Run agents to see cost breakdown" />
+        <CRTEmptyState title={t('cost.no_agent')} subtitle={t('cost.no_agent_sub')} />
       ) : (
         data.byAgent.map((agent, i) => (
           <TokenBar key={agent.agentName} agent={agent} maxTokens={maxTokens} index={i} />
@@ -462,41 +444,27 @@ function OverviewTab({ data }: { data: CostData }) {
   );
 }
 
-function ToolsTab({ data }: { data: CostData }) {
+function ToolsSection({ data }: { data: CostData }) {
+  const { t } = useTranslation();
   const totalCalls = data.byTool.reduce((s, t) => s + t.callCount, 0);
 
-  return (
-    <div>
-      <TotalsRow data={data} />
-
-      <SectionLabel label="TOOL CALL DISTRIBUTION" />
-
-      {data.byTool.length === 0 ? (
-        <CRTEmptyState title="NO TOOL DATA" subtitle="Tool call counts will appear when agents run" />
-      ) : (
-        <>
-          <div style={{ marginBottom: '4px', fontSize: '8px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em' }}>
-            {totalCalls} TOTAL CALLS
-          </div>
-          <ToolChart tools={data.byTool} />
-        </>
-      )}
-    </div>
+  return data.byTool.length === 0 ? (
+    <CRTEmptyState title={t('cost.no_tool')} subtitle={t('cost.no_tool_sub')} />
+  ) : (
+    <>
+      <div style={{ marginBottom: '4px', fontSize: '8px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+        {t('cost.total_calls', { count: totalCalls })}
+      </div>
+      <ToolChart tools={data.byTool} />
+    </>
   );
 }
 
-function TrendsTab({ data }: { data: CostData }) {
-  return (
-    <div>
-      <TotalsRow data={data} />
-
-      <SectionLabel label="TOKEN BURN OVER TIME" />
-
-      {data.timeSeries.length === 0 ? (
-        <CRTEmptyState title="NO TIME SERIES" subtitle="Token trends will appear as agents work" />
-      ) : (
-        <TokenSparkline series={data.timeSeries} allAgents={data.byAgent} />
-      )}
-    </div>
+function TrendsSection({ data }: { data: CostData }) {
+  const { t } = useTranslation();
+  return data.timeSeries.length === 0 ? (
+    <CRTEmptyState title={t('cost.no_series')} subtitle={t('cost.no_series_sub')} />
+  ) : (
+    <TokenSparkline series={data.timeSeries} allAgents={data.byAgent} />
   );
 }

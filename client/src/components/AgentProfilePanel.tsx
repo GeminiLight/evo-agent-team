@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X, CheckCircle2, Loader2, Clock, Lock, ChevronDown, ChevronRight, Pencil, Check, RotateCcw } from 'lucide-react';
 import type { TeamMember, Task, AgentSessionStats } from '../types';
 import { getTaskStatus, STATUS_COLORS, type StatusKey } from '../utils/statusColors';
@@ -71,7 +72,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 function InfoRow({ label, value, mono = false, accent }: { label: string; value: React.ReactNode; mono?: boolean; accent?: string }) {
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', padding: '6px 0', borderBottom: '1px solid var(--border)' }}>
-      <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em', flexShrink: 0, paddingTop: '1px' }}>{label}</span>
+      <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em', flexShrink: 0, paddingTop: '1px', textTransform: 'uppercase' }}>{label}</span>
       <span style={{ fontSize: '10px', color: accent ?? 'var(--text-secondary)', fontFamily: mono ? 'var(--font-mono)' : undefined, letterSpacing: mono ? '0.04em' : undefined, wordBreak: 'break-all', textAlign: 'right' }}>
         {value}
       </span>
@@ -80,6 +81,7 @@ function InfoRow({ label, value, mono = false, accent }: { label: string; value:
 }
 
 export default function AgentProfilePanel({ member, tasks, teamId, isLead = false, sessionStats, onClose, onPromptSaved }: AgentProfilePanelProps) {
+  const { t } = useTranslation();
   const panelRef = useFocusTrap<HTMLDivElement>();
   const [promptExpanded, setPromptExpanded] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -183,8 +185,8 @@ export default function AgentProfilePanel({ member, tasks, teamId, isLead = fals
 
         {/* Header */}
         <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
-          <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.15em', fontFamily: 'var(--font-mono)' }}>
-            AGENT // PROFILE
+          <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.15em', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>
+            {t('panel.agent_profile')}
           </span>
           <button onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', padding: '2px' }}
             onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-primary)')}
@@ -249,11 +251,11 @@ export default function AgentProfilePanel({ member, tasks, teamId, isLead = fals
 
           {/* Identity details */}
           <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: '3px', padding: '4px 12px' }}>
-            <InfoRow label="AGENT ID"    value={member.agentId}        mono />
-            {member.model       && <InfoRow label="MODEL"      value={member.model}         mono accent={accent} />}
-            {member.backendType && <InfoRow label="BACKEND"    value={member.backendType}   mono />}
+            <InfoRow label={t('panel.agent_id')}    value={member.agentId}        mono />
+            {member.model       && <InfoRow label={t('panel.model')}      value={member.model}         mono accent={accent} />}
+            {member.backendType && <InfoRow label={t('panel.backend')}    value={member.backendType}   mono />}
             {member.color       && (
-              <InfoRow label="COLOR" value={
+              <InfoRow label={t('panel.color')} value={
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                   <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: accent, boxShadow: `0 0 4px ${accent}`, display: 'inline-block' }} />
                   {member.color}
@@ -261,10 +263,10 @@ export default function AgentProfilePanel({ member, tasks, teamId, isLead = fals
               } />
             )}
             {member.planModeRequired !== undefined && (
-              <InfoRow label="PLAN MODE" value={member.planModeRequired ? 'REQUIRED' : 'OPTIONAL'} accent={member.planModeRequired ? 'var(--amber)' : 'var(--text-muted)'} />
+              <InfoRow label={t('panel.plan_mode')} value={member.planModeRequired ? 'REQUIRED' : 'OPTIONAL'} accent={member.planModeRequired ? 'var(--amber)' : 'var(--text-muted)'} />
             )}
-            {joinedAtStr && <InfoRow label="JOINED"    value={joinedAtStr} />}
-            {member.cwd  && <InfoRow label="CWD"       value={member.cwd}  mono />}
+            {joinedAtStr && <InfoRow label={t('panel.joined')}    value={joinedAtStr} />}
+            {member.cwd  && <InfoRow label={t('panel.cwd')}       value={member.cwd}  mono />}
           </div>
 
           {/* System Prompt editor */}
@@ -279,8 +281,8 @@ export default function AgentProfilePanel({ member, tasks, teamId, isLead = fals
                   ? <ChevronDown size={10} style={{ color: 'var(--text-muted)' }} />
                   : <ChevronRight size={10} style={{ color: 'var(--text-muted)' }} />
                 }
-                <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.15em', fontFamily: 'var(--font-mono)' }}>
-                  SYSTEM PROMPT
+                <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.15em', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>
+                  {t('panel.system_prompt')}
                 </span>
               </button>
 
@@ -301,7 +303,7 @@ export default function AgentProfilePanel({ member, tasks, teamId, isLead = fals
                   onMouseEnter={e => { e.currentTarget.style.borderColor = accent; e.currentTarget.style.color = accent; }}
                   onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-muted)'; }}
                 >
-                  <Pencil size={9} /> EDIT
+                  <Pencil size={9} /> <span style={{ textTransform: 'uppercase' }}>{t('panel.edit')}</span>
                 </button>
               )}
 
@@ -322,7 +324,7 @@ export default function AgentProfilePanel({ member, tasks, teamId, isLead = fals
                       color: 'var(--text-muted)', fontFamily: 'var(--font-mono)',
                     }}
                   >
-                    <RotateCcw size={9} /> CANCEL
+                    <RotateCcw size={9} /> <span style={{ textTransform: 'uppercase' }}>{t('common.cancel')}</span>
                   </button>
                   <button
                     onClick={handleSave}
@@ -339,7 +341,7 @@ export default function AgentProfilePanel({ member, tasks, teamId, isLead = fals
                       transition: 'all 0.15s',
                     }}
                   >
-                    <Check size={9} /> {saving ? 'SAVING…' : 'SAVE'}
+                    <Check size={9} /> <span style={{ textTransform: 'uppercase' }}>{saving ? 'SAVING…' : t('panel.save')}</span>
                   </button>
                 </div>
               )}
@@ -425,7 +427,7 @@ export default function AgentProfilePanel({ member, tasks, teamId, isLead = fals
 
           {/* Performance stats */}
           <div>
-            <SectionLabel>PERFORMANCE</SectionLabel>
+            <SectionLabel><span style={{ textTransform: 'uppercase' }}>{t('panel.performance')}</span></SectionLabel>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '14px' }}>
               {[
                 { label: 'TOTAL',  value: assignedTasks.length,  color: 'var(--text-primary)' },
@@ -456,7 +458,7 @@ export default function AgentProfilePanel({ member, tasks, teamId, isLead = fals
           {/* Current work */}
           {activeTasks.length > 0 && (
             <div>
-              <SectionLabel>CURRENT WORK</SectionLabel>
+              <SectionLabel><span style={{ textTransform: 'uppercase' }}>{t('panel.current_work')}</span></SectionLabel>
               {activeTasks.map(t => (
                 <div key={t.id} style={{
                   fontSize: '10px', color: 'var(--amber)',
@@ -475,7 +477,7 @@ export default function AgentProfilePanel({ member, tasks, teamId, isLead = fals
           {/* Session stats */}
           {sessionStats && (
             <div>
-              <SectionLabel>SESSION STATS</SectionLabel>
+              <SectionLabel><span style={{ textTransform: 'uppercase' }}>{t('panel.session_stats')}</span></SectionLabel>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '8px' }}>
                 {[
                   { label: 'MSGS',    value: String(sessionStats.messageCount),         color: 'var(--text-primary)' },
@@ -516,7 +518,7 @@ export default function AgentProfilePanel({ member, tasks, teamId, isLead = fals
 
           {/* Assigned tasks list */}
           <div>
-            <SectionLabel>ASSIGNED TASKS // {assignedTasks.length}</SectionLabel>
+            <SectionLabel><span style={{ textTransform: 'uppercase' }}>{t('panel.assigned_tasks', { count: assignedTasks.length })}</span></SectionLabel>
             {assignedTasks.length === 0 ? (
               <span style={{ fontSize: '11px', color: 'var(--text-muted)', letterSpacing: '0.06em', fontFamily: 'var(--font-mono)' }}>
                 — NO TASKS ASSIGNED —

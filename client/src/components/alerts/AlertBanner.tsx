@@ -1,8 +1,14 @@
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { Alert, AlertSeverity } from '../../types';
+import type { BlockingDetail } from '../../hooks/usePendingHumanRequests';
+import RespondModal from '../shared/RespondModal';
 
 interface AlertBannerProps {
   alerts: Alert[];
   onDismiss?: (id: string) => void;
+  teamId?: string;
+  pendingHumanDetails?: BlockingDetail[];
 }
 
 function fmtDuration(ms: number): string {
@@ -25,7 +31,9 @@ function kindIcon(kind: Alert['kind']): string {
   return '●';
 }
 
-export default function AlertBanner({ alerts, onDismiss }: AlertBannerProps) {
+export default function AlertBanner({ alerts, onDismiss, teamId, pendingHumanDetails }: AlertBannerProps) {
+  const { t } = useTranslation();
+  const [respondingAgent, setRespondingAgent] = useState<string | null>(null);
   if (alerts.length === 0) return null;
 
   const criticals = alerts.filter(a => a.severity === 'critical');
@@ -99,11 +107,33 @@ export default function AlertBanner({ alerts, onDismiss }: AlertBannerProps) {
               </div>
             </div>
 
+            {/* RESPOND button for human_input_escalated */}
+            {alert.kind === 'human_input_escalated' && teamId && alert.agentName && (
+              <button
+                onClick={() => setRespondingAgent(alert.agentName!)}
+                style={{
+                  flexShrink: 0,
+                  padding: '3px 10px',
+                  fontSize: '8px', letterSpacing: '0.12em', fontWeight: 700,
+                  fontFamily: 'var(--font-mono)',
+                  background: 'rgba(245,166,35,0.12)',
+                  color: 'var(--amber)',
+                  border: '1px solid var(--amber-dim)',
+                  borderRadius: '2px',
+                  cursor: 'pointer',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(245,166,35,0.2)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'rgba(245,166,35,0.12)')}
+              >
+                <span style={{ textTransform: 'uppercase' }}>{t('alert.respond')}</span>
+              </button>
+            )}
+
             {/* Dismiss */}
             {onDismiss && (
               <button
                 onClick={() => onDismiss(alert.id)}
-                title="Dismiss alert"
+                title={t('alert.dismiss')}
                 style={{
                   flexShrink: 0,
                   background: 'transparent',
@@ -131,9 +161,20 @@ export default function AlertBanner({ alerts, onDismiss }: AlertBannerProps) {
           fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.1em',
           fontFamily: 'var(--font-mono)', paddingLeft: '4px',
         }}>
-          {alerts.length} ACTIVE ALERT{alerts.length !== 1 ? 'S' : ''}
+          <span style={{ textTransform: 'uppercase' }}>{t('alert.active_alert', { count: alerts.length })}</span>
           {criticals.length > 0 && ` — ${criticals.length} CRITICAL`}
         </div>
+      )}
+
+      {/* Respond modal */}
+      {respondingAgent && teamId && (
+        <RespondModal
+          agentName={respondingAgent}
+          toolName={pendingHumanDetails?.find(d => d.name === respondingAgent)?.blocking.toolName}
+          detail={pendingHumanDetails?.find(d => d.name === respondingAgent)?.blocking.detail}
+          teamId={teamId}
+          onClose={() => setRespondingAgent(null)}
+        />
       )}
     </div>
   );

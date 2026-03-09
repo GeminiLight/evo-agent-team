@@ -1,46 +1,48 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface EmptyStateProps {
   onEnableDemo: () => void;
 }
 
-const BOOT_LINES = [
-  'AGENT//CTRL v2.0.0',
-  'Initializing subsystems...',
-  'Scanning team directories...',
-  '~/.claude/teams/  ............. [EMPTY]',
-  '~/.claude/tasks/  ............. [EMPTY]',
-  'No active agent teams detected.',
-];
-
-const STEPS = [
-  {
-    number: '01',
-    title: 'Start a Claude Code Session',
-    description: 'Open your project in Claude Code and begin a conversation.',
-    code: 'claude',
-    color: 'var(--ice)',
-  },
-  {
-    number: '02',
-    title: 'Create a Team',
-    description: 'Use TeamCreate to spawn a coordinated group of agents.',
-    code: 'TeamCreate({ team_name: "my-team" })',
-    color: 'var(--amber)',
-  },
-  {
-    number: '03',
-    title: 'Spawn Teammates',
-    description: 'Launch agents with the Agent tool — they appear here live.',
-    code: 'Agent({ subagent_type: "general-purpose" })',
-    color: 'var(--phosphor)',
-  },
-];
-
 export default function EmptyState({ onEnableDemo }: EmptyStateProps) {
+  const { t } = useTranslation();
   const [visibleLines, setVisibleLines] = useState(0);
   const [showActions, setShowActions] = useState(false);
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
+
+  const BOOT_LINES = [
+    t('empty.boot_line_1'),
+    t('empty.boot_line_2'),
+    t('empty.boot_line_3'),
+    t('empty.boot_line_4'),
+    t('empty.boot_line_5'),
+    t('empty.boot_line_6'),
+  ];
+
+  const STEPS = [
+    {
+      number: '01',
+      title: t('empty.step1_title'),
+      description: t('empty.step1_desc'),
+      code: 'claude',
+      color: 'var(--ice)',
+    },
+    {
+      number: '02',
+      title: t('empty.step2_title'),
+      description: t('empty.step2_desc'),
+      code: 'TeamCreate({ team_name: "my-team" })',
+      color: 'var(--amber)',
+    },
+    {
+      number: '03',
+      title: t('empty.step3_title'),
+      description: t('empty.step3_desc'),
+      code: 'Agent({ subagent_type: "general-purpose" })',
+      color: 'var(--phosphor)',
+    },
+  ];
 
   // Typewriter boot sequence
   useEffect(() => {
@@ -51,7 +53,7 @@ export default function EmptyState({ onEnableDemo }: EmptyStateProps) {
     const delay = visibleLines === 0 ? 200 : 100;
     const timer = setTimeout(() => setVisibleLines(v => v + 1), delay);
     return () => clearTimeout(timer);
-  }, [visibleLines]);
+  }, [visibleLines, BOOT_LINES.length]);
 
   function handleCopy(code: string, idx: number) {
     navigator.clipboard.writeText(code).then(() => {
@@ -92,7 +94,7 @@ export default function EmptyState({ onEnableDemo }: EmptyStateProps) {
             <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--amber)', opacity: 0.7 }} />
             <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--phosphor)', opacity: 0.7 }} />
             <span style={{ marginLeft: '8px', fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.08em' }}>
-              agent-ctrl — system scan
+              {t('empty.terminal_title')}
             </span>
           </div>
 
@@ -101,7 +103,7 @@ export default function EmptyState({ onEnableDemo }: EmptyStateProps) {
             {BOOT_LINES.slice(0, visibleLines).map((line, i) => (
               <div key={i} style={{
                 fontSize: '12px', lineHeight: 1.7, letterSpacing: '0.02em',
-                color: line.includes('[EMPTY]') ? 'var(--amber)'
+                color: line.includes('[EMPTY]') || line.includes('[空]') ? 'var(--amber)'
                   : line.startsWith('AGENT//') ? 'var(--phosphor)'
                   : line.startsWith('~') ? 'var(--ice)'
                   : 'var(--text-secondary)',
@@ -132,8 +134,9 @@ export default function EmptyState({ onEnableDemo }: EmptyStateProps) {
               <div style={{
                 fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.2em',
                 marginBottom: '12px', textAlign: 'center',
+                textTransform: 'uppercase',
               }}>
-                — GET STARTED IN 3 STEPS —
+                {t('empty.get_started')}
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -205,11 +208,12 @@ export default function EmptyState({ onEnableDemo }: EmptyStateProps) {
                             color: copiedIdx === idx ? 'var(--phosphor)' : 'var(--text-muted)',
                             fontFamily: 'var(--font-mono)',
                             transition: 'color 0.15s',
+                            textTransform: 'uppercase',
                           }}
                           onMouseEnter={e => { if (copiedIdx !== idx) e.currentTarget.style.color = 'var(--text-secondary)'; }}
                           onMouseLeave={e => { if (copiedIdx !== idx) e.currentTarget.style.color = 'var(--text-muted)'; }}
                         >
-                          {copiedIdx === idx ? '✓ COPIED' : 'COPY'}
+                          {copiedIdx === idx ? t('empty.copied') : t('empty.copy')}
                         </button>
                       </div>
                     </div>
@@ -223,14 +227,14 @@ export default function EmptyState({ onEnableDemo }: EmptyStateProps) {
               display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px',
             }}>
               <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
-              <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.15em' }}>OR</span>
+              <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.15em', textTransform: 'uppercase' }}>{t('empty.or')}</span>
               <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
             </div>
 
             {/* Demo CTA */}
             <div style={{ textAlign: 'center' }}>
-              <p style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: '12px' }}>
-                EXPLORE WITH SIMULATED TEAM DATA
+              <p style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.1em', marginBottom: '12px', textTransform: 'uppercase' }}>
+                {t('empty.explore_demo')}
               </p>
               <button
                 onClick={onEnableDemo}
@@ -246,6 +250,7 @@ export default function EmptyState({ onEnableDemo }: EmptyStateProps) {
                   transition: 'all 0.2s',
                   position: 'relative',
                   overflow: 'hidden',
+                  textTransform: 'uppercase',
                 }}
                 onMouseEnter={e => {
                   e.currentTarget.style.background = 'var(--phosphor-glow)';
@@ -258,10 +263,10 @@ export default function EmptyState({ onEnableDemo }: EmptyStateProps) {
                   e.currentTarget.style.borderColor = 'var(--border-bright)';
                 }}
               >
-                ▶ LAUNCH DEMO
+                {t('empty.launch_demo')}
               </button>
               <p style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.06em', marginTop: '8px', opacity: 0.6 }}>
-                No setup required — see a live team simulation
+                {t('empty.no_setup')}
               </p>
             </div>
 

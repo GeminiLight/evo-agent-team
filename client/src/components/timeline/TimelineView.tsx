@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { TeamDetail, TimelineResponse, TaskChangeEvent } from '../../types';
 import TimelineEvent from './TimelineEvent';
 import CRTEmptyState from '../shared/CRTEmptyState';
@@ -36,6 +37,7 @@ function useTimeline(teamId: string) {
 type SortOrder = 'desc' | 'asc';
 
 export default function TimelineView({ teamId, teamDetail, onEventsChange }: TimelineViewProps) {
+  const { t } = useTranslation();
   const { data, loading } = useTimeline(teamId);
   const [order, setOrder] = useState<SortOrder>('desc');
 
@@ -128,8 +130,8 @@ export default function TimelineView({ teamId, teamDetail, onEventsChange }: Tim
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         flexShrink: 0,
       }}>
-        <span style={{ fontSize: '9px', letterSpacing: '0.15em', color: 'var(--text-muted)' }}>
-          TIMELINE // {teamName.toUpperCase()}
+        <span style={{ fontSize: '9px', letterSpacing: '0.15em', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+          {t('timeline.title', { name: teamName })}
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div style={{ display: 'flex', gap: '2px' }}>
@@ -160,11 +162,11 @@ export default function TimelineView({ teamId, teamDetail, onEventsChange }: Tim
               animation: isFollowing ? 'status-pulse 2s ease-in-out infinite' : 'none',
               display: 'inline-block',
             }} />
-            FOLLOW
+            <span style={{ textTransform: 'uppercase' }}>{t('timeline.follow')}</span>
           </button>
           {!loading && (
-            <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>
-              {sorted.length} EVENT{sorted.length !== 1 ? 'S' : ''}
+            <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+              {t('timeline.event', { count: sorted.length })}
             </span>
           )}
         </div>
@@ -214,7 +216,7 @@ export default function TimelineView({ teamId, teamDetail, onEventsChange }: Tim
             animation: 'fade-up 0.2s ease-out',
           }}
         >
-          {order === 'desc' ? '↑' : '↓'} {newCount} NEW EVENT{newCount !== 1 ? 'S' : ''}
+          {order === 'desc' ? '↑' : '↓'} <span style={{ textTransform: 'uppercase' }}>{t('timeline.new_event', { count: newCount })}</span>
         </button>
       )}
     </div>

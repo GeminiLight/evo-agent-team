@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { CheckCircle2, Loader2, Clock } from 'lucide-react';
 import type { TeamDetail, TeamMember, Task, InboxSummaryItem, AgentSessionStats, SessionTodo, TodoItem } from '../../types';
 import type { BlockingDetail } from '../../hooks/usePendingHumanRequests';
@@ -9,13 +10,6 @@ import AgentHeatmap from './AgentHeatmap';
 import CRTEmptyState from '../shared/CRTEmptyState';
 
 type SortMode = 'default' | 'workload' | 'completion' | 'name';
-
-const SORT_OPTS: { id: SortMode; label: string; tooltip: string }[] = [
-  { id: 'default',    label: 'DEFAULT',    tooltip: 'Original member order' },
-  { id: 'workload',   label: 'WORKLOAD ↓', tooltip: 'Sort by active tasks (most busy first)' },
-  { id: 'completion', label: 'DONE% ↓',    tooltip: 'Sort by completion percentage' },
-  { id: 'name',       label: 'A→Z',        tooltip: 'Sort alphabetically by name' },
-];
 
 function sortMembers(members: TeamMember[], tasks: Task[], mode: SortMode): TeamMember[] {
   if (mode === 'name') return [...members].sort((a, b) => a.name.localeCompare(b.name));
@@ -60,11 +54,20 @@ interface DashboardViewProps {
   sessionStats?: Record<string, AgentSessionStats>;
   leadName?: string | null;
   projectTodos?: SessionTodo[];
+  teamId?: string;
 }
 
-export default function DashboardView({ team, onTaskSelect, onAgentSelect, onTeamUpdate, pendingHumanAgents = [], pendingHumanDetails = [], inboxSummary = {}, sessionStats = {}, leadName = null, projectTodos = [] }: DashboardViewProps) {
+export default function DashboardView({ team, onTaskSelect, onAgentSelect, onTeamUpdate, pendingHumanAgents = [], pendingHumanDetails = [], inboxSummary = {}, sessionStats = {}, leadName = null, projectTodos = [], teamId }: DashboardViewProps) {
+  const { t } = useTranslation();
   const members = team.config?.members ?? [];
   const [sortMode, setSortMode] = useState<SortMode>('default');
+
+  const SORT_OPTS: { id: SortMode; label: string; tooltip: string }[] = [
+    { id: 'default',    label: t('dashboard.sort_default'),    tooltip: t('dashboard.sort_default_tooltip') },
+    { id: 'workload',   label: t('dashboard.sort_workload'),   tooltip: t('dashboard.sort_workload_tooltip') },
+    { id: 'completion', label: t('dashboard.sort_completion'), tooltip: t('dashboard.sort_completion_tooltip') },
+    { id: 'name',       label: t('dashboard.sort_name'),       tooltip: t('dashboard.sort_name_tooltip') },
+  ];
 
   const sortedMembers = useMemo(
     () => sortMembers(members, team.tasks, sortMode),
@@ -81,11 +84,11 @@ export default function DashboardView({ team, onTaskSelect, onAgentSelect, onTea
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {/* Roster header with sort controls */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: '9px', letterSpacing: '0.15em', color: 'var(--text-muted)' }}>
-              AGENT ROSTER // {members.length} UNIT{members.length !== 1 ? 'S' : ''}
+            <span style={{ fontSize: '9px', letterSpacing: '0.15em', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+              {t('dashboard.roster', { count: members.length })}
             </span>
             <div style={{ display: 'flex', gap: '2px', alignItems: 'center' }}>
-              <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em', marginRight: '4px' }}>SORT</span>
+              <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em', marginRight: '4px', textTransform: 'uppercase' }}>{t('dashboard.sort')}</span>
               {SORT_OPTS.map(opt => {
                 const isActive = sortMode === opt.id;
                 return (
@@ -103,6 +106,7 @@ export default function DashboardView({ team, onTaskSelect, onAgentSelect, onTea
                       borderRadius: '2px',
                       cursor: 'pointer',
                       transition: 'all 0.1s',
+                      textTransform: 'uppercase',
                     }}
                     onMouseEnter={e => { if (!isActive) e.currentTarget.style.color = 'var(--text-secondary)'; }}
                     onMouseLeave={e => { if (!isActive) e.currentTarget.style.color = 'var(--text-muted)'; }}
@@ -133,8 +137,10 @@ export default function DashboardView({ team, onTaskSelect, onAgentSelect, onTea
                   sortRank={sortMode !== 'default' ? idx + 1 : undefined}
                   awaitingInput={pendingHumanAgents.includes(member.name)}
                   blockingTool={blockingDetail?.toolName}
+                  blockingDetail={blockingDetail?.detail}
                   isLead={member.name === leadName}
                   unreadCount={unreadCount}
+                  teamId={teamId}
                 />
               );
             })}
@@ -142,7 +148,7 @@ export default function DashboardView({ team, onTaskSelect, onAgentSelect, onTea
         </div>
       ) : (
         <div style={{ background: 'var(--surface-0)', border: '1px solid var(--border)', borderRadius: '4px' }}>
-          <CRTEmptyState title="NO AGENTS" subtitle="Waiting for team members to connect..." />
+          <CRTEmptyState title={t('dashboard.no_agents')} subtitle={t('dashboard.no_agents_sub')} />
         </div>
       )}
 
@@ -165,6 +171,7 @@ export default function DashboardView({ team, onTaskSelect, onAgentSelect, onTea
 // ─── Inline Session Todo List ─────────────────────────────────────────────────
 
 function SessionTodoList({ sessions }: { sessions: SessionTodo[] }) {
+  const { t } = useTranslation();
   const totalActive = sessions.reduce(
     (sum, s) => sum + s.items.filter(i => i.status === 'in_progress').length, 0
   );
@@ -183,8 +190,8 @@ function SessionTodoList({ sessions }: { sessions: SessionTodo[] }) {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         background: 'var(--surface-1)',
       }}>
-        <span style={{ fontSize: '9px', letterSpacing: '0.15em', color: 'var(--text-muted)' }}>
-          SESSION TODOS
+        <span style={{ fontSize: '9px', letterSpacing: '0.15em', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+          {t('dashboard.session_todos')}
         </span>
         {totalActive > 0 && (
           <span style={{
@@ -193,8 +200,9 @@ function SessionTodoList({ sessions }: { sessions: SessionTodo[] }) {
             border: '1px solid var(--amber-dim)',
             borderRadius: '2px', padding: '1px 6px',
             fontFamily: 'var(--font-mono)', letterSpacing: '0.08em',
+            textTransform: 'uppercase',
           }}>
-            {totalActive} ACTIVE
+            {totalActive} {t('status.active')}
           </span>
         )}
       </div>
@@ -217,14 +225,14 @@ function SessionTodoList({ sessions }: { sessions: SessionTodo[] }) {
                 fontSize: '8px', padding: '1px 5px',
                 color: 'var(--amber)', background: 'var(--amber-glow)',
                 border: '1px solid var(--amber-dim)', borderRadius: '2px',
-                letterSpacing: '0.1em',
-              }}>LEAD</span>
+                letterSpacing: '0.1em', textTransform: 'uppercase',
+              }}>{t('status.lead')}</span>
             )}
             <span style={{ color: 'var(--text-muted)', opacity: 0.5, fontSize: '8px' }}>
               {session.cwd}
             </span>
             <span style={{ marginLeft: 'auto', opacity: 0.6 }}>
-              {session.items.filter(i => i.status === 'completed').length}/{session.items.length} done
+              {t('dashboard.done_count', { done: session.items.filter(i => i.status === 'completed').length, total: session.items.length })}
             </span>
           </div>
 

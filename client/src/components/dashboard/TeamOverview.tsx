@@ -1,8 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
-import { BookOpen, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { BookOpen, X, RefreshCw, ChevronDown, ChevronRight } from 'lucide-react';
 import type { TeamDetail, AgentSessionStats } from '../../types';
 import MarkdownContent, { inlineRender } from '../shared/MarkdownContent';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
+import { useSummary } from '../../hooks/useSummary';
 
 interface TeamOverviewProps {
   team: TeamDetail;
@@ -10,8 +12,14 @@ interface TeamOverviewProps {
 }
 
 export default function TeamOverview({ team, sessionStats = {} }: TeamOverviewProps) {
+  const { t } = useTranslation();
   const [guideOpen, setGuideOpen] = useState(false);
   const [descExpanded, setDescExpanded] = useState(false);
+  const [summaryOpen, setSummaryOpen] = useState(() => {
+    try { return localStorage.getItem('exec-summary-open') !== 'false'; } catch { return true; }
+  });
+
+  const { data: summary, loading: summaryLoading, refreshing: summaryRefreshing, refresh: refreshSummary } = useSummary(team.id);
 
   const { stats } = team;
 
@@ -36,10 +44,10 @@ export default function TeamOverview({ team, sessionStats = {} }: TeamOverviewPr
   const blockedPct = (blockedCount / total) * 100;
 
   const bars = [
-    { label: 'COMPLETED', count: stats.completed, pct: completedPct, color: 'var(--color-completed)', glow: 'var(--phosphor-glow-strong)' },
-    { label: 'ACTIVE', count: stats.inProgress, pct: inProgressPct, color: 'var(--color-in-progress)', glow: 'var(--amber-glow)' },
-    { label: 'PENDING', count: stats.pending, pct: pendingPct, color: 'var(--color-pending)', glow: 'transparent' },
-    { label: 'BLOCKED', count: blockedCount, pct: blockedPct, color: 'var(--color-blocked)', glow: 'var(--crimson-glow)' },
+    { key: 'completed', label: t('overview.completed'), count: stats.completed, pct: completedPct, color: 'var(--color-completed)', glow: 'var(--phosphor-glow-strong)' },
+    { key: 'active', label: t('overview.active'), count: stats.inProgress, pct: inProgressPct, color: 'var(--color-in-progress)', glow: 'var(--amber-glow)' },
+    { key: 'pending', label: t('overview.pending'), count: stats.pending, pct: pendingPct, color: 'var(--color-pending)', glow: 'transparent' },
+    { key: 'blocked', label: t('overview.blocked'), count: blockedCount, pct: blockedPct, color: 'var(--color-blocked)', glow: 'var(--crimson-glow)' },
   ];
 
   const overallPct = Math.round(completedPct);
@@ -53,10 +61,9 @@ export default function TeamOverview({ team, sessionStats = {} }: TeamOverviewPr
         padding: '20px',
         position: 'relative',
         overflow: 'hidden',
-        display: 'grid',
-        gridTemplateColumns: '1fr auto',
-        columnGap: '32px',
-        alignItems: 'center',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0',
       }}>
         {/* Corner decorations */}
         <CornerMark pos="tl" />
@@ -64,11 +71,11 @@ export default function TeamOverview({ team, sessionStats = {} }: TeamOverviewPr
         <CornerMark pos="bl" />
         <CornerMark pos="br" />
 
-        {/* Left: label + name + bar + legend */}
+        {/* Left: label + name + description */}
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
-            <div style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.15em' }}>
-              SYS // OVERVIEW
+            <div style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
+              {t('overview.sys_overview')}
             </div>
             {/* GUIDE button */}
             <button
@@ -85,6 +92,7 @@ export default function TeamOverview({ team, sessionStats = {} }: TeamOverviewPr
                 fontSize: '8px', letterSpacing: '0.1em',
                 color: 'var(--text-muted)',
                 transition: 'all 0.15s',
+                textTransform: 'uppercase',
               }}
               onMouseEnter={e => {
                 e.currentTarget.style.borderColor = 'var(--phosphor)';
@@ -98,7 +106,7 @@ export default function TeamOverview({ team, sessionStats = {} }: TeamOverviewPr
               }}
             >
               <BookOpen size={9} />
-              GUIDE
+              {t('overview.guide')}
             </button>
           </div>
           <div style={{
@@ -114,9 +122,9 @@ export default function TeamOverview({ team, sessionStats = {} }: TeamOverviewPr
             <div style={{ marginBottom: '14px', maxWidth: '480px' }}>
               <div style={{
                 fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.15em',
-                marginBottom: '4px',
+                marginBottom: '4px', textTransform: 'uppercase',
               }}>
-                MISSION
+                {t('overview.mission')}
               </div>
               <div
                 onClick={() => setDescExpanded(prev => !prev)}
@@ -137,37 +145,57 @@ export default function TeamOverview({ team, sessionStats = {} }: TeamOverviewPr
               </div>
             </div>
           )}
+        </div>
 
-          {/* Stacked bar */}
-          <div style={{ marginBottom: '12px', maxWidth: '400px' }}>
-            <div style={{ display: 'flex', height: '8px', borderRadius: '2px', overflow: 'hidden', background: 'var(--surface-2)', gap: '1px' }}>
-              {bars.filter(b => b.count > 0).map(bar => (
-                <div key={bar.label} style={{
-                  width: `${bar.pct}%`, background: bar.color,
-                  boxShadow: `0 0 6px ${bar.glow}`,
-                  transition: 'width 0.6s ease-out',
-                  animation: bar.label === 'ACTIVE' ? 'status-pulse 2s ease-in-out infinite' : 'none',
-                }} />
-              ))}
+        {/* Task progress row: bar + legend (left) + percentage (right) */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
+          <div style={{ flex: 1 }}>
+            {/* Stacked bar */}
+            <div style={{ marginBottom: '12px', maxWidth: '400px' }}>
+              <div style={{ display: 'flex', height: '8px', borderRadius: '2px', overflow: 'hidden', background: 'var(--surface-2)', gap: '1px' }}>
+                {bars.filter(b => b.count > 0).map(bar => (
+                  <div key={bar.key} style={{
+                    width: `${bar.pct}%`, background: bar.color,
+                    boxShadow: `0 0 6px ${bar.glow}`,
+                    transition: 'width 0.6s ease-out',
+                    animation: bar.key === 'active' ? 'status-pulse 2s ease-in-out infinite' : 'none',
+                  }} />
+                ))}
+              </div>
             </div>
-          </div>
 
-          {/* Legend — 4 items in a row */}
-          <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
-            {bars.map(bar => (
-              <div key={bar.label} style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
-                <div style={{
-                  width: '8px', height: '8px', borderRadius: '1px',
-                  background: bar.count > 0 ? bar.color : 'var(--surface-3)',
-                  boxShadow: bar.count > 0 ? `0 0 4px ${bar.glow}` : 'none',
-                }} />
-                <span style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.08em' }}>{bar.label}</span>
-                <span style={{ fontSize: '12px', fontWeight: 600, color: bar.count > 0 ? bar.color : 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
-                  {bar.count}
+            {/* Legend — 4 items in a row */}
+            <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+              {bars.map(bar => (
+                <div key={bar.key} style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+                  <div style={{
+                    width: '8px', height: '8px', borderRadius: '1px',
+                    background: bar.count > 0 ? bar.color : 'var(--surface-3)',
+                    boxShadow: bar.count > 0 ? `0 0 4px ${bar.glow}` : 'none',
+                  }} />
+                  <span style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{bar.label}</span>
+                  <span style={{ fontSize: '12px', fontWeight: 600, color: bar.count > 0 ? bar.color : 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+                    {bar.count}
                 </span>
               </div>
             ))}
           </div>
+          </div>
+
+          {/* Right: big completion number — vertically centered with bar + legend */}
+          <div style={{ textAlign: 'right', flexShrink: 0 }}>
+            <div style={{
+              fontSize: '52px', fontWeight: 700, lineHeight: 1,
+              color: overallPct === 100 ? 'var(--phosphor)' : 'var(--text-primary)',
+              textShadow: overallPct === 100 ? '0 0 30px var(--phosphor-glow-strong)' : 'none',
+              fontFamily: 'var(--font-mono)',
+              transition: 'all 0.5s',
+            }}>
+              {overallPct}
+            </div>
+            <div style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{t('overview.pct_done')}</div>
+          </div>
+        </div>
 
           {/* Session stats — team-wide aggregated */}
           {aggregatedStats && (
@@ -176,35 +204,34 @@ export default function TeamOverview({ team, sessionStats = {} }: TeamOverviewPr
               marginTop: '14px', paddingTop: '12px',
               borderTop: '1px solid var(--border)',
             }}>
-              <span style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.15em', flexShrink: 0 }}>
+              <span style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.15em', flexShrink: 0, textTransform: 'uppercase' }}>
                 SESSION
               </span>
-              <StatCell label="IN" value={fmtTokens(aggregatedStats.inputTokens)} color="var(--ice)" title={`Total input tokens: ${aggregatedStats.inputTokens.toLocaleString()}`} />
-              <StatCell label="OUT" value={fmtTokens(aggregatedStats.outputTokens)} color="var(--phosphor)" title={`Total output tokens: ${aggregatedStats.outputTokens.toLocaleString()}`} />
+              <StatCell label={t('overview.in_tokens')} value={fmtTokens(aggregatedStats.inputTokens)} color="var(--ice)" title={`Total input tokens: ${aggregatedStats.inputTokens.toLocaleString()}`} />
+              <StatCell label={t('overview.out_tokens')} value={fmtTokens(aggregatedStats.outputTokens)} color="var(--phosphor)" title={`Total output tokens: ${aggregatedStats.outputTokens.toLocaleString()}`} />
               {aggregatedStats.cacheReadTokens > 0 && (
-                <StatCell label="CACHE" value={fmtTokens(aggregatedStats.cacheReadTokens)} color="var(--text-secondary)" title={`Cache read tokens: ${aggregatedStats.cacheReadTokens.toLocaleString()}`} />
+                <StatCell label={t('overview.cache_tokens')} value={fmtTokens(aggregatedStats.cacheReadTokens)} color="var(--text-secondary)" title={`Cache read tokens: ${aggregatedStats.cacheReadTokens.toLocaleString()}`} />
               )}
-              <StatCell label="MSG" value={String(aggregatedStats.messageCount)} color="var(--text-secondary)" title={`Total API messages across ${aggregatedStats.agentCount} agents`} />
+              <StatCell label={t('overview.messages')} value={String(aggregatedStats.messageCount)} color="var(--text-secondary)" title={`Total API messages across ${aggregatedStats.agentCount} agents`} />
               {aggregatedStats.maxDurationMs > 0 && (
-                <StatCell label="TIME" value={fmtDuration(aggregatedStats.maxDurationMs)} color="var(--text-secondary)" title="Longest agent session duration" />
+                <StatCell label={t('overview.time')} value={fmtDuration(aggregatedStats.maxDurationMs)} color="var(--text-secondary)" title="Longest agent session duration" />
               )}
             </div>
           )}
-        </div>
 
-        {/* Right: big completion number */}
-        <div style={{ textAlign: 'right', flexShrink: 0 }}>
-          <div style={{
-            fontSize: '52px', fontWeight: 700, lineHeight: 1,
-            color: overallPct === 100 ? 'var(--phosphor)' : 'var(--text-primary)',
-            textShadow: overallPct === 100 ? '0 0 30px var(--phosphor-glow-strong)' : 'none',
-            fontFamily: 'var(--font-mono)',
-            transition: 'all 0.5s',
-          }}>
-            {overallPct}
-          </div>
-          <div style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>% DONE</div>
-        </div>
+          {/* D0: Executive Summary */}
+          <ExecSummaryBlock
+            data={summary}
+            loading={summaryLoading}
+            refreshing={summaryRefreshing}
+            open={summaryOpen}
+            onToggle={() => {
+              const next = !summaryOpen;
+              setSummaryOpen(next);
+              try { localStorage.setItem('exec-summary-open', String(next)); } catch { /* ignore */ }
+            }}
+            onRefresh={refreshSummary}
+          />
       </div>
 
       {/* Team Guide panel */}
@@ -307,7 +334,7 @@ function TeamGuidePanel({ teamId, teamName, onClose }: { teamId: string; teamNam
 function StatCell({ label, value, color, title }: { label: string; value: string; color: string; title?: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }} title={title}>
-      <span style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>{label}</span>
+      <span style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{label}</span>
       <span style={{ fontSize: '11px', fontWeight: 600, color, fontFamily: 'var(--font-mono)', letterSpacing: '0.04em' }}>
         {value}
       </span>
@@ -347,4 +374,120 @@ function CornerMark({ pos }: { pos: 'tl' | 'tr' | 'bl' | 'br' }) {
   if (pos === 'bl') { style.bottom = 0; style.left = 0; style.borderWidth = '0 0 1px 1px'; }
   if (pos === 'br') { style.bottom = 0; style.right = 0; style.borderWidth = '0 1px 1px 0'; }
   return <div style={style} />;
+}
+
+// ─── D0: Exec Summary Block ───────────────────────────────────────────────────
+
+import type { ExecSummaryResponse } from '../../types';
+
+interface ExecSummaryBlockProps {
+  data: ExecSummaryResponse | null;
+  loading: boolean;
+  refreshing: boolean;
+  open: boolean;
+  onToggle: () => void;
+  onRefresh: () => void;
+}
+
+function ExecSummaryBlock({ data, loading, refreshing, open, onToggle, onRefresh }: ExecSummaryBlockProps) {
+  const { t } = useTranslation();
+
+  return (
+    <div style={{
+      marginTop: '14px',
+      borderTop: '1px solid var(--border)',
+      paddingTop: '10px',
+    }}>
+      {/* Header row */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <button
+          onClick={onToggle}
+          style={{
+            display: 'flex', alignItems: 'center', gap: '5px',
+            background: 'transparent', border: 'none', cursor: 'pointer',
+            padding: 0, flex: 1,
+          }}
+        >
+          {open
+            ? <ChevronDown size={10} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+            : <ChevronRight size={10} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+          }
+          <span style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.15em', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>
+            {t('overview.exec_summary')}
+          </span>
+          {data?.isAIGenerated && (
+            <span style={{
+              fontSize: '7px', letterSpacing: '0.08em', color: 'var(--ice)',
+              border: '1px solid var(--ice)', borderRadius: '2px', padding: '0 4px',
+              opacity: 0.7, fontFamily: 'var(--font-mono)',
+            }}>AI</span>
+          )}
+          {data?.isStale && (
+            <span style={{ fontSize: '7px', color: 'var(--amber)', opacity: 0.7, fontFamily: 'var(--font-mono)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+              {t('overview.stale')}
+            </span>
+          )}
+        </button>
+
+        <button
+          onClick={e => { e.stopPropagation(); onRefresh(); }}
+          disabled={refreshing}
+          title={t('overview.refresh')}
+          style={{
+            background: 'transparent', border: 'none', cursor: refreshing ? 'default' : 'pointer',
+            color: 'var(--text-muted)', padding: '2px', display: 'flex', alignItems: 'center',
+            opacity: refreshing ? 0.4 : 1,
+          }}
+          onMouseEnter={e => { if (!refreshing) (e.currentTarget as HTMLElement).style.color = 'var(--phosphor)'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)'; }}
+        >
+          <RefreshCw size={9} style={{ animation: refreshing ? 'spin 1s linear infinite' : 'none' }} />
+        </button>
+
+        {data?.generatedAt && (
+          <span style={{ fontSize: '7px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', opacity: 0.5 }}>
+            {new Date(data.generatedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}
+          </span>
+        )}
+      </div>
+
+      {/* Content */}
+      {open && (
+        <div style={{ marginTop: '8px', paddingLeft: '15px' }}>
+          {(loading && !data) ? (
+            <div style={{ fontSize: '9px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+              {t('overview.generating')}
+            </div>
+          ) : data ? (
+            <SummaryContent text={data.summary} />
+          ) : null}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SummaryContent({ text }: { text: string }) {
+  const lines = text.split('\n').filter(Boolean);
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+      {lines.map((line, i) => {
+        const isBullet = line.startsWith('- ');
+        const content = isBullet ? line.slice(2) : line;
+        return (
+          <div key={i} style={{ display: 'flex', gap: '6px', alignItems: 'flex-start' }}>
+            {isBullet && (
+              <span style={{ color: 'var(--phosphor)', fontSize: '9px', flexShrink: 0, marginTop: '1px', opacity: 0.6 }}>▸</span>
+            )}
+            <span style={{
+              fontSize: '10px', color: 'var(--text-secondary)', lineHeight: 1.5,
+              fontFamily: 'var(--font-mono)', letterSpacing: '0.02em',
+            }}>
+              {inlineRender(content)}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
 }

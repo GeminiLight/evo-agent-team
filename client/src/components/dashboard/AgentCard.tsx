@@ -1,4 +1,8 @@
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import type { TeamMember, Task } from '../../types';
+import RespondModal from '../shared/RespondModal';
 
 interface AgentCardProps {
   member: TeamMember;
@@ -7,8 +11,10 @@ interface AgentCardProps {
   sortRank?: number;
   awaitingInput?: boolean;
   blockingTool?: string;
+  blockingDetail?: string;
   isLead?: boolean;
   unreadCount?: number;
+  teamId?: string;
 }
 
 const AGENT_COLOR_MAP: Record<string, string> = {
@@ -27,15 +33,19 @@ function agentAccentColor(color?: string): string {
   return AGENT_COLOR_MAP[color.toLowerCase()] ?? color;
 }
 
-function blockingLabel(toolName?: string): string {
-  if (!toolName) return '⚠ INPUT';
-  if (toolName === 'Bash') return '⚠ BASH';
-  if (toolName === 'AskUserQuestion') return '⚠ INPUT';
-  if (toolName === 'Edit' || toolName === 'Write' || toolName === 'NotebookEdit') return '⚠ EDIT';
-  return '⚠ INPUT';
+function blockingLabel(toolName: string | undefined, t: TFunction): string {
+  if (!toolName) return t('agent_card.input');
+  if (toolName === 'Bash') return t('agent_card.bash');
+  if (toolName === 'AskUserQuestion') return t('agent_card.input');
+  if (toolName === 'Edit' || toolName === 'Write' || toolName === 'NotebookEdit') return t('agent_card.edit');
+  return t('agent_card.input');
 }
 
-export default function AgentCard({ member, tasks, onAgentSelect, sortRank, awaitingInput = false, blockingTool, isLead = false, unreadCount = 0 }: AgentCardProps) {
+export default function AgentCard({ member, tasks, onAgentSelect, sortRank, awaitingInput = false, blockingTool, blockingDetail, isLead = false, unreadCount = 0, teamId }: AgentCardProps) {
+  const { t } = useTranslation();
+  const [respondOpen, setRespondOpen] = useState(false);
+  const isDemo = teamId === 'demo-team' || !teamId;
+
   const assignedTasks = tasks.filter(t => t.owner === member.name);
   const activeTasks = assignedTasks.filter(t => t.status === 'in_progress');
   const completedTasks = assignedTasks.filter(t => t.status === 'completed');
@@ -98,8 +108,9 @@ export default function AgentCard({ member, tasks, onAgentSelect, sortRank, awai
           border: '1px solid rgba(255,140,66,0.35)',
           borderRadius: '2px',
           fontFamily: 'var(--font-mono)',
+          textTransform: 'uppercase',
         }}>
-          LEAD
+          {t('status.lead')}
         </div>
       )}
 
@@ -182,8 +193,8 @@ export default function AgentCard({ member, tasks, onAgentSelect, sortRank, awai
             boxShadow: awaitingInput ? '0 0 5px var(--amber)' : isActive ? `0 0 5px ${accent}` : 'none',
             animation: (awaitingInput || isActive) ? 'status-pulse 2s ease-in-out infinite' : 'none',
           }} />
-          <span style={{ fontSize: '8px', color: awaitingInput ? 'var(--amber)' : isActive ? accent : 'var(--text-muted)', letterSpacing: '0.1em' }}>
-            {awaitingInput ? blockingLabel(blockingTool) : isActive ? 'RUN' : 'IDLE'}
+          <span style={{ fontSize: '8px', color: awaitingInput ? 'var(--amber)' : isActive ? accent : 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+            {awaitingInput ? blockingLabel(blockingTool, t) : isActive ? t('status.run') : t('status.idle')}
           </span>
         </div>
       </div>
@@ -207,7 +218,7 @@ export default function AgentCard({ member, tasks, onAgentSelect, sortRank, awai
           color: 'var(--text-muted)', minHeight: '18px',
           display: 'flex', alignItems: 'center',
         }}>
-          <span>— awaiting assignment</span>
+          <span>{t('agent_card.awaiting_assignment')}</span>
         </div>
       )}
 
@@ -245,22 +256,44 @@ export default function AgentCard({ member, tasks, onAgentSelect, sortRank, awai
             flexShrink: 0,
           }} />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{
-              fontSize: '9px', fontWeight: 700, color: 'var(--amber)',
-              letterSpacing: '0.1em',
-            }}>
-              AWAITING INPUT
+            <div style={{ fontSize: '9px', fontWeight: 700, color: 'var(--amber)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+              {t('agent_card.awaiting_input')}
             </div>
             {blockingTool && (
-              <div style={{
-                fontSize: '8px', color: 'var(--text-muted)',
-                letterSpacing: '0.06em', marginTop: '1px',
-              }}>
+              <div style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.06em', marginTop: '1px' }}>
                 {blockingTool}
               </div>
             )}
           </div>
+          <button
+            onClick={e => { e.stopPropagation(); if (!isDemo) setRespondOpen(true); }}
+            title={isDemo ? t('agent_card.demo_unavailable') : t('agent_card.respond_to', { name: member.name })}
+            style={{
+              padding: '3px 10px', fontSize: '8px', letterSpacing: '0.1em', fontWeight: 700,
+              fontFamily: 'var(--font-mono)',
+              background: isDemo ? 'transparent' : 'rgba(245,166,35,0.15)',
+              color: isDemo ? 'var(--text-muted)' : 'var(--amber)',
+              border: `1px solid ${isDemo ? 'var(--border)' : 'var(--amber-dim)'}`,
+              borderRadius: '2px',
+              cursor: isDemo ? 'default' : 'pointer',
+              flexShrink: 0,
+              textTransform: 'uppercase',
+            }}
+          >
+            {t('agent_card.respond')}
+          </button>
         </div>
+      )}
+
+      {/* Respond modal */}
+      {respondOpen && teamId && (
+        <RespondModal
+          agentName={member.name}
+          toolName={blockingTool}
+          detail={blockingDetail}
+          teamId={teamId}
+          onClose={() => setRespondOpen(false)}
+        />
       )}
     </div>
   );

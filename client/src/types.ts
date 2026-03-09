@@ -146,6 +146,15 @@ export interface TeamDetail {
   };
 }
 
+// D0: Executive Summary
+export interface ExecSummaryResponse {
+  teamId: string;
+  summary: string;
+  generatedAt: string;
+  isAIGenerated: boolean;
+  isStale: boolean;
+}
+
 // F1: WebSocket
 export type WsMessageType = 'teams_update' | 'team_detail_update' | 'ping';
 export interface WsMessage {

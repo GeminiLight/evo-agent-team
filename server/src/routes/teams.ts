@@ -573,6 +573,38 @@ router.get('/teams/:id/timeline', async (req, res) => {
   res.json({ teamId: id, events: getTimeline(id) });
 });
 
+// ── Helper: mark feedback entries as processed ──────────────────────────────
+async function markFeedbackProcessed(teamId: string, entryIds: string[]): Promise<number> {
+  const feedbackDir = path.join(config.teamsDir, teamId, 'feedback');
+  const idSet = new Set(entryIds);
+  let marked = 0;
+  try {
+    const files = await fs.readdir(feedbackDir);
+    for (const file of files.filter(f => f.endsWith('.jsonl'))) {
+      const filePath = path.join(feedbackDir, file);
+      const raw = await fs.readFile(filePath, 'utf-8');
+      const lines = raw.split('\n').filter(Boolean);
+      let changed = false;
+      const updated = lines.map(line => {
+        try {
+          const entry = JSON.parse(line);
+          if (idSet.has(entry.id) && !entry.processedAt) {
+            entry.processedAt = new Date().toISOString();
+            changed = true;
+            marked++;
+            return JSON.stringify(entry);
+          }
+        } catch { /* skip */ }
+        return line;
+      });
+      if (changed) {
+        await fs.writeFile(filePath, updated.map(l => l + '\n').join(''), 'utf-8');
+      }
+    }
+  } catch { /* dir may not exist */ }
+  return marked;
+}
+
 // GET /api/teams/:id/feedback  — list all feedback entries across all agents
 router.get('/teams/:id/feedback', async (req, res) => {
   const { id } = req.params;
@@ -674,6 +706,7 @@ router.post('/teams/:id/preferences/generate', async (req, res) => {
 
   const feedbackDir = path.join(config.teamsDir, id, 'feedback');
   const byAgent: Record<string, string[]> = {};
+  const allConsumedIds: string[] = [];
 
   try {
     const files = await fs.readdir(feedbackDir);
@@ -681,15 +714,18 @@ router.post('/teams/:id/preferences/generate', async (req, res) => {
       const agentName = file.replace('.jsonl', '');
       const raw = await fs.readFile(path.join(feedbackDir, file), 'utf-8');
       const corrections: string[] = [];
+      const entryIds: string[] = [];
       for (const line of raw.split('\n').filter(Boolean)) {
         try {
           const entry = JSON.parse(line);
-          if ((entry.type === 'correction' || entry.type === 'bookmark') && entry.content) {
+          if ((entry.type === 'correction' || entry.type === 'bookmark') && entry.content && !entry.processedAt) {
             corrections.push(entry.content);
+            if (entry.id) entryIds.push(entry.id);
           }
         } catch { /* skip */ }
       }
       if (corrections.length > 0) byAgent[agentName] = corrections;
+      if (entryIds.length > 0) allConsumedIds.push(...entryIds);
     }
   } catch {
     res.json({ ok: true, preferences: {} });
@@ -747,7 +783,240 @@ Return ONLY the rules, one per line, no numbering or bullets.`;
   await fs.mkdir(path.dirname(prefPath), { recursive: true });
   await fs.writeFile(prefPath, JSON.stringify(preferences, null, 2), 'utf-8');
 
+  // Mark all consumed feedback entries as processed
+  if (allConsumedIds.length > 0) {
+    await markFeedbackProcessed(id, allConsumedIds);
+  }
+
   res.json({ ok: true, preferences });
+});
+
+// POST /api/teams/:id/feedback/analyze  — LLM: analyze feedback and suggest preference/guide updates
+router.post('/teams/:id/feedback/analyze', async (req, res) => {
+  const { id } = req.params;
+  if (id === 'demo-team') {
+    res.status(403).json({ error: 'Not available in demo mode' });
+    return;
+  }
+
+  const apiKey = process.env.LLM_API_KEY;
+  if (!apiKey) {
+    console.warn('[feedback/analyze] LLM_API_KEY not set, skipping analysis');
+    res.json({ suggestions: [] });
+    return;
+  }
+
+  // 1. Read all feedback
+  const feedbackDir = path.join(config.teamsDir, id, 'feedback');
+  const allFeedback: Array<{ agentName: string; type: string; content: string; createdAt: string; context?: { messageContent?: string } }> = [];
+  try {
+    const files = await fs.readdir(feedbackDir);
+    for (const file of files.filter(f => f.endsWith('.jsonl'))) {
+      const raw = await fs.readFile(path.join(feedbackDir, file), 'utf-8');
+      for (const line of raw.split('\n').filter(Boolean)) {
+        try { allFeedback.push(JSON.parse(line)); } catch { /* skip */ }
+      }
+    }
+  } catch { /* no feedback dir */ }
+
+  if (allFeedback.length === 0) {
+    res.json({ suggestions: [] });
+    return;
+  }
+
+  // 2. Read current preferences
+  const prefPath = path.join(config.teamsDir, id, 'preferences.json');
+  let preferences: Record<string, string[]> = {};
+  try { preferences = JSON.parse(await fs.readFile(prefPath, 'utf-8')); } catch { /* none */ }
+
+  // 3. Read TEAM_GUIDE.md
+  const configPath = path.join(config.teamsDir, id, 'config.json');
+  let guideContent = '(none)';
+  try {
+    const teamConfig = JSON.parse(await fs.readFile(configPath, 'utf-8'));
+    const cwds: string[] = (teamConfig.members ?? []).map((m: { cwd?: string }) => m.cwd).filter(Boolean);
+    for (const cwd of cwds) {
+      try {
+        guideContent = await fs.readFile(path.join(cwd, 'TEAM_GUIDE.md'), 'utf-8');
+        break;
+      } catch { /* try next */ }
+    }
+  } catch { /* no config */ }
+
+  // 4. Call LLM
+  const baseURL = process.env.LLM_BASE_URL ?? 'http://v2.open.venus.oa.com/llmproxy/v1';
+  const model = process.env.LLM_MODEL ?? 'claude-sonnet-4-6';
+
+  const feedbackFormatted = allFeedback.map((f, i) => {
+    let line = `${i + 1}. [${f.type}] ${f.agentName}: "${f.content ?? '(no content)'}"`;
+    if (f.context?.messageContent) {
+      line += `\n   Agent output: "${f.context.messageContent.slice(0, 300)}"`;
+    }
+    return line;
+  }).join('\n');
+
+  const { latestEntry } = req.body as { latestEntry?: { agentName: string; type: string; content: string; context?: { messageContent?: string } } };
+
+  const prompt = `You are analyzing user feedback about an AI agent team.
+Each feedback entry may include the agent's actual output that was evaluated.
+Use this context to understand what specific behavior triggered the feedback.
+
+CURRENT TEAM GUIDE:
+${guideContent}
+
+CURRENT PREFERENCES:
+${JSON.stringify(preferences, null, 2)}
+
+ALL FEEDBACK HISTORY:
+${feedbackFormatted}
+
+${latestEntry ? `LATEST FEEDBACK ENTRY:\n[${latestEntry.type}] ${latestEntry.agentName}: "${latestEntry.content}"${latestEntry.context?.messageContent ? `\nAgent output: "${latestEntry.context.messageContent.slice(0, 300)}"` : ''}` : ''}
+
+Based on this feedback, suggest updates to the team guide or agent-specific preferences.
+- Only suggest changes that are clearly supported by the feedback
+- Prefer agent-specific preferences for individual behavior corrections
+- Use TEAM_GUIDE for cross-cutting rules that apply to all agents
+- Do NOT suggest rules that already exist in current preferences
+
+Return a JSON array of suggestions:
+[{"id":"sug-1","target":"TEAM_GUIDE"|"agentName","action":"add"|"remove","rule":"...","reason":"..."}]
+
+Return ONLY valid JSON, no other text.`;
+
+  try {
+    const OpenAI = (await import('openai')).default;
+    const client = new OpenAI({ baseURL, apiKey });
+
+    const completion = await client.chat.completions.create({
+      model,
+      messages: [{ role: 'user', content: prompt }],
+      max_tokens: 800,
+    });
+
+    const text = completion.choices[0]?.message?.content ?? '[]';
+    // Extract JSON array from response (handle possible markdown wrapping)
+    const jsonMatch = text.match(/\[[\s\S]*\]/);
+    const suggestions = jsonMatch ? JSON.parse(jsonMatch[0]) : [];
+    res.json({ suggestions });
+  } catch (err) {
+    console.error('[feedback/analyze] LLM error:', (err as Error).message);
+    res.json({ suggestions: [] });
+  }
+});
+
+// POST /api/teams/:id/feedback/apply  — apply accepted suggestions to preferences/TEAM_GUIDE
+router.post('/teams/:id/feedback/apply', async (req, res) => {
+  const { id } = req.params;
+  if (id === 'demo-team') {
+    res.status(403).json({ error: 'Not available in demo mode' });
+    return;
+  }
+
+  const { accepted, sourceEntryId } = req.body as {
+    accepted: Array<{ id: string; target: string; action: string; rule: string; reason: string }>;
+    sourceEntryId?: string;
+  };
+
+  if (!Array.isArray(accepted) || accepted.length === 0) {
+    res.json({ ok: true, preferences: {}, guideUpdated: false });
+    return;
+  }
+
+  // Read current preferences
+  const prefPath = path.join(config.teamsDir, id, 'preferences.json');
+  let preferences: Record<string, string[]> = {};
+  try { preferences = JSON.parse(await fs.readFile(prefPath, 'utf-8')); } catch { /* none */ }
+
+  let guideUpdated = false;
+  const promptsUpdated: string[] = [];
+
+  // Read team config (needed for TEAM_GUIDE path + agent prompts)
+  const configPath = path.join(config.teamsDir, id, 'config.json');
+  let teamConfig: TeamConfig | null = null;
+  let guidePath = '';
+  try {
+    teamConfig = JSON.parse(await fs.readFile(configPath, 'utf-8'));
+    const cwds: string[] = (teamConfig!.members ?? []).map((m: { cwd?: string }) => m.cwd).filter(Boolean) as string[];
+    if (cwds.length > 0) guidePath = path.join(cwds[0], 'TEAM_GUIDE.md');
+  } catch { /* no config */ }
+
+  for (const sug of accepted) {
+    if (sug.target === 'TEAM_GUIDE') {
+      // Apply to TEAM_GUIDE.md
+      if (!guidePath) continue;
+      let guideContent = '';
+      try { guideContent = await fs.readFile(guidePath, 'utf-8'); } catch { /* new file */ }
+
+      if (sug.action === 'add') {
+        if (guideContent.includes('## Preferences')) {
+          guideContent = guideContent.replace(
+            /(## Preferences\n)/,
+            `$1- ${sug.rule}\n`
+          );
+        } else {
+          guideContent += `\n\n## Preferences\n- ${sug.rule}\n`;
+        }
+      } else if (sug.action === 'remove') {
+        guideContent = guideContent.split('\n').filter(l => !l.includes(sug.rule)).join('\n');
+      }
+
+      await fs.writeFile(guidePath, guideContent, 'utf-8');
+      guideUpdated = true;
+    } else {
+      // Apply to agent preferences + agent prompt
+      const agent = sug.target;
+      if (!preferences[agent]) preferences[agent] = [];
+
+      if (sug.action === 'add') {
+        if (!preferences[agent].includes(sug.rule)) {
+          preferences[agent].push(sug.rule);
+        }
+        // Also append to agent's system prompt in config.json
+        if (teamConfig) {
+          const member = teamConfig.members?.find(m => m.name === agent);
+          if (member) {
+            const ruleLine = `\n- ${sug.rule}`;
+            if (!member.prompt) {
+              member.prompt = `## Preferences${ruleLine}`;
+            } else if (!member.prompt.includes(sug.rule)) {
+              if (member.prompt.includes('## Preferences')) {
+                member.prompt = member.prompt.replace(/(## Preferences\n?)/, `$1${ruleLine}\n`);
+              } else {
+                member.prompt += `\n\n## Preferences${ruleLine}`;
+              }
+            }
+            promptsUpdated.push(agent);
+          }
+        }
+      } else if (sug.action === 'remove') {
+        preferences[agent] = preferences[agent].filter(r => r !== sug.rule);
+        // Also remove from agent's system prompt
+        if (teamConfig) {
+          const member = teamConfig.members?.find(m => m.name === agent);
+          if (member?.prompt) {
+            member.prompt = member.prompt.split('\n').filter(l => !l.includes(sug.rule)).join('\n');
+            promptsUpdated.push(agent);
+          }
+        }
+      }
+    }
+  }
+
+  // Save preferences
+  await fs.mkdir(path.dirname(prefPath), { recursive: true });
+  await fs.writeFile(prefPath, JSON.stringify(preferences, null, 2), 'utf-8');
+
+  // Save updated agent prompts to config.json
+  if (teamConfig && promptsUpdated.length > 0) {
+    await fs.writeFile(configPath, JSON.stringify(teamConfig, null, 2), 'utf-8');
+  }
+
+  // Mark source feedback entry as processed
+  if (sourceEntryId) {
+    await markFeedbackProcessed(id, [sourceEntryId]);
+  }
+
+  res.json({ ok: true, preferences, guideUpdated, promptsUpdated });
 });
 
 // POST /api/teams/:id/feedback  — append a feedback entry to feedback/{agentName}.jsonl

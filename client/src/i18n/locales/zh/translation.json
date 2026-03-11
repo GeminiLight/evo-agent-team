@@ -279,7 +279,29 @@
     "th_praise": "👍 表扬",
     "th_correction": "👎 纠正",
     "th_bookmark": "📌 书签",
-    "no_note": "（无备注）"
+    "no_note": "（无备注）",
+    "analyzing": "分析反馈中...",
+    "suggestions_title": "AI 建议",
+    "suggestions_desc": "审查对偏好和团队指南的更改建议",
+    "suggestion_target_guide": "团队指南",
+    "suggestion_action_add": "新增",
+    "suggestion_action_update": "更新",
+    "suggestion_action_remove": "移除",
+    "apply_selected": "应用选中 ({{count}})",
+    "skip_suggestions": "跳过",
+    "no_suggestions": "未建议任何更改",
+    "applied": "已应用",
+    "applying": "应用中...",
+    "done_title": "完成",
+    "saved_no_suggestions": "反馈已保存，暂无规则建议。",
+    "guide_rules_subtitle": "来自 TEAM_GUIDE.md 的团队规则",
+    "guide_source_file": "TEAM_GUIDE.md",
+    "guide_readonly": "只读",
+    "processed": "已应用",
+    "filter_all_status": "所有状态",
+    "filter_pending": "待处理",
+    "filter_applied": "已应用",
+    "close": "关闭"
   },
   "panel": {
     "agent_profile": "代理 // 档案",
@@ -344,7 +366,9 @@
     "search": "搜索...",
     "good": "好",
     "wrong": "差",
-    "mark": "标记"
+    "mark": "标记",
+    "analyze_banner": "{{count}} 条建议 — 审查变更？",
+    "feedback_with_context": "已提交含输出上下文的反馈"
   },
   "empty": {
     "boot_line_1": "AGENT//CTRL v2.0.0",

@@ -336,6 +336,11 @@ function MessageRow({ message, activeKinds, toolFilter, search, teamId, agentNam
             messageUuid={message.uuid}
             sessionId={sessionId ?? null}
             rowHovered={hovered}
+            messageContent={message.entries
+              .filter(e => e.kind === 'text' && e.text)
+              .map(e => e.text!)
+              .join('\n')
+              .slice(0, 500)}
           />
         )}
       </div>
@@ -473,6 +478,9 @@ function EntryBlock({ entry, search }: { entry: SessionEntry; search: string }) 
 // ── Feedback strip ────────────────────────────────────────────────────────────
 
 type FeedbackType = 'praise' | 'correction' | 'bookmark';
+type StripPhase = 'idle' | 'analyzing' | 'suggestions' | 'applying' | 'done';
+
+interface StripSuggestion { id: string; target: string; action: 'add' | 'update' | 'remove'; rule: string; reason: string; }
 
 interface FeedbackStripProps {
   teamId: string;
@@ -480,17 +488,44 @@ interface FeedbackStripProps {
   messageUuid: string;
   sessionId: string | null;
   rowHovered: boolean;
+  messageContent?: string;
 }
 
-function FeedbackStrip({ teamId, agentName, messageUuid, sessionId, rowHovered }: FeedbackStripProps) {
+function FeedbackStrip({ teamId, agentName, messageUuid, sessionId, rowHovered, messageContent }: FeedbackStripProps) {
   const { t } = useTranslation();
   const [submitted, setSubmitted] = useState<FeedbackType | null>(null);
   const [correcting, setCorrecting] = useState(false);
   const [note, setNote] = useState('');
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [phase, setPhase] = useState<StripPhase>('idle');
+  const [suggestions, setSuggestions] = useState<StripSuggestion[]>([]);
+  const [accepted, setAccepted] = useState<Set<string>>(new Set());
+  const [feedbackEntryId, setFeedbackEntryId] = useState<string | null>(null);
   const isDemo = teamId === 'demo-team';
-  const show = rowHovered || correcting || !!submitted;
+  const show = rowHovered || correcting || !!submitted || phase === 'suggestions' || phase === 'analyzing' || phase === 'done';
+
+  const applySelected = async () => {
+    const toApply = suggestions.filter(s => accepted.has(s.id));
+    if (toApply.length === 0) { setPhase('done'); setSubmitted(submitted); return; }
+    setPhase('applying');
+    try {
+      await fetch(`/api/teams/${teamId}/feedback/apply`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accepted: toApply, sourceEntryId: feedbackEntryId }),
+      });
+    } catch { /* ignore */ }
+    setPhase('done');
+  };
+
+  // Auto-dismiss done phase after 3s
+  useEffect(() => {
+    if (phase === 'done') {
+      const timer = setTimeout(() => setPhase('idle'), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [phase]);
 
   const submit = async (type: FeedbackType, content?: string) => {
     if (sending || isDemo) return;
@@ -500,12 +535,36 @@ function FeedbackStrip({ teamId, agentName, messageUuid, sessionId, rowHovered }
       const res = await fetch(`/api/teams/${teamId}/feedback`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ agentName, messageUuid, sessionId, type, content }),
+        body: JSON.stringify({ agentName, messageUuid, sessionId, type, content, context: { messageContent } }),
       });
       if (res.ok) {
+        const { id: entryId } = await res.json();
+        setFeedbackEntryId(entryId);
         setSubmitted(type);
         setCorrecting(false);
         setNote('');
+
+        // Trigger analyze flow
+        setPhase('analyzing');
+        try {
+          const analyzeRes = await fetch(`/api/teams/${teamId}/feedback/analyze`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              latestEntry: { agentName, type, content, context: { messageContent } },
+            }),
+          });
+          const { suggestions: sugs } = await analyzeRes.json();
+          if (sugs?.length > 0) {
+            setSuggestions(sugs);
+            setAccepted(new Set(sugs.map((s: StripSuggestion) => s.id)));
+            setPhase('suggestions');
+          } else {
+            setPhase('done');
+          }
+        } catch {
+          setPhase('done');
+        }
       } else {
         const j = await res.json().catch(() => ({}));
         setError((j as { error?: string }).error ?? 'Failed');
@@ -529,13 +588,25 @@ function FeedbackStrip({ teamId, agentName, messageUuid, sessionId, rowHovered }
       {show && (
         <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
           {submitted ? (
-            <span style={{
-              fontSize: '8px', color: submitted === 'praise' ? 'var(--phosphor)' : submitted === 'correction' ? 'var(--crimson)' : 'var(--ice)',
-              letterSpacing: '0.1em', fontFamily: 'var(--font-mono)',
-              opacity: 0.7,
-            }}>
-              {submitted === 'praise' ? '👍 MARKED GOOD' : submitted === 'correction' ? '👎 CORRECTION SAVED' : '📌 BOOKMARKED'}
-            </span>
+            <>
+              <span style={{
+                fontSize: '8px', color: submitted === 'praise' ? 'var(--phosphor)' : submitted === 'correction' ? 'var(--crimson)' : 'var(--ice)',
+                letterSpacing: '0.1em', fontFamily: 'var(--font-mono)',
+                opacity: 0.7,
+              }}>
+                {submitted === 'praise' ? '👍 MARKED GOOD' : submitted === 'correction' ? '👎 CORRECTION SAVED' : '📌 BOOKMARKED'}
+              </span>
+              {phase === 'analyzing' && (
+                <span style={{ fontSize: '8px', color: 'var(--ice)', letterSpacing: '0.08em', fontFamily: 'var(--font-mono)', marginLeft: '8px', animation: 'pulse 1.5s ease-in-out infinite' }}>
+                  ✦ {t('review.analyzing')}
+                </span>
+              )}
+              {phase === 'done' && submitted && (
+                <span style={{ fontSize: '8px', color: 'var(--phosphor)', letterSpacing: '0.08em', fontFamily: 'var(--font-mono)', marginLeft: '8px' }}>
+                  ✦ {t('review.applied')}
+                </span>
+              )}
+            </>
           ) : (
             <>
               {BTNS.map(btn => (
@@ -626,6 +697,101 @@ function FeedbackStrip({ teamId, agentName, messageUuid, sessionId, rowHovered }
             >{sending ? '...' : 'SAVE'}</button>
           </div>
         </div>
+      )}
+
+      {/* Inline suggestions banner */}
+      {phase === 'suggestions' && (
+        <div style={{ marginTop: '6px', border: '1px solid var(--ice)33', borderRadius: '3px', padding: '8px', background: 'var(--surface-1)' }}>
+          <div style={{ fontSize: '8px', color: 'var(--ice)', letterSpacing: '0.1em', fontFamily: 'var(--font-mono)', marginBottom: '6px' }}>
+            ✦ {t('review.suggestions_title')} — {t('history.analyze_banner', { count: suggestions.length })}
+          </div>
+          {suggestions.map(s => {
+            const checked = accepted.has(s.id);
+            const ACTION_COLORS: Record<string, string> = { add: 'var(--phosphor)', update: 'var(--ice)', remove: 'var(--amber)' };
+            return (
+              <div
+                key={s.id}
+                onClick={() => setAccepted(prev => { const n = new Set(prev); if (n.has(s.id)) n.delete(s.id); else n.add(s.id); return n; })}
+                style={{
+                  display: 'flex', alignItems: 'flex-start', gap: '8px', padding: '4px 2px',
+                  cursor: 'pointer', opacity: checked ? 1 : 0.5, transition: 'all 0.15s ease',
+                  borderRadius: '2px',
+                }}
+              >
+                {/* Custom checkbox */}
+                <div style={{
+                  width: '12px', height: '12px', borderRadius: '2px', flexShrink: 0, marginTop: '1px',
+                  border: `1px solid ${checked ? 'var(--phosphor)' : 'var(--border)'}`,
+                  background: checked ? 'var(--phosphor)' : 'transparent',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '8px', color: 'var(--surface-0)',
+                  transition: 'all 0.15s ease',
+                }}>
+                  {checked && '✓'}
+                </div>
+                {/* Content */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                    {/* Target badge */}
+                    <span style={{
+                      fontSize: '7px', letterSpacing: '0.1em', textTransform: 'uppercase' as const,
+                      padding: '1px 5px', borderRadius: '2px',
+                      background: s.target === 'TEAM_GUIDE' ? 'var(--ice)18' : 'var(--phosphor)18',
+                      color: s.target === 'TEAM_GUIDE' ? 'var(--ice)' : 'var(--phosphor)',
+                      border: `1px solid ${s.target === 'TEAM_GUIDE' ? 'var(--ice)' : 'var(--phosphor)'}40`,
+                      fontFamily: 'var(--font-mono)',
+                    }}>
+                      {s.target === 'TEAM_GUIDE' ? t('review.suggestion_target_guide') : s.target}
+                    </span>
+                    {/* Action label */}
+                    <span style={{
+                      fontSize: '7px', letterSpacing: '0.08em', textTransform: 'uppercase' as const,
+                      color: ACTION_COLORS[s.action] ?? 'var(--text-muted)',
+                      fontFamily: 'var(--font-mono)', fontWeight: 700,
+                    }}>
+                      {t(`review.suggestion_action_${s.action}`)}
+                    </span>
+                    {/* Rule text */}
+                    <span style={{ fontSize: '9px', color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>
+                      {s.rule}
+                    </span>
+                  </div>
+                  {s.reason && (
+                    <div style={{ fontSize: '9px', color: 'var(--text-muted)', lineHeight: 1.3, marginTop: '2px', paddingLeft: '0' }}>
+                      {s.reason}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+          <div style={{ display: 'flex', gap: '4px', marginTop: '6px', justifyContent: 'flex-end' }}>
+            <button
+              onClick={() => setPhase('done')}
+              style={{
+                padding: '2px 10px', fontSize: '8px', letterSpacing: '0.08em',
+                fontFamily: 'var(--font-mono)',
+                background: 'transparent', color: 'var(--text-muted)',
+                border: '1px solid var(--border)', borderRadius: '2px', cursor: 'pointer',
+              }}
+            >{t('review.skip_suggestions')}</button>
+            <button
+              onClick={applySelected}
+              style={{
+                padding: '2px 10px', fontSize: '8px', letterSpacing: '0.08em', fontWeight: 700,
+                fontFamily: 'var(--font-mono)',
+                background: 'rgba(0,210,255,0.08)', color: 'var(--ice)',
+                border: '1px solid var(--ice)', borderRadius: '2px', cursor: 'pointer',
+              }}
+            >{t('review.apply_selected', { count: accepted.size })}</button>
+          </div>
+        </div>
+      )}
+
+      {phase === 'applying' && (
+        <span style={{ fontSize: '8px', color: 'var(--ice)', letterSpacing: '0.08em', fontFamily: 'var(--font-mono)', marginTop: '4px' }}>
+          {t('review.applying')}
+        </span>
       )}
     </div>
   );

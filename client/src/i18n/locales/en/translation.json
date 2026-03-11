@@ -279,7 +279,29 @@
     "th_praise": "👍 Praise",
     "th_correction": "👎 Correction",
     "th_bookmark": "📌 Bookmark",
-    "no_note": "(no note)"
+    "no_note": "(no note)",
+    "analyzing": "Analyzing feedback...",
+    "suggestions_title": "AI Suggestions",
+    "suggestions_desc": "Review proposed changes to preferences and team guide",
+    "suggestion_target_guide": "Team Guide",
+    "suggestion_action_add": "Add",
+    "suggestion_action_update": "Update",
+    "suggestion_action_remove": "Remove",
+    "apply_selected": "Apply Selected ({{count}})",
+    "skip_suggestions": "Skip",
+    "no_suggestions": "No changes suggested",
+    "applied": "Applied",
+    "applying": "Applying...",
+    "done_title": "Complete",
+    "saved_no_suggestions": "Feedback saved. No rule changes suggested.",
+    "guide_rules_subtitle": "Cross-team rules from TEAM_GUIDE.md",
+    "guide_source_file": "TEAM_GUIDE.md",
+    "guide_readonly": "READ-ONLY",
+    "processed": "APPLIED",
+    "filter_all_status": "All Status",
+    "filter_pending": "Pending",
+    "filter_applied": "Applied",
+    "close": "Close"
   },
   "panel": {
     "agent_profile": "Agent // Profile",
@@ -344,7 +366,9 @@
     "search": "search...",
     "good": "Good",
     "wrong": "Wrong",
-    "mark": "Mark"
+    "mark": "Mark",
+    "analyze_banner": "{{count}} suggestion(s) — review changes?",
+    "feedback_with_context": "Feedback submitted with output context"
   },
   "empty": {
     "boot_line_1": "AGENT//CTRL v2.0.0",

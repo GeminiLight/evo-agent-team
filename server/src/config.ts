@@ -1,9 +1,11 @@
 import { config as dotenvConfig } from 'dotenv';
 import os from 'os';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import type { AppConfig } from './types.js';
 
-dotenvConfig({ path: path.resolve(import.meta.dirname, '../../.env') });
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+dotenvConfig({ path: path.resolve(__dirname, '../../.env') });
 
 function expandHome(p: string): string {
   if (p.startsWith('~')) {

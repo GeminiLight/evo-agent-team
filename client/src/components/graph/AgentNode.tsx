@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import type { TeamMember } from '../../types';
+import { agentColor } from '../../utils/agentColors';
 
 interface AgentNodeData {
   member: TeamMember;
@@ -23,38 +24,30 @@ function AgentTooltip({ member, isActive, taskCount, inProgressCount = 0, comple
       transform: 'translateX(-50%)',
       background: 'var(--surface-1)',
       border: '1px solid var(--border)',
-      borderRadius: '4px',
-      padding: '10px 12px',
-      minWidth: '180px',
+      borderRadius: '6px',
+      padding: '12px 14px',
+      minWidth: '200px',
       fontFamily: 'var(--font-mono, monospace)',
-      boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+      boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
       zIndex: 9999,
       pointerEvents: 'none',
       whiteSpace: 'nowrap',
+      backdropFilter: 'blur(8px)',
     }}>
-      {/* Arrow */}
       <div style={{
-        position: 'absolute',
-        top: '100%',
-        left: '50%',
-        transform: 'translateX(-50%)',
+        position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)',
         width: 0, height: 0,
-        borderLeft: '6px solid transparent',
-        borderRight: '6px solid transparent',
+        borderLeft: '6px solid transparent', borderRight: '6px solid transparent',
         borderTop: '6px solid var(--border)',
       }} />
       <div style={{
-        position: 'absolute',
-        top: 'calc(100% - 1px)',
-        left: '50%',
-        transform: 'translateX(-50%)',
+        position: 'absolute', top: 'calc(100% - 1px)', left: '50%', transform: 'translateX(-50%)',
         width: 0, height: 0,
-        borderLeft: '5px solid transparent',
-        borderRight: '5px solid transparent',
+        borderLeft: '5px solid transparent', borderRight: '5px solid transparent',
         borderTop: '5px solid var(--surface-1)',
       }} />
 
-      <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '0.06em', marginBottom: '8px', borderBottom: '1px solid var(--border)', paddingBottom: '6px' }}>
+      <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '0.04em', marginBottom: '8px', borderBottom: '1px solid var(--border)', paddingBottom: '6px' }}>
         {member.name}
       </div>
 
@@ -75,13 +68,13 @@ function AgentTooltip({ member, isActive, taskCount, inProgressCount = 0, comple
         </div>
         {inProgressCount > 0 && (
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px' }}>
-            <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.08em' }}>IN PROGRESS</span>
+            <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.08em' }}>ACTIVE</span>
             <span style={{ fontSize: '9px', color: 'var(--amber)', letterSpacing: '0.06em' }}>{inProgressCount}</span>
           </div>
         )}
         {completedCount > 0 && (
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px' }}>
-            <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.08em' }}>COMPLETED</span>
+            <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.08em' }}>DONE</span>
             <span style={{ fontSize: '9px', color: 'var(--phosphor)', letterSpacing: '0.06em' }}>{completedCount}</span>
           </div>
         )}
@@ -103,15 +96,19 @@ export function AgentNode({ data }: { data: AgentNodeData }) {
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleMouseEnter = () => {
-    hoverTimer.current = setTimeout(() => setShowTooltip(true), 400);
+    hoverTimer.current = setTimeout(() => setShowTooltip(true), 300);
   };
   const handleMouseLeave = () => {
     if (hoverTimer.current) clearTimeout(hoverTimer.current);
     setShowTooltip(false);
   };
 
-  // Dimming: when another node is selected and this one isn't
   const isDimmed = hasSelection && !isSelected;
+
+  // Progress bar: completed / total tasks
+  const total = taskCount;
+  const done = completedCount ?? 0;
+  const progressPct = total > 0 ? Math.round((done / total) * 100) : 0;
 
   return (
     <div
@@ -126,84 +123,89 @@ export function AgentNode({ data }: { data: AgentNodeData }) {
             : isLead
               ? '2px solid var(--amber)'
               : `1px solid ${isActive ? 'var(--active-border-hi)' : 'var(--border)'}`,
-        borderRadius: '4px',
-        padding: isSelected || isAlerted || isLead ? '11px 13px' : '12px 14px',
-        minWidth: '160px',
+        borderLeft: isSelected
+          ? '2px solid var(--phosphor)'
+          : isAlerted
+            ? '2px solid var(--crimson, #ff4466)'
+            : `3px solid ${agentColor(member.name)}`,
+        borderRadius: '8px',
+        padding: isSelected || isAlerted || isLead ? '9px 11px' : '10px 12px',
+        width: '160px',
         fontFamily: 'var(--font-mono, monospace)',
         boxShadow: isSelected
-          ? '0 0 12px var(--phosphor-glow-strong)'
+          ? '0 0 16px var(--phosphor-glow-strong)'
           : isAlerted
-            ? '0 0 10px var(--crimson-glow, rgba(255,68,102,0.5))'
+            ? '0 0 12px var(--crimson-glow, rgba(255,68,102,0.5))'
             : isLead
-              ? '0 0 8px var(--amber-glow)'
-              : isActive ? 'var(--active-glow)' : '0 0 0 rgba(0,0,0,0)',
+              ? '0 0 10px var(--amber-glow)'
+              : isActive ? 'var(--active-glow)' : '0 2px 8px rgba(0,0,0,0.2)',
         animation: isAlerted && !isSelected
           ? 'agent-alert-pulse 1.5s ease-in-out infinite'
           : isActive && !isSelected ? 'agent-glow 2s ease-in-out infinite' : 'none',
         position: 'relative',
-        opacity: isDimmed ? 0.35 : 1,
-        filter: isDimmed ? 'saturate(0.3)' : 'none',
-        transform: isSelected ? 'scale(1.03)' : 'none',
+        opacity: isDimmed ? 0.3 : 1,
+        filter: isDimmed ? 'saturate(0.2)' : 'none',
+        transform: isSelected ? 'scale(1.04)' : 'none',
         transition: 'opacity 0.3s, filter 0.3s, transform 0.2s, border-color 0.2s, box-shadow 0.2s',
       }}
     >
       {showTooltip && (
         <AgentTooltip
-          member={member}
-          isActive={isActive}
-          taskCount={taskCount}
-          inProgressCount={inProgressCount}
-          completedCount={completedCount}
+          member={member} isActive={isActive}
+          taskCount={taskCount} inProgressCount={inProgressCount} completedCount={completedCount}
         />
       )}
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+      {/* Header: avatar + name + badges */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
         <div style={{
-          width: '28px', height: '28px',
-          borderRadius: isLead ? '50%' : '3px',
+          width: '26px', height: '26px',
+          borderRadius: isLead ? '50%' : '5px',
           background: isActive ? 'var(--active-bg-hi)' : 'var(--surface-2)',
           border: isLead
             ? '2px solid var(--amber)'
             : `1px solid ${isActive ? 'var(--active-border-hi)' : 'var(--border)'}`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '13px', fontWeight: 700,
+          fontSize: '12px', fontWeight: 700,
           color: isLead ? 'var(--amber)' : isActive ? 'var(--active-text)' : 'var(--text-secondary)',
           textShadow: isLead ? '0 0 8px var(--amber-glow)' : isActive ? '0 0 8px var(--phosphor-glow-strong)' : 'none',
           boxShadow: isLead ? '0 0 6px var(--amber-glow)' : 'none',
+          flexShrink: 0,
         }}>
           {initial}
         </div>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-            <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '0.04em' }}>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
+            <div style={{
+              fontSize: '10px', fontWeight: 600, color: 'var(--text-primary)',
+              letterSpacing: '0.04em',
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              maxWidth: '80px',
+            }}>
               {member.name}
             </div>
             {isLead && (
               <span style={{
-                fontSize: '7px', padding: '1px 4px',
+                fontSize: '6px', padding: '1px 3px',
                 color: 'var(--amber)', background: 'rgba(245,166,35,0.12)',
                 border: '1px solid rgba(245,166,35,0.35)', borderRadius: '2px',
                 fontFamily: 'var(--font-mono)', letterSpacing: '0.12em', fontWeight: 700,
               }}>LEAD</span>
             )}
-            {isAlerted && (
-              <span style={{
-                fontSize: '7px', padding: '1px 4px',
-                color: 'var(--crimson, #ff4466)', background: 'rgba(255,68,102,0.12)',
-                border: '1px solid rgba(255,68,102,0.45)', borderRadius: '2px',
-                fontFamily: 'var(--font-mono)', letterSpacing: '0.1em', fontWeight: 700,
-                animation: 'status-pulse 1.5s ease-in-out infinite',
-              }}>ALERT</span>
-            )}
           </div>
-          <div style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+          <div style={{
+            fontSize: '8px', color: 'var(--text-muted)',
+            letterSpacing: '0.08em', textTransform: 'uppercase',
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          }}>
             {member.agentType}
           </div>
         </div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+      {/* Status row: dot + status + task badge */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: total > 0 ? '6px' : 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
           <span style={{
             width: '5px', height: '5px', borderRadius: '50%',
             background: isActive ? 'var(--phosphor)' : 'var(--text-muted)',
@@ -211,31 +213,50 @@ export function AgentNode({ data }: { data: AgentNodeData }) {
             display: 'inline-block',
             animation: isActive ? 'status-pulse 2s ease-in-out infinite' : 'none',
           }} />
-          <span style={{ fontSize: '9px', color: isActive ? 'var(--active-text)' : 'var(--text-muted)', letterSpacing: '0.1em' }}>
+          <span style={{
+            fontSize: '8px',
+            color: isActive ? 'var(--active-text)' : 'var(--text-muted)',
+            letterSpacing: '0.1em',
+          }}>
             {isActive ? 'ACTIVE' : 'IDLE'}
           </span>
         </div>
         {taskCount > 0 && (
           <span style={{
-            fontSize: '9px',
-            color: 'var(--ice)',
-            background: 'var(--ice-glow)',
-            border: '1px solid var(--ice-dim)',
-            borderRadius: '2px',
-            padding: '1px 6px',
-            letterSpacing: '0.08em',
+            fontSize: '8px', color: 'var(--ice)',
+            background: 'var(--ice-glow)', border: '1px solid var(--ice-dim)',
+            borderRadius: '3px', padding: '1px 5px',
+            letterSpacing: '0.06em', fontWeight: 600,
           }}>
             {taskCount}T
           </span>
         )}
       </div>
 
+      {/* Mini progress bar */}
+      {total > 0 && (
+        <div style={{
+          height: '2px', borderRadius: '1px',
+          background: 'var(--border)',
+          overflow: 'hidden',
+        }}>
+          <div style={{
+            height: '100%',
+            width: `${progressPct}%`,
+            background: 'var(--phosphor)',
+            borderRadius: '1px',
+            transition: 'width 0.5s ease',
+            boxShadow: progressPct > 0 ? '0 0 4px var(--phosphor-glow)' : 'none',
+          }} />
+        </div>
+      )}
+
       <Handle
         type="source"
         position={Position.Bottom}
         style={{
           background: isActive ? 'var(--phosphor)' : 'var(--text-muted)',
-          width: '8px', height: '8px',
+          width: '7px', height: '7px',
           border: '2px solid var(--surface-1)',
           boxShadow: isActive ? 'var(--active-glow)' : 'none',
         }}

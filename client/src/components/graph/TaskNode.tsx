@@ -16,10 +16,17 @@ const STATUS_LABELS: Record<StatusKey, string> = {
   blocked: 'BLOCKED',
 };
 
+const STATUS_ICONS: Record<StatusKey, string> = {
+  completed: '✓',
+  in_progress: '●',
+  pending: '○',
+  blocked: '✕',
+};
+
 function TaskTooltip({ task, derivedStatus }: { task: Task; derivedStatus: StatusKey }) {
   const colors = STATUS_COLORS[derivedStatus];
   const descPreview = task.description
-    ? task.description.length > 120 ? task.description.slice(0, 120) + '…' : task.description
+    ? task.description.length > 160 ? task.description.slice(0, 160) + '…' : task.description
     : null;
 
   return (
@@ -31,66 +38,55 @@ function TaskTooltip({ task, derivedStatus }: { task: Task; derivedStatus: Statu
       background: 'var(--surface-1)',
       border: `1px solid var(--border)`,
       borderLeft: `3px solid ${colors.border}`,
-      borderRadius: '4px',
-      padding: '10px 12px',
-      minWidth: '220px',
-      maxWidth: '280px',
+      borderRadius: '6px',
+      padding: '12px 14px',
+      minWidth: '240px',
+      maxWidth: '300px',
       fontFamily: 'var(--font-mono, monospace)',
-      boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+      boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
       zIndex: 9999,
       pointerEvents: 'none',
       whiteSpace: 'normal',
+      backdropFilter: 'blur(8px)',
     }}>
       {/* Arrow */}
       <div style={{
-        position: 'absolute',
-        top: '100%',
-        left: '50%',
-        transform: 'translateX(-50%)',
+        position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)',
         width: 0, height: 0,
-        borderLeft: '6px solid transparent',
-        borderRight: '6px solid transparent',
+        borderLeft: '6px solid transparent', borderRight: '6px solid transparent',
         borderTop: '6px solid var(--border)',
       }} />
       <div style={{
-        position: 'absolute',
-        top: 'calc(100% - 1px)',
-        left: '50%',
-        transform: 'translateX(-50%)',
+        position: 'absolute', top: 'calc(100% - 1px)', left: '50%', transform: 'translateX(-50%)',
         width: 0, height: 0,
-        borderLeft: '5px solid transparent',
-        borderRight: '5px solid transparent',
+        borderLeft: '5px solid transparent', borderRight: '5px solid transparent',
         borderTop: '5px solid var(--surface-1)',
       }} />
 
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px', borderBottom: '1px solid var(--border)', paddingBottom: '6px', gap: '8px' }}>
-        <span style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '0.04em', lineHeight: 1.3, flex: 1 }}>
+      <div style={{ marginBottom: '8px', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>
+        <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '0.04em', lineHeight: 1.4 }}>
           {task.subject}
-        </span>
-        <span style={{
-          fontSize: '8px', color: colors.text, background: colors.bg,
-          border: `1px solid ${colors.border}40`, borderRadius: '2px',
-          padding: '1px 5px', letterSpacing: '0.1em', flexShrink: 0,
-        }}>
-          {STATUS_LABELS[derivedStatus]}
-        </span>
+        </div>
       </div>
 
       {descPreview && (
-        <div style={{ fontSize: '9px', color: 'var(--text-muted)', lineHeight: 1.5, letterSpacing: '0.02em', marginBottom: '8px' }}>
+        <div style={{ fontSize: '9px', color: 'var(--text-muted)', lineHeight: 1.6, letterSpacing: '0.02em', marginBottom: '8px' }}>
           {descPreview}
         </div>
       )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px' }}>
-          <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.08em' }}>TASK ID</span>
+          <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.08em' }}>TASK</span>
           <span style={{ fontSize: '9px', color: 'var(--text-secondary)', letterSpacing: '0.06em' }}>#{task.id}</span>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px' }}>
+          <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.08em' }}>STATUS</span>
+          <span style={{ fontSize: '9px', color: colors.text, letterSpacing: '0.08em' }}>{STATUS_LABELS[derivedStatus]}</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px' }}>
           <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.08em' }}>OWNER</span>
-          <span style={{ fontSize: '9px', color: task.owner ? colors.text : 'var(--text-muted)', letterSpacing: '0.06em', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <span style={{ fontSize: '9px', color: task.owner ? colors.text : 'var(--text-muted)', letterSpacing: '0.06em' }}>
             {task.owner || 'UNASSIGNED'}
           </span>
         </div>
@@ -115,33 +111,43 @@ export function TaskNode({ data }: { data: TaskNodeData }) {
   const { task, derivedStatus } = data;
   const colors = STATUS_COLORS[derivedStatus];
   const isInProgress = derivedStatus === 'in_progress';
+  const isDone = derivedStatus === 'completed';
   const [showTooltip, setShowTooltip] = useState(false);
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleMouseEnter = () => {
-    hoverTimer.current = setTimeout(() => setShowTooltip(true), 400);
+    hoverTimer.current = setTimeout(() => setShowTooltip(true), 300);
   };
   const handleMouseLeave = () => {
     if (hoverTimer.current) clearTimeout(hoverTimer.current);
     setShowTooltip(false);
   };
 
+  // Truncate subject for compact display
+  const maxSubjectLen = 48;
+  const truncatedSubject = task.subject.length > maxSubjectLen
+    ? task.subject.slice(0, maxSubjectLen) + '…'
+    : task.subject;
+
   return (
     <div
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       style={{
-        background: 'var(--surface-0)',
-        borderRadius: '4px',
-        minWidth: '200px',
-        maxWidth: '240px',
+        background: isDone ? 'var(--surface-0)' : 'var(--surface-1)',
+        borderRadius: '6px',
+        width: '190px',
         fontFamily: 'var(--font-mono, monospace)',
         overflow: 'visible',
-        border: `1px solid ${colors.border}40`,
-        borderLeft: `3px solid ${colors.border}`,
-        boxShadow: isInProgress ? `0 0 15px ${colors.border}20` : 'none',
-        animation: isInProgress ? 'status-pulse 2s ease-in-out infinite' : 'none',
+        border: `1px solid ${colors.border}${isDone ? '25' : '50'}`,
+        borderLeft: `3px solid ${colors.border}${isDone ? '60' : ''}`,
+        boxShadow: isInProgress
+          ? `0 0 20px ${colors.border}25, inset 0 0 0 1px ${colors.border}15`
+          : 'none',
         position: 'relative',
+        opacity: isDone ? 0.45 : 1,
+        transform: isDone ? 'scale(0.97)' : 'none',
+        transition: 'opacity 0.3s, box-shadow 0.3s, transform 0.15s',
       }}
     >
       {showTooltip && <TaskTooltip task={task} derivedStatus={derivedStatus} />}
@@ -151,89 +157,94 @@ export function TaskNode({ data }: { data: TaskNodeData }) {
         position={Position.Top}
         style={{
           background: colors.border,
-          width: '7px', height: '7px',
-          border: '2px solid var(--surface-0)',
+          width: '6px', height: '6px',
+          border: '2px solid var(--surface-1)',
         }}
       />
 
-      <div style={{ padding: '10px 12px' }}>
-        {/* Top row: id + status */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+      <div style={{ padding: '8px 10px' }}>
+        {/* Compact header: status icon + id + status badge */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          marginBottom: '5px',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <span style={{
+              fontSize: '10px',
+              color: colors.text,
+              fontWeight: 700,
+              textShadow: isInProgress ? `0 0 6px ${colors.border}` : 'none',
+            }}>
+              {STATUS_ICONS[derivedStatus]}
+            </span>
+            <span style={{
+              fontSize: '8px', fontFamily: 'monospace',
+              color: 'var(--text-muted)', letterSpacing: '0.06em',
+            }}>
+              #{task.id}
+            </span>
+          </div>
           <span style={{
-            fontSize: '9px',
-            fontFamily: 'monospace',
-            color: 'var(--text-muted)',
-            letterSpacing: '0.08em',
-          }}>
-            #{task.id}
-          </span>
-          <span style={{
-            fontSize: '8px',
-            color: colors.text,
-            background: colors.bg,
-            border: `1px solid ${colors.border}40`,
-            borderRadius: '2px',
-            padding: '1px 5px',
-            letterSpacing: '0.1em',
+            fontSize: '7px', color: colors.text,
+            background: colors.bg, border: `1px solid ${colors.border}35`,
+            borderRadius: '3px', padding: '1px 5px',
+            letterSpacing: '0.1em', fontWeight: 600,
           }}>
             {STATUS_LABELS[derivedStatus]}
           </span>
         </div>
 
-        {/* Subject */}
+        {/* Subject — compact, 2 lines max */}
         <div style={{
-          fontSize: '11px',
-          fontWeight: 500,
-          color: derivedStatus === 'completed' ? 'var(--text-muted)' : 'var(--text-primary)',
-          marginBottom: '6px',
-          lineHeight: 1.3,
-          letterSpacing: '0.02em',
-          textDecoration: derivedStatus === 'completed' ? 'line-through' : 'none',
+          fontSize: '10px', fontWeight: 500,
+          color: isDone ? 'var(--text-muted)' : 'var(--text-primary)',
+          marginBottom: '4px',
+          lineHeight: 1.35, letterSpacing: '0.02em',
+          textDecoration: isDone ? 'line-through' : 'none',
+          display: '-webkit-box',
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: 'vertical' as const,
+          overflow: 'hidden',
         }}>
-          {task.subject}
+          {truncatedSubject}
         </div>
 
-        {/* Active form */}
+        {/* Active form spinner */}
         {isInProgress && task.activeForm && (
           <div style={{
-            display: 'flex', alignItems: 'center', gap: '5px',
-            fontSize: '9px',
-            color: 'var(--amber)',
-            marginBottom: '6px',
-            letterSpacing: '0.04em',
+            display: 'flex', alignItems: 'center', gap: '4px',
+            fontSize: '8px', color: 'var(--amber)',
+            marginBottom: '3px', letterSpacing: '0.04em',
           }}>
-            <Loader2 size={9} style={{ animation: 'spin-slow 2.5s linear infinite', flexShrink: 0 }} />
-            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <Loader2 size={8} style={{ animation: 'spin-slow 2.5s linear infinite', flexShrink: 0 }} />
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '140px' }}>
               {task.activeForm}
             </span>
           </div>
         )}
 
-        {/* Bottom: owner + deps */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '4px' }}>
+        {/* Bottom row: owner tag */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          marginTop: '2px',
+        }}>
           {task.owner ? (
             <span style={{
-              fontSize: '9px',
-              color: colors.text,
-              background: colors.bg,
-              borderRadius: '2px',
-              padding: '1px 5px',
-              border: `1px solid ${colors.border}30`,
-              letterSpacing: '0.04em',
-              maxWidth: '100px',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
+              fontSize: '8px', color: colors.text, letterSpacing: '0.04em',
+              maxWidth: '110px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              opacity: 0.8,
             }}>
               {task.owner}
             </span>
           ) : (
-            <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.06em' }}>UNASSIGNED</span>
+            <span style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.06em', opacity: 0.6 }}>
+              unassigned
+            </span>
           )}
 
-          <div style={{ display: 'flex', gap: '6px', fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.06em' }}>
-            {task.blockedBy.length > 0 && <span title={`Blocked by #${task.blockedBy.join(', #')}`}>↑{task.blockedBy.length}</span>}
-            {task.blocks.length > 0 && <span title={`Blocks #${task.blocks.join(', #')}`}>↓{task.blocks.length}</span>}
+          <div style={{ display: 'flex', gap: '4px', fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.04em' }}>
+            {task.blockedBy.length > 0 && <span title={`Blocked by #${task.blockedBy.join(', #')}`} style={{ color: 'var(--crimson, #ff3b5c)' }}>↑{task.blockedBy.length}</span>}
+            {task.blocks.length > 0 && <span title={`Blocks #${task.blocks.join(', #')}`} style={{ color: 'var(--ice)' }}>↓{task.blocks.length}</span>}
           </div>
         </div>
       </div>
@@ -243,8 +254,8 @@ export function TaskNode({ data }: { data: TaskNodeData }) {
         position={Position.Bottom}
         style={{
           background: colors.border,
-          width: '7px', height: '7px',
-          border: '2px solid var(--surface-0)',
+          width: '6px', height: '6px',
+          border: '2px solid var(--surface-1)',
         }}
       />
     </div>

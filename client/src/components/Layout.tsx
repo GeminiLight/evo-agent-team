@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { LayoutDashboard, Network, MessageSquare, Clock, Download, Activity, ScrollText, DollarSign, Star, Settings, MoreVertical } from 'lucide-react';
 import type { TeamSummary, TeamDetail } from '../types';
 
-export type ViewType = 'dashboard' | 'graph' | 'commlog' | 'timeline' | 'history' | 'cost' | 'review' | 'settings';
+export type ViewType = 'dashboard' | 'graph' | 'activity' | 'commlog' | 'timeline' | 'history' | 'cost' | 'review' | 'settings';
 
 interface LayoutProps {
   teams: TeamSummary[];
@@ -164,7 +164,7 @@ export default function Layout({
             {/* Human-input alert — compact pill */}
             {pendingHumanCount > 0 && (
               <button
-                onClick={() => onViewChange('commlog')}
+                onClick={() => onViewChange('activity')}
                 title={t('alert.agents_awaiting', { names: pendingHumanAgents.join(', ') })}
                 style={{
                   display: 'flex', alignItems: 'center', gap: '4px',
@@ -263,8 +263,7 @@ export default function Layout({
           }}>
             <ViewBtn active={view === 'dashboard'} onClick={() => onViewChange('dashboard')} icon={<LayoutDashboard size={11} />} label={t('nav.matrix')} tooltip={t('nav.matrix_tooltip')} />
             <ViewBtn active={view === 'graph'}     onClick={() => onViewChange('graph')}     icon={<Network size={11} />}          label={t('nav.graph')} tooltip={t('nav.graph_tooltip')} />
-            <ViewBtn active={view === 'commlog'}   onClick={() => onViewChange('commlog')}   icon={<MessageSquare size={11} />}    label={t('nav.comms')} tooltip={t('nav.comms_tooltip')} badge={pendingHumanCount > 0} />
-            <ViewBtn active={view === 'timeline'}  onClick={() => onViewChange('timeline')}  icon={<Clock size={11} />}            label={t('nav.log')} tooltip={t('nav.log_tooltip')} />
+            <ViewBtn active={view === 'activity'}  onClick={() => onViewChange('activity')}  icon={<Activity size={11} />}         label={t('nav.activity')} tooltip={t('nav.activity_tooltip')} badge={pendingHumanCount > 0} />
             <ViewBtn active={view === 'history'}   onClick={() => onViewChange('history')}   icon={<ScrollText size={11} />}       label={t('nav.hist')} tooltip={t('nav.hist_tooltip')} />
             <ViewBtn active={view === 'cost'}      onClick={() => onViewChange('cost')}      icon={<DollarSign size={11} />}       label={t('nav.cost')} tooltip={t('nav.cost_tooltip')} />
             <ViewBtn active={view === 'review'}    onClick={() => onViewChange('review')}    icon={<Star size={11} />}             label={t('nav.review')} tooltip={t('nav.review_tooltip')} />
@@ -297,6 +296,7 @@ export default function Layout({
       <main style={{
         flex: 1, overflow: 'auto',
         padding: '20px 24px',
+        paddingBottom: (view !== 'activity' && view !== 'commlog' && view !== 'timeline' && view !== 'history') ? '52px' : '20px',
       }}>
         {children}
       </main>
@@ -415,6 +415,7 @@ function ExportMenu({ onExportPng, onExportJson, onExportCsv, canExportPng, view
 
   const csvLabel = view === 'commlog' ? t('export.comms_csv')
     : view === 'timeline' ? t('export.timeline_csv')
+    : view === 'activity' ? t('export.comms_csv')
     : t('export.tasks_csv');
 
   return (

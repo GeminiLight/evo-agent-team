@@ -12,6 +12,7 @@ import DashboardView from './components/dashboard/DashboardView';
 import { TopologyView } from './components/graph/TopologyView';
 import TaskDetailPanel from './components/TaskDetailPanel';
 import AgentProfilePanel from './components/AgentProfilePanel';
+import ActivityView from './components/activity/ActivityView';
 import CommLogView from './components/commlog/CommLogView';
 import TimelineView from './components/timeline/TimelineView';
 import SessionHistoryContainer from './components/history/SessionHistoryContainer';
@@ -19,6 +20,7 @@ import CostView from './components/cost/CostView';
 import ReviewView from './components/review/ReviewView';
 import SettingsView from './components/settings/SettingsView';
 import AlertBanner from './components/alerts/AlertBanner';
+import MiniFeedBar from './components/shared/MiniFeedBar';
 import { exportGraphAsPng, exportTeamAsJson, exportTasksCsv, exportCommLogCsv, exportTimelineCsv } from './utils/exportUtils';
 import type { AgentMessage, TaskChangeEvent, Task } from './types';
 
@@ -72,6 +74,8 @@ export default function App() {
       exportCommLogCsv(selectedTeamId, commMessagesRef.current);
     } else if (view === 'timeline' && selectedTeamId) {
       exportTimelineCsv(selectedTeamId, timelineEventsRef.current);
+    } else if (view === 'activity' && selectedTeamId) {
+      exportCommLogCsv(selectedTeamId, commMessagesRef.current);
     } else if (teamDetail) {
       exportTasksCsv(teamDetail);
     }
@@ -159,6 +163,15 @@ export default function App() {
         {view === 'graph' && teamDetail && (
           <TopologyView team={teamDetail} onTaskSelect={setSelectedTaskId} onAgentSelect={setSelectedAgentId} containerRef={graphContainerRef} selectedAgentId={selectedAgentId} alertedAgentNames={alertedAgentNames} />
         )}
+        {view === 'activity' && selectedTeamId && (
+          <ActivityView
+            teamId={selectedTeamId}
+            teamDetail={teamDetail}
+            onMessagesChange={msgs => { commMessagesRef.current = msgs; }}
+            onEventsChange={evts => { timelineEventsRef.current = evts; }}
+            pendingHumanRequests={pendingHuman}
+          />
+        )}
         {view === 'commlog' && selectedTeamId && (
           <CommLogView
             teamId={selectedTeamId}
@@ -207,6 +220,13 @@ export default function App() {
           </div>
         )}
       </Layout>
+      {/* Global mini-feed bar — shown on non-stream views */}
+      {view !== 'activity' && view !== 'commlog' && view !== 'timeline' && view !== 'history' && (
+        <MiniFeedBar
+          teamId={selectedTeamId}
+          onOpenActivity={() => setView('activity')}
+        />
+      )}
       {selectedTask && (
         <TaskDetailPanel
           task={selectedTask}

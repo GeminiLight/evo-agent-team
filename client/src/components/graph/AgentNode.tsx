@@ -194,7 +194,7 @@ export function AgentNode({ data }: { data: AgentNodeData }) {
             )}
           </div>
           <div style={{
-            fontSize: '8px', color: 'var(--text-muted)',
+            fontSize: '9px', color: 'var(--text-muted)',
             letterSpacing: '0.08em', textTransform: 'uppercase',
             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
           }}>
@@ -214,7 +214,7 @@ export function AgentNode({ data }: { data: AgentNodeData }) {
             animation: isActive ? 'status-pulse 2s ease-in-out infinite' : 'none',
           }} />
           <span style={{
-            fontSize: '8px',
+            fontSize: '9px',
             color: isActive ? 'var(--active-text)' : 'var(--text-muted)',
             letterSpacing: '0.1em',
           }}>
@@ -223,7 +223,7 @@ export function AgentNode({ data }: { data: AgentNodeData }) {
         </div>
         {taskCount > 0 && (
           <span style={{
-            fontSize: '8px', color: 'var(--ice)',
+            fontSize: '9px', color: 'var(--ice)',
             background: 'var(--ice-glow)', border: '1px solid var(--ice-dim)',
             borderRadius: '3px', padding: '1px 5px',
             letterSpacing: '0.06em', fontWeight: 600,

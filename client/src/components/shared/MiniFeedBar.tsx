@@ -121,7 +121,7 @@ export default function MiniFeedBar({ teamId, onOpenActivity, maxItems = 5 }: Mi
           animation: 'status-pulse 2s ease-in-out infinite',
           display: 'inline-block',
         }} />
-        <span style={{ fontSize: '8px', letterSpacing: '0.14em', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+        <span style={{ fontSize: '9px', letterSpacing: '0.14em', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
           {t('activity.feed')}
         </span>
       </button>
@@ -142,7 +142,7 @@ export default function MiniFeedBar({ teamId, onOpenActivity, maxItems = 5 }: Mi
       {/* Total count */}
       <div style={{
         flexShrink: 0,
-        fontSize: '8px',
+        fontSize: '9px',
         color: 'var(--text-muted)',
         letterSpacing: '0.08em',
         paddingLeft: '10px',
@@ -166,7 +166,7 @@ function FeedChip({ entry }: { entry: FeedEntry }) {
         display: 'flex', alignItems: 'center', gap: '5px',
         flexShrink: 0, maxWidth: '260px',
       }}>
-        <span style={{ fontSize: '8px', color: 'var(--text-muted)', opacity: 0.5, flexShrink: 0 }}>
+        <span style={{ fontSize: '9px', color: 'var(--text-muted)', opacity: 0.5, flexShrink: 0 }}>
           {timeAgo(entry.ts)}
         </span>
         <span style={{
@@ -182,7 +182,7 @@ function FeedChip({ entry }: { entry: FeedEntry }) {
         }}>
           {m.sender}
         </span>
-        <span style={{ fontSize: '8px', color: 'var(--text-muted)' }}>→</span>
+        <span style={{ fontSize: '9px', color: 'var(--text-muted)' }}>→</span>
         <span style={{
           fontSize: '9px', color: agentColor(m.recipient),
           letterSpacing: '0.04em', flexShrink: 0,
@@ -208,7 +208,7 @@ function FeedChip({ entry }: { entry: FeedEntry }) {
       display: 'flex', alignItems: 'center', gap: '5px',
       flexShrink: 0, maxWidth: '240px',
     }}>
-      <span style={{ fontSize: '8px', color: 'var(--text-muted)', opacity: 0.5, flexShrink: 0 }}>
+      <span style={{ fontSize: '9px', color: 'var(--text-muted)', opacity: 0.5, flexShrink: 0 }}>
         {timeAgo(entry.ts)}
       </span>
       <span style={{
@@ -217,7 +217,7 @@ function FeedChip({ entry }: { entry: FeedEntry }) {
         flexShrink: 0, display: 'inline-block',
       }} />
       <span style={{
-        fontSize: '8px', color: dotColor, letterSpacing: '0.06em',
+        fontSize: '9px', color: dotColor, letterSpacing: '0.06em',
         fontWeight: 600, flexShrink: 0,
       }}>
         #{e.taskId}
@@ -230,7 +230,7 @@ function FeedChip({ entry }: { entry: FeedEntry }) {
         {e.taskSubject.length > 30 ? e.taskSubject.slice(0, 30) + '...' : e.taskSubject}
       </span>
       <span style={{
-        fontSize: '7px', letterSpacing: '0.1em',
+        fontSize: '9px', letterSpacing: '0.1em',
         color: dotColor, background: `${dotColor}15`,
         border: `1px solid ${dotColor}30`,
         padding: '0px 4px', borderRadius: '2px',

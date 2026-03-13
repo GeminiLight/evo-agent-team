@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { LayoutDashboard, Network, MessageSquare, Clock, Download, Activity, ScrollText, DollarSign, Star, Settings, MoreVertical } from 'lucide-react';
+import { Activity, Download } from 'lucide-react';
 import type { TeamSummary, TeamDetail } from '../types';
+import Sidebar from './layout/Sidebar';
+import StatusBar from './layout/StatusBar';
 
 export type ViewType = 'dashboard' | 'graph' | 'activity' | 'commlog' | 'timeline' | 'history' | 'cost' | 'review' | 'settings';
 
@@ -23,6 +25,9 @@ interface LayoutProps {
   pendingHumanAgents?: string[];
   alertCount?: number;
   criticalAlertCount?: number;
+  onAgentSelect?: (agentId: string) => void;
+  alertedAgentNames?: Set<string>;
+  onExpertProfile?: () => void;
 }
 
 export default function Layout({
@@ -43,21 +48,16 @@ export default function Layout({
   pendingHumanAgents = [],
   alertCount = 0,
   criticalAlertCount = 0,
+  onAgentSelect,
+  alertedAgentNames = new Set(),
+  onExpertProfile,
 }: LayoutProps) {
-  const { t, i18n } = useTranslation();
-  const [time, setTime] = useState(() => new Date());
-
-  useEffect(() => {
-    const id = setInterval(() => setTime(new Date()), 1000);
-    return () => clearInterval(id);
-  }, []);
-
-  const timeStr = time.toLocaleTimeString(i18n.language?.startsWith('zh') ? 'zh-CN' : 'en-US', { hour12: false });
+  const { t } = useTranslation();
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--void)', fontFamily: 'var(--font-mono)' }}>
 
-      {/* ═══════ HEADER — Two-tier command bar ═══════ */}
+      {/* ═══════ HEADER — Single row command bar ═══════ */}
       <header style={{
         background: 'var(--surface-0)',
         borderBottom: '1px solid var(--border)',
@@ -66,18 +66,20 @@ export default function Layout({
         top: 0,
         zIndex: 100,
       }}>
-
-        {/* ─── ROW 1: Identity + Global Status ─── */}
         <div style={{
           padding: '0 16px',
           height: '36px',
           display: 'flex',
           alignItems: 'center',
           gap: '10px',
-          borderBottom: '1px solid var(--border)',
         }}>
           {/* Logo */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+          <div
+            onClick={() => onViewChange('dashboard')}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0, cursor: 'pointer', padding: '2px 4px', borderRadius: '4px', transition: 'background 0.15s' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface-1)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+          >
             <div style={{ position: 'relative' }}>
               <Activity size={13} style={{ color: 'var(--phosphor)' }} />
               <div style={{
@@ -131,27 +133,12 @@ export default function Layout({
           {/* Spacer */}
           <div style={{ flex: 1 }} />
 
-          {/* Right cluster: compact global indicators */}
+          {/* Right cluster */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-
-            {/* WS status + clock — merged into one compact block */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <StatusDot
-                live={wsConnected ?? false}
-                label={wsConnected ? t('status.live') : t('status.poll')}
-                color={wsConnected ? 'var(--status-ok)' : 'var(--status-warn)'}
-              />
-              <span style={{
-                fontSize: '10px', color: 'var(--text-muted)',
-                letterSpacing: '0.1em', fontVariantNumeric: 'tabular-nums',
-              }}>
-                {timeStr}
-              </span>
-            </div>
 
             {isDemoMode && (
               <span style={{
-                fontSize: '8px', letterSpacing: '0.12em',
+                fontSize: '9px', letterSpacing: '0.12em',
                 color: 'var(--status-warn)', background: 'var(--amber-glow)',
                 border: '1px solid var(--amber-dim)',
                 padding: '1px 6px', borderRadius: '2px', lineHeight: '14px',
@@ -161,7 +148,7 @@ export default function Layout({
               </span>
             )}
 
-            {/* Human-input alert — compact pill */}
+            {/* Human-input alert pill */}
             {pendingHumanCount > 0 && (
               <button
                 onClick={() => onViewChange('activity')}
@@ -174,19 +161,19 @@ export default function Layout({
                   borderRadius: '3px',
                   cursor: 'pointer',
                   fontFamily: 'var(--font-mono)',
-                  fontSize: '8px', letterSpacing: '0.1em', lineHeight: '14px',
+                  fontSize: '9px', letterSpacing: '0.1em', lineHeight: '14px',
                   color: 'var(--amber)',
                   animation: 'status-pulse 2s ease-in-out infinite',
                   flexShrink: 0,
                   textTransform: 'uppercase',
                 }}
               >
-                <span style={{ fontSize: '8px' }}>!</span>
+                <span style={{ fontSize: '9px' }}>!</span>
                 {t('alert.input', { count: pendingHumanCount })}
               </button>
             )}
 
-            {/* Alert count — compact */}
+            {/* Alert count pill */}
             {alertCount > 0 && (
               <button
                 onClick={() => onViewChange('dashboard')}
@@ -199,39 +186,21 @@ export default function Layout({
                   borderRadius: '3px',
                   cursor: 'pointer',
                   fontFamily: 'var(--font-mono)',
-                  fontSize: '8px', letterSpacing: '0.1em', lineHeight: '14px',
+                  fontSize: '9px', letterSpacing: '0.1em', lineHeight: '14px',
                   color: criticalAlertCount > 0 ? 'var(--crimson, #ff4466)' : 'var(--amber)',
                   animation: criticalAlertCount > 0 ? 'status-pulse 2s ease-in-out infinite' : 'none',
                   flexShrink: 0,
                   textTransform: 'uppercase',
                 }}
               >
-                <span style={{ fontSize: '7px' }}>●</span>
+                <span style={{ fontSize: '9px' }}>●</span>
                 {t('alert.alert', { count: alertCount })}
               </button>
             )}
 
             <div style={{ width: '1px', height: '14px', background: 'var(--border)', flexShrink: 0 }} />
 
-            {/* Utilities: Config + Export in compact cluster */}
-            <button
-              onClick={() => onViewChange('settings')}
-              title={t('nav.settings_tooltip')}
-              style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                width: '26px', height: '26px',
-                background: view === 'settings' ? 'var(--active-bg-med)' : 'transparent',
-                color: view === 'settings' ? 'var(--phosphor)' : 'var(--text-muted)',
-                border: `1px solid ${view === 'settings' ? 'var(--phosphor)' : 'var(--border)'}`,
-                borderRadius: '3px', cursor: 'pointer',
-                transition: 'all 0.15s',
-              }}
-              onMouseEnter={e => { if (view !== 'settings') { e.currentTarget.style.borderColor = 'var(--border-bright)'; e.currentTarget.style.color = 'var(--text-secondary)'; } }}
-              onMouseLeave={e => { if (view !== 'settings') { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-muted)'; } }}
-            >
-              <Settings size={11} />
-            </button>
-
+            {/* Export menu */}
             {(onExportPng || onExportJson || onExportCsv) && (
               <ExportMenu
                 onExportPng={onExportPng}
@@ -243,144 +212,34 @@ export default function Layout({
             )}
           </div>
         </div>
-
-        {/* ─── ROW 2: Navigation + Task Stats ─── */}
-        <div style={{
-          padding: '0 16px',
-          height: '32px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0',
-          background: 'var(--surface-0)',
-        }}>
-          {/* View navigation — full-width tabs with room to breathe */}
-          <nav style={{
-            display: 'flex',
-            alignItems: 'stretch',
-            height: '100%',
-            gap: '0',
-            flexShrink: 0,
-          }}>
-            <ViewBtn active={view === 'dashboard'} onClick={() => onViewChange('dashboard')} icon={<LayoutDashboard size={11} />} label={t('nav.matrix')} tooltip={t('nav.matrix_tooltip')} />
-            <ViewBtn active={view === 'graph'}     onClick={() => onViewChange('graph')}     icon={<Network size={11} />}          label={t('nav.graph')} tooltip={t('nav.graph_tooltip')} />
-            <ViewBtn active={view === 'activity'}  onClick={() => onViewChange('activity')}  icon={<Activity size={11} />}         label={t('nav.activity')} tooltip={t('nav.activity_tooltip')} badge={pendingHumanCount > 0} />
-            <ViewBtn active={view === 'history'}   onClick={() => onViewChange('history')}   icon={<ScrollText size={11} />}       label={t('nav.hist')} tooltip={t('nav.hist_tooltip')} />
-            <ViewBtn active={view === 'cost'}      onClick={() => onViewChange('cost')}      icon={<DollarSign size={11} />}       label={t('nav.cost')} tooltip={t('nav.cost_tooltip')} />
-            <ViewBtn active={view === 'review'}    onClick={() => onViewChange('review')}    icon={<Star size={11} />}             label={t('nav.review')} tooltip={t('nav.review_tooltip')} />
-          </nav>
-
-          {/* Spacer */}
-          <div style={{ flex: 1 }} />
-
-          {/* Task stat counters — compact inline readout */}
-          {teamDetail && (
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: '10px',
-              flexShrink: 0,
-            }}>
-              <StatChip value={teamDetail.stats.completed} label={t('stat.done')} color="var(--status-ok)" tooltip={t('stat.done_tooltip')} />
-              <StatChip value={teamDetail.stats.inProgress} label={t('stat.run')} color="var(--status-warn)" pulse={teamDetail.stats.inProgress > 0} tooltip={t('stat.run_tooltip')} />
-              <StatChip value={teamDetail.stats.pending} label={t('stat.wait')} color="var(--status-neutral)" tooltip={t('stat.wait_tooltip')} />
-              <span style={{
-                fontSize: '9px', color: 'var(--text-muted)',
-                letterSpacing: '0.08em',
-              }}>
-                /{teamDetail.stats.total}
-              </span>
-            </div>
-          )}
-        </div>
       </header>
 
-      {/* ═══════ MAIN CONTENT ═══════ */}
-      <main style={{
-        flex: 1, overflow: 'auto',
-        padding: '20px 24px',
-        paddingBottom: (view !== 'activity' && view !== 'commlog' && view !== 'timeline' && view !== 'history') ? '52px' : '20px',
-      }}>
-        {children}
-      </main>
-    </div>
-  );
-}
+      {/* ═══════ BODY — Sidebar + Main ═══════ */}
+      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+        <Sidebar
+          view={view}
+          onViewChange={onViewChange}
+          teamDetail={teamDetail}
+          pendingHumanCount={pendingHumanCount}
+          pendingHumanAgents={pendingHumanAgents}
+          alertedAgentNames={alertedAgentNames}
+          onAgentSelect={onAgentSelect}
+          onExpertProfile={onExpertProfile}
+        />
+        <main style={{
+          flex: 1, overflow: 'auto',
+          padding: '20px 24px',
+        }}>
+          {children}
+        </main>
+      </div>
 
-// ─── Status dot — compact traffic-light indicator ───────────────────────────
-function StatusDot({ live, label, color }: { live: boolean; label: string; color: string }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-      <span style={{
-        width: '5px', height: '5px', borderRadius: '50%',
-        display: 'inline-block', flexShrink: 0,
-        background: color,
-        boxShadow: `0 0 4px ${color}`,
-        animation: live ? 'status-pulse 2s ease-in-out infinite' : 'none',
-      }} />
-      <span style={{ fontSize: '8px', color, letterSpacing: '0.1em', textTransform: 'uppercase' }}>{label}</span>
+      {/* ═══════ STATUS BAR ═══════ */}
+      <StatusBar
+        teamDetail={teamDetail}
+        wsConnected={wsConnected}
+      />
     </div>
-  );
-}
-
-// ─── Stat chip — ultra-compact inline counter ────────────────────────────────
-function StatChip({ value, label, color, pulse, tooltip }: { value: number; label: string; color: string; pulse?: boolean; tooltip?: string }) {
-  return (
-    <div
-      title={tooltip ?? label}
-      style={{ display: 'flex', alignItems: 'baseline', gap: '3px' }}
-    >
-      <span style={{
-        fontSize: '12px', fontWeight: 700, color,
-        fontFamily: 'var(--font-mono)', lineHeight: 1,
-        fontVariantNumeric: 'tabular-nums',
-        animation: pulse ? 'status-pulse 2s ease-in-out infinite' : 'none',
-      }}>
-        {value}
-      </span>
-      <span style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-        {label}
-      </span>
-    </div>
-  );
-}
-
-// ─── View button — tab style with bottom accent ─────────────────────────────
-function ViewBtn({ active, onClick, icon, label, tooltip, badge = false }: {
-  active: boolean; onClick: () => void; icon: React.ReactNode; label: string; tooltip?: string; badge?: boolean;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      title={tooltip ?? label}
-      style={{
-        display: 'flex', alignItems: 'center', gap: '5px',
-        padding: '0 12px',
-        height: '100%',
-        fontSize: '9px', letterSpacing: '0.08em',
-        fontFamily: 'var(--font-mono)',
-        background: 'transparent',
-        color: active ? 'var(--active-text)' : 'var(--text-muted)',
-        border: 'none',
-        borderBottom: active ? '2px solid var(--phosphor)' : '2px solid transparent',
-        cursor: 'pointer',
-        transition: 'color 0.15s, border-color 0.15s',
-        textShadow: active ? '0 0 8px var(--phosphor-glow-strong)' : 'none',
-        position: 'relative',
-        whiteSpace: 'nowrap',
-        textTransform: 'uppercase',
-      }}
-      onMouseEnter={e => { if (!active) e.currentTarget.style.color = 'var(--text-secondary)'; }}
-      onMouseLeave={e => { if (!active) e.currentTarget.style.color = 'var(--text-muted)'; }}
-    >
-      {icon}{label}
-      {badge && (
-        <span style={{
-          position: 'absolute', top: '5px', right: '4px',
-          width: '5px', height: '5px', borderRadius: '50%',
-          background: 'var(--amber)',
-          boxShadow: '0 0 4px var(--amber)',
-          animation: 'status-pulse 2s ease-in-out infinite',
-        }} />
-      )}
-    </button>
   );
 }
 
@@ -501,7 +360,7 @@ function ExportItem({ label, sublabel, onClick, divided }: {
       onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
     >
       <span style={{ fontSize: '10px', letterSpacing: '0.06em' }}>{label}</span>
-      {sublabel && <span style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.06em' }}>{sublabel}</span>}
+      {sublabel && <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.06em' }}>{sublabel}</span>}
     </button>
   );
 }

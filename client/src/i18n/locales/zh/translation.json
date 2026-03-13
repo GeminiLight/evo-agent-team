@@ -19,6 +19,17 @@
     "settings": "配置",
     "settings_tooltip": "设置 — 外观、服务器配置和连接信息"
   },
+  "sidebar": {
+    "overview": "概览",
+    "topology": "拓扑",
+    "activity": "活动",
+    "sessions": "会话",
+    "stats": "统计",
+    "review": "评审",
+    "expert_profile": "专家",
+    "collapse": "收起侧栏",
+    "expand": "展开侧栏"
+  },
   "stat": {
     "done": "完成",
     "run": "运行",
@@ -432,6 +443,43 @@
     "loading": "加载中...",
     "no_data": "暂无数据"
   },
+  "action_queue": {
+    "title": "行动队列",
+    "needs_action": "需要操作",
+    "alerts": "告警",
+    "recent": "最近事件",
+    "respond": "回复",
+    "dismiss": "关闭",
+    "all_clear": "一切正常",
+    "all_clear_sub": "没有待处理的操作",
+    "event_created": "已创建",
+    "event_started": "已开始",
+    "event_completed": "已完成"
+  },
+  "expert": {
+    "title": "专家 // 档案",
+    "feedback_stats": "反馈统计",
+    "total_feedback": "总计",
+    "praise": "表扬",
+    "corrections": "纠正",
+    "bookmarks": "书签",
+    "processed": "已处理",
+    "last_activity": "最近",
+    "by_agent": "按代理",
+    "preferences_summary": "偏好摘要",
+    "total_rules": "规则",
+    "agents_covered": "覆盖代理",
+    "no_preferences": "暂未生成偏好",
+    "response_stats": "响应统计",
+    "pending_requests": "等待中",
+    "total_responses": "已响应",
+    "activity_heatmap": "活动热力图",
+    "heatmap_less": "少",
+    "heatmap_more": "多",
+    "recent_feedback": "最近反馈",
+    "team_guide": "团队指南",
+    "guide_readonly": "只读"
+  },
   "settings": {
     "title": "设置 // {{name}}",
     "appearance": "外观",
@@ -452,6 +500,20 @@
     "ws_status": "WebSocket",
     "server_port": "服务端口",
     "selected_team": "选中团队",
-    "none": "无"
+    "none": "无",
+    "shortcuts_title": "快捷键",
+    "shortcuts_view_switch": "1-6: 切换视图",
+    "shortcuts_search": "/: 聚焦搜索",
+    "shortcuts_close": "Esc: 关闭面板",
+    "shortcuts_next": "n: 下一通知",
+    "shortcuts_refresh": "r: 刷新"
+  },
+  "topology": {
+    "filter_all": "全部",
+    "filter_active": "活跃",
+    "filter_blocked": "阻塞",
+    "filter_all_tooltip": "显示所有任务（含已完成）",
+    "filter_active_tooltip": "隐藏已完成任务（默认）",
+    "filter_blocked_tooltip": "仅显示被阻塞的任务"
   }
 }

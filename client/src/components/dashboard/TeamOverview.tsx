@@ -1,10 +1,270 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BookOpen, X, RefreshCw, ChevronDown, ChevronRight } from 'lucide-react';
-import type { TeamDetail, AgentSessionStats } from '../../types';
+import type { TeamDetail, AgentSessionStats, ExecSummaryResponse } from '../../types';
 import MarkdownContent, { inlineRender } from '../shared/MarkdownContent';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { useSummary } from '../../hooks/useSummary';
+
+// ─── Shared helpers ──────────────────────────────────────────────────────────
+
+function StatCell({ label, value, color, title }: { label: string; value: string; color: string; title?: string }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }} title={title}>
+      <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{label}</span>
+      <span style={{ fontSize: '11px', fontWeight: 600, color, fontFamily: 'var(--font-mono)', letterSpacing: '0.04em' }}>
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function fmtTokens(n: number): string {
+  if (n === 0) return '0';
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
+  return String(n);
+}
+
+function fmtDuration(ms: number): string {
+  const totalMins = Math.floor(ms / 60000);
+  if (totalMins < 1) return '<1m';
+  if (totalMins < 60) return `${totalMins}m`;
+  const hours = Math.floor(totalMins / 60);
+  const mins = totalMins % 60;
+  if (hours < 24) return mins > 0 ? `${hours}h${mins}m` : `${hours}h`;
+  const days = Math.floor(hours / 24);
+  const remHours = hours % 24;
+  return remHours > 0 ? `${days}d${remHours}h` : `${days}d`;
+}
+
+function CornerMark({ pos }: { pos: 'tl' | 'tr' | 'bl' | 'br' }) {
+  const style: React.CSSProperties = {
+    position: 'absolute',
+    width: '8px',
+    height: '8px',
+    borderColor: 'var(--border-bright)',
+    borderStyle: 'solid',
+  };
+  if (pos === 'tl') { style.top = 0; style.left = 0; style.borderWidth = '1px 0 0 1px'; }
+  if (pos === 'tr') { style.top = 0; style.right = 0; style.borderWidth = '1px 1px 0 0'; }
+  if (pos === 'bl') { style.bottom = 0; style.left = 0; style.borderWidth = '0 0 1px 1px'; }
+  if (pos === 'br') { style.bottom = 0; style.right = 0; style.borderWidth = '0 1px 1px 0'; }
+  return <div style={style} />;
+}
+
+function computeBars(stats: TeamDetail['stats'], t: (key: string) => string) {
+  const total = stats.total || 1;
+  const completedPct = (stats.completed / total) * 100;
+  const inProgressPct = (stats.inProgress / total) * 100;
+  const pendingPct = (stats.pending / total) * 100;
+  const blockedCount = Math.max(0, stats.total - stats.completed - stats.inProgress - stats.pending);
+  const blockedPct = (blockedCount / total) * 100;
+
+  return [
+    { key: 'completed', label: t('overview.completed'), count: stats.completed, pct: completedPct, color: 'var(--color-completed)', glow: 'var(--phosphor-glow-strong)' },
+    { key: 'active', label: t('overview.active'), count: stats.inProgress, pct: inProgressPct, color: 'var(--color-in-progress)', glow: 'var(--amber-glow)' },
+    { key: 'pending', label: t('overview.pending'), count: stats.pending, pct: pendingPct, color: 'var(--color-pending)', glow: 'transparent' },
+    { key: 'blocked', label: t('overview.blocked'), count: blockedCount, pct: blockedPct, color: 'var(--color-blocked)', glow: 'var(--crimson-glow)' },
+  ];
+}
+
+function aggregateSessionStats(sessionStats: Record<string, AgentSessionStats>) {
+  const values = Object.values(sessionStats);
+  if (values.length === 0) return null;
+  return {
+    inputTokens: values.reduce((s, v) => s + v.inputTokens, 0),
+    outputTokens: values.reduce((s, v) => s + v.outputTokens, 0),
+    cacheReadTokens: values.reduce((s, v) => s + v.cacheReadTokens, 0),
+    messageCount: values.reduce((s, v) => s + v.messageCount, 0),
+    maxDurationMs: Math.max(...values.map(v => v.sessionDurationMs ?? 0)),
+    agentCount: values.length,
+  };
+}
+
+// ─── Exported sub-components ─────────────────────────────────────────────────
+
+/** AI Executive Summary — always-open version for the 3-column layout */
+export interface ExecSummaryBlockProps {
+  teamId: string;
+}
+
+export function ExecSummaryBlock({ teamId }: ExecSummaryBlockProps) {
+  const { t } = useTranslation();
+  const { data, loading, refreshing, refresh } = useSummary(teamId);
+
+  return (
+    <div style={{
+      background: 'var(--surface-0)',
+      border: '1px solid var(--border)',
+      borderRadius: '4px',
+      padding: '12px 14px',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '8px',
+    }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.15em', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', flex: 1 }}>
+          {t('overview.exec_summary')}
+        </span>
+        {data?.isAIGenerated && (
+          <span style={{
+            fontSize: '9px', letterSpacing: '0.08em', color: 'var(--ice)',
+            border: '1px solid var(--ice)', borderRadius: '2px', padding: '0 4px',
+            opacity: 0.7, fontFamily: 'var(--font-mono)',
+          }}>AI</span>
+        )}
+        {data?.isStale && (
+          <span style={{ fontSize: '9px', color: 'var(--amber)', opacity: 0.7, fontFamily: 'var(--font-mono)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+            {t('overview.stale')}
+          </span>
+        )}
+        <button
+          onClick={refresh}
+          disabled={refreshing}
+          title={t('overview.refresh')}
+          style={{
+            background: 'transparent', border: 'none', cursor: refreshing ? 'default' : 'pointer',
+            color: 'var(--text-muted)', padding: '2px', display: 'flex', alignItems: 'center',
+            opacity: refreshing ? 0.4 : 1,
+          }}
+          onMouseEnter={e => { if (!refreshing) (e.currentTarget as HTMLElement).style.color = 'var(--phosphor)'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)'; }}
+        >
+          <RefreshCw size={9} style={{ animation: refreshing ? 'spin 1s linear infinite' : 'none' }} />
+        </button>
+        {data?.generatedAt && (
+          <span style={{ fontSize: '9px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', opacity: 0.5 }}>
+            {new Date(data.generatedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}
+          </span>
+        )}
+      </div>
+
+      {/* Content — always visible */}
+      <div>
+        {(loading && !data) ? (
+          <div style={{ fontSize: '9px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+            {t('overview.generating')}
+          </div>
+        ) : data ? (
+          <SummaryContent text={data.summary} />
+        ) : (
+          <div style={{ fontSize: '9px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em', opacity: 0.6 }}>
+            {t('overview.no_summary')}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** Progress bar + status legend — compact card */
+export interface ProgressSectionProps {
+  stats: TeamDetail['stats'];
+}
+
+export function ProgressSection({ stats }: ProgressSectionProps) {
+  const { t } = useTranslation();
+  const bars = computeBars(stats, t);
+  const total = stats.total || 1;
+  const overallPct = Math.round((stats.completed / total) * 100);
+
+  return (
+    <div style={{
+      background: 'var(--surface-0)',
+      border: '1px solid var(--border)',
+      borderRadius: '4px',
+      padding: '12px 14px',
+      display: 'flex', flexDirection: 'column', gap: '8px',
+      minWidth: '160px',
+    }}>
+      {/* Percentage + label */}
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+        <span style={{
+          fontSize: '24px', fontWeight: 700, lineHeight: 1,
+          color: overallPct === 100 ? 'var(--phosphor)' : 'var(--text-primary)',
+          textShadow: overallPct === 100 ? '0 0 20px var(--phosphor-glow-strong)' : 'none',
+          fontFamily: 'var(--font-mono)', transition: 'all 0.5s',
+        }}>
+          {overallPct}
+        </span>
+        <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{t('overview.pct_done')}</span>
+      </div>
+
+      {/* Stacked bar */}
+      <div style={{ display: 'flex', height: '5px', borderRadius: '2px', overflow: 'hidden', background: 'var(--surface-2)', gap: '1px' }}>
+        {bars.filter(b => b.count > 0).map(bar => (
+          <div key={bar.key} style={{
+            width: `${bar.pct}%`, background: bar.color,
+            boxShadow: `0 0 4px ${bar.glow}`,
+            transition: 'width 0.6s ease-out',
+            animation: bar.key === 'active' ? 'status-pulse 2s ease-in-out infinite' : 'none',
+          }} />
+        ))}
+      </div>
+
+      {/* Legend — compact 2×2 */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '3px 10px' }}>
+        {bars.map(bar => (
+          <div key={bar.key} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <div style={{
+              width: '5px', height: '5px', borderRadius: '1px',
+              background: bar.count > 0 ? bar.color : 'var(--surface-3)',
+              boxShadow: bar.count > 0 ? `0 0 3px ${bar.glow}` : 'none',
+            }} />
+            <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{bar.label}</span>
+            <span style={{ fontSize: '10px', fontWeight: 600, color: bar.count > 0 ? bar.color : 'var(--text-muted)', fontFamily: 'var(--font-mono)', marginLeft: 'auto' }}>
+              {bar.count}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Token statistics — vertical compact card */
+export interface StatsRowProps {
+  sessionStats: Record<string, AgentSessionStats>;
+}
+
+export function StatsRow({ sessionStats }: StatsRowProps) {
+  const { t } = useTranslation();
+  const agg = useMemo(() => aggregateSessionStats(sessionStats), [sessionStats]);
+
+  return (
+    <div style={{
+      background: 'var(--surface-0)',
+      border: '1px solid var(--border)',
+      borderRadius: '4px',
+      padding: '12px 14px',
+      display: 'flex', flexDirection: 'column', gap: '6px',
+      minWidth: '140px',
+    }}>
+      <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.12em', textTransform: 'uppercase', flexShrink: 0 }}>
+        SESSION
+      </span>
+      {agg ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <StatCell label={t('overview.in_tokens')} value={fmtTokens(agg.inputTokens)} color="var(--ice)" title={`Input: ${agg.inputTokens.toLocaleString()}`} />
+          <StatCell label={t('overview.out_tokens')} value={fmtTokens(agg.outputTokens)} color="var(--phosphor)" title={`Output: ${agg.outputTokens.toLocaleString()}`} />
+          {agg.cacheReadTokens > 0 && (
+            <StatCell label={t('overview.cache_tokens')} value={fmtTokens(agg.cacheReadTokens)} color="var(--text-secondary)" title={`Cache: ${agg.cacheReadTokens.toLocaleString()}`} />
+          )}
+          <StatCell label={t('overview.messages')} value={String(agg.messageCount)} color="var(--text-secondary)" title={`${agg.messageCount} msgs across ${agg.agentCount} agents`} />
+          {agg.maxDurationMs > 0 && (
+            <StatCell label={t('overview.time')} value={fmtDuration(agg.maxDurationMs)} color="var(--text-secondary)" title="Longest session" />
+          )}
+        </div>
+      ) : (
+        <span style={{ fontSize: '9px', color: 'var(--text-muted)', opacity: 0.5, letterSpacing: '0.06em' }}>—</span>
+      )}
+    </div>
+  );
+}
+
+// ─── Original TeamOverview (default export, kept for fallback) ───────────────
 
 interface TeamOverviewProps {
   team: TeamDetail;
@@ -22,35 +282,10 @@ export default function TeamOverview({ team, sessionStats = {} }: TeamOverviewPr
   const { data: summary, loading: summaryLoading, refreshing: summaryRefreshing, refresh: refreshSummary } = useSummary(team.id);
 
   const { stats } = team;
-
-  const aggregatedStats = useMemo(() => {
-    const values = Object.values(sessionStats);
-    if (values.length === 0) return null;
-    return {
-      inputTokens: values.reduce((s, v) => s + v.inputTokens, 0),
-      outputTokens: values.reduce((s, v) => s + v.outputTokens, 0),
-      cacheReadTokens: values.reduce((s, v) => s + v.cacheReadTokens, 0),
-      messageCount: values.reduce((s, v) => s + v.messageCount, 0),
-      maxDurationMs: Math.max(...values.map(v => v.sessionDurationMs ?? 0)),
-      agentCount: values.length,
-    };
-  }, [sessionStats]);
+  const bars = computeBars(stats, t);
+  const aggregatedStats = useMemo(() => aggregateSessionStats(sessionStats), [sessionStats]);
   const total = stats.total || 1;
-
-  const completedPct = (stats.completed / total) * 100;
-  const inProgressPct = (stats.inProgress / total) * 100;
-  const pendingPct = (stats.pending / total) * 100;
-  const blockedCount = Math.max(0, stats.total - stats.completed - stats.inProgress - stats.pending);
-  const blockedPct = (blockedCount / total) * 100;
-
-  const bars = [
-    { key: 'completed', label: t('overview.completed'), count: stats.completed, pct: completedPct, color: 'var(--color-completed)', glow: 'var(--phosphor-glow-strong)' },
-    { key: 'active', label: t('overview.active'), count: stats.inProgress, pct: inProgressPct, color: 'var(--color-in-progress)', glow: 'var(--amber-glow)' },
-    { key: 'pending', label: t('overview.pending'), count: stats.pending, pct: pendingPct, color: 'var(--color-pending)', glow: 'transparent' },
-    { key: 'blocked', label: t('overview.blocked'), count: blockedCount, pct: blockedPct, color: 'var(--color-blocked)', glow: 'var(--crimson-glow)' },
-  ];
-
-  const overallPct = Math.round(completedPct);
+  const overallPct = Math.round((stats.completed / total) * 100);
 
   return (
     <>
@@ -89,7 +324,7 @@ export default function TeamOverview({ team, sessionStats = {} }: TeamOverviewPr
                 borderRadius: '2px',
                 cursor: 'pointer',
                 fontFamily: 'var(--font-mono)',
-                fontSize: '8px', letterSpacing: '0.1em',
+                fontSize: '9px', letterSpacing: '0.1em',
                 color: 'var(--text-muted)',
                 transition: 'all 0.15s',
                 textTransform: 'uppercase',
@@ -121,7 +356,7 @@ export default function TeamOverview({ team, sessionStats = {} }: TeamOverviewPr
           {team.config?.description && (
             <div style={{ marginBottom: '14px', maxWidth: '480px' }}>
               <div style={{
-                fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.15em',
+                fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.15em',
                 marginBottom: '4px', textTransform: 'uppercase',
               }}>
                 {t('overview.mission')}
@@ -204,7 +439,7 @@ export default function TeamOverview({ team, sessionStats = {} }: TeamOverviewPr
               marginTop: '14px', paddingTop: '12px',
               borderTop: '1px solid var(--border)',
             }}>
-              <span style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.15em', flexShrink: 0, textTransform: 'uppercase' }}>
+              <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.15em', flexShrink: 0, textTransform: 'uppercase' }}>
                 SESSION
               </span>
               <StatCell label={t('overview.in_tokens')} value={fmtTokens(aggregatedStats.inputTokens)} color="var(--ice)" title={`Total input tokens: ${aggregatedStats.inputTokens.toLocaleString()}`} />
@@ -220,7 +455,7 @@ export default function TeamOverview({ team, sessionStats = {} }: TeamOverviewPr
           )}
 
           {/* D0: Executive Summary */}
-          <ExecSummaryBlock
+          <InlineExecSummaryBlock
             data={summary}
             loading={summaryLoading}
             refreshing={summaryRefreshing}
@@ -329,58 +564,9 @@ function TeamGuidePanel({ teamId, teamName, onClose }: { teamId: string; teamNam
   );
 }
 
-// ─── Markdown renderer and inline render imported from shared/MarkdownContent ─
+// ─── Inline Exec Summary (collapsible, used in original TeamOverview) ────────
 
-function StatCell({ label, value, color, title }: { label: string; value: string; color: string; title?: string }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }} title={title}>
-      <span style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{label}</span>
-      <span style={{ fontSize: '11px', fontWeight: 600, color, fontFamily: 'var(--font-mono)', letterSpacing: '0.04em' }}>
-        {value}
-      </span>
-    </div>
-  );
-}
-
-function fmtTokens(n: number): string {
-  if (n === 0) return '0';
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
-  return String(n);
-}
-
-function fmtDuration(ms: number): string {
-  const totalMins = Math.floor(ms / 60000);
-  if (totalMins < 1) return '<1m';
-  if (totalMins < 60) return `${totalMins}m`;
-  const hours = Math.floor(totalMins / 60);
-  const mins = totalMins % 60;
-  if (hours < 24) return mins > 0 ? `${hours}h${mins}m` : `${hours}h`;
-  const days = Math.floor(hours / 24);
-  const remHours = hours % 24;
-  return remHours > 0 ? `${days}d${remHours}h` : `${days}d`;
-}
-
-function CornerMark({ pos }: { pos: 'tl' | 'tr' | 'bl' | 'br' }) {
-  const style: React.CSSProperties = {
-    position: 'absolute',
-    width: '8px',
-    height: '8px',
-    borderColor: 'var(--border-bright)',
-    borderStyle: 'solid',
-  };
-  if (pos === 'tl') { style.top = 0; style.left = 0; style.borderWidth = '1px 0 0 1px'; }
-  if (pos === 'tr') { style.top = 0; style.right = 0; style.borderWidth = '1px 1px 0 0'; }
-  if (pos === 'bl') { style.bottom = 0; style.left = 0; style.borderWidth = '0 0 1px 1px'; }
-  if (pos === 'br') { style.bottom = 0; style.right = 0; style.borderWidth = '0 1px 1px 0'; }
-  return <div style={style} />;
-}
-
-// ─── D0: Exec Summary Block ───────────────────────────────────────────────────
-
-import type { ExecSummaryResponse } from '../../types';
-
-interface ExecSummaryBlockProps {
+interface InlineExecSummaryBlockProps {
   data: ExecSummaryResponse | null;
   loading: boolean;
   refreshing: boolean;
@@ -389,7 +575,7 @@ interface ExecSummaryBlockProps {
   onRefresh: () => void;
 }
 
-function ExecSummaryBlock({ data, loading, refreshing, open, onToggle, onRefresh }: ExecSummaryBlockProps) {
+function InlineExecSummaryBlock({ data, loading, refreshing, open, onToggle, onRefresh }: InlineExecSummaryBlockProps) {
   const { t } = useTranslation();
 
   return (
@@ -412,18 +598,18 @@ function ExecSummaryBlock({ data, loading, refreshing, open, onToggle, onRefresh
             ? <ChevronDown size={10} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
             : <ChevronRight size={10} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
           }
-          <span style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.15em', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>
+          <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.15em', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>
             {t('overview.exec_summary')}
           </span>
           {data?.isAIGenerated && (
             <span style={{
-              fontSize: '7px', letterSpacing: '0.08em', color: 'var(--ice)',
+              fontSize: '9px', letterSpacing: '0.08em', color: 'var(--ice)',
               border: '1px solid var(--ice)', borderRadius: '2px', padding: '0 4px',
               opacity: 0.7, fontFamily: 'var(--font-mono)',
             }}>AI</span>
           )}
           {data?.isStale && (
-            <span style={{ fontSize: '7px', color: 'var(--amber)', opacity: 0.7, fontFamily: 'var(--font-mono)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+            <span style={{ fontSize: '9px', color: 'var(--amber)', opacity: 0.7, fontFamily: 'var(--font-mono)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
               {t('overview.stale')}
             </span>
           )}
@@ -445,7 +631,7 @@ function ExecSummaryBlock({ data, loading, refreshing, open, onToggle, onRefresh
         </button>
 
         {data?.generatedAt && (
-          <span style={{ fontSize: '7px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', opacity: 0.5 }}>
+          <span style={{ fontSize: '9px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', opacity: 0.5 }}>
             {new Date(data.generatedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}
           </span>
         )}

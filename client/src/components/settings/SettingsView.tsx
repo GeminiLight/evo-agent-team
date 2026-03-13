@@ -189,7 +189,7 @@ export default function SettingsView({ teamId, wsConnected }: SettingsViewProps)
                       {t(`theme.${themeItem.id}.label`)}
                     </div>
                     <div style={{
-                      fontSize: '7px', color: 'var(--text-muted)', letterSpacing: '0.03em',
+                      fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.03em',
                       fontFamily: 'var(--font-mono)',
                     }}>
                       {t(`theme.${themeItem.id}.desc`)}
@@ -378,6 +378,38 @@ export default function SettingsView({ teamId, wsConnected }: SettingsViewProps)
             {teamId ?? t('settings.none')}
           </span>
         </FieldRow>
+
+        {/* ── KEYBOARD SHORTCUTS ── */}
+        <SectionLabel label={t('settings.shortcuts_title')} />
+
+        {[
+          t('settings.shortcuts_view_switch'),
+          t('settings.shortcuts_search'),
+          t('settings.shortcuts_close'),
+          t('settings.shortcuts_next'),
+          t('settings.shortcuts_refresh'),
+        ].map((shortcut, i) => {
+          const [key, ...descParts] = shortcut.split(': ');
+          const desc = descParts.join(': ');
+          return (
+            <div key={i} style={{
+              display: 'flex', alignItems: 'center', gap: '12px',
+              padding: '4px 0', maxWidth: '530px',
+            }}>
+              <code style={{
+                padding: '2px 8px', fontSize: '9px',
+                fontFamily: 'var(--font-mono)',
+                background: 'var(--surface-2)',
+                border: '1px solid var(--border)',
+                borderRadius: '3px',
+                color: 'var(--phosphor)',
+                letterSpacing: '0.06em',
+                minWidth: '50px', textAlign: 'center',
+              }}>{key}</code>
+              <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.04em' }}>{desc}</span>
+            </div>
+          );
+        })}
 
       </div>
     </div>

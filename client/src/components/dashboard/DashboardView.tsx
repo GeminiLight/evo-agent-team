@@ -1,10 +1,12 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CheckCircle2, Loader2, Clock } from 'lucide-react';
-import type { TeamDetail, TeamMember, Task, InboxSummaryItem, AgentSessionStats, SessionTodo, TodoItem } from '../../types';
+import type { TeamDetail, TeamMember, Task, InboxSummaryItem, AgentSessionStats, SessionTodo, TodoItem, Alert, TaskChangeEvent } from '../../types';
 import type { BlockingDetail } from '../../hooks/usePendingHumanRequests';
-import TeamOverview from './TeamOverview';
-import AgentCard from './AgentCard';
+import type { ViewType } from '../Layout';
+import { ExecSummaryBlock, ProgressSection, StatsRow } from './TeamOverview';
+import CompactAgentCard from './CompactAgentCard';
+import ActionQueue from './ActionQueue';
 import TaskList from './TaskList';
 import AgentHeatmap from './AgentHeatmap';
 import CRTEmptyState from '../shared/CRTEmptyState';
@@ -24,7 +26,6 @@ function sortMembers(members: TeamMember[], tasks: Task[], mode: SortMode): Team
   if (mode === 'workload') {
     return [...members].sort((a, b) => {
       const sa = getStats(a); const sb = getStats(b);
-      // active tasks first, then by total
       const scoreA = sa.active * 1000 + sa.total;
       const scoreB = sb.active * 1000 + sb.total;
       return scoreB - scoreA;
@@ -55,12 +56,39 @@ interface DashboardViewProps {
   leadName?: string | null;
   projectTodos?: SessionTodo[];
   teamId?: string;
+  alerts?: Alert[];
+  onDismissAlert?: (id: string) => void;
+  onViewChange?: (view: ViewType) => void;
 }
 
-export default function DashboardView({ team, onTaskSelect, onAgentSelect, onTeamUpdate, pendingHumanAgents = [], pendingHumanDetails = [], inboxSummary = {}, sessionStats = {}, leadName = null, projectTodos = [], teamId }: DashboardViewProps) {
+export default function DashboardView({
+  team, onTaskSelect, onAgentSelect, onTeamUpdate,
+  pendingHumanAgents = [], pendingHumanDetails = [],
+  inboxSummary = {}, sessionStats = {}, leadName = null,
+  projectTodos = [], teamId,
+  alerts = [], onDismissAlert, onViewChange,
+}: DashboardViewProps) {
   const { t } = useTranslation();
   const members = team.config?.members ?? [];
   const [sortMode, setSortMode] = useState<SortMode>('default');
+
+  // Fetch recent timeline events for ActionQueue
+  const [recentEvents, setRecentEvents] = useState<TaskChangeEvent[]>([]);
+  useEffect(() => {
+    if (!teamId) return;
+    let cancelled = false;
+    fetch(`/api/teams/${teamId}/timeline`)
+      .then(r => r.ok ? r.json() : null)
+      .then((data: { events?: TaskChangeEvent[] } | null) => {
+        if (!cancelled && data?.events) {
+          // Most recent first, take top 10
+          const sorted = data.events.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+          setRecentEvents(sorted.slice(0, 10));
+        }
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [teamId]);
 
   const SORT_OPTS: { id: SortMode; label: string; tooltip: string }[] = [
     { id: 'default',    label: t('dashboard.sort_default'),    tooltip: t('dashboard.sort_default_tooltip') },
@@ -74,96 +102,127 @@ export default function DashboardView({ team, onTaskSelect, onAgentSelect, onTea
     [members, team.tasks, sortMode],
   );
 
+  const alertedAgentNames = new Set(alerts.filter(a => a.agentName).map(a => a.agentName!));
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      {/* Row 1: overview full-width */}
-      <TeamOverview team={team} sessionStats={sessionStats} />
+      {/* Top row: Overview strip — full width, horizontal */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'auto 1fr auto',
+        gap: '10px',
+        alignItems: 'stretch',
+      }}>
+        <ProgressSection stats={team.stats} />
+        <ExecSummaryBlock teamId={team.id} />
+        <StatsRow sessionStats={sessionStats} />
+      </div>
 
-      {/* Row 2: agent roster full-width, wraps freely */}
-      {members.length > 0 ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          {/* Roster header with sort controls */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: '9px', letterSpacing: '0.15em', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-              {t('dashboard.roster', { count: members.length })}
-            </span>
-            <div style={{ display: 'flex', gap: '2px', alignItems: 'center' }}>
-              <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em', marginRight: '4px', textTransform: 'uppercase' }}>{t('dashboard.sort')}</span>
-              {SORT_OPTS.map(opt => {
-                const isActive = sortMode === opt.id;
-                return (
-                  <button
-                    key={opt.id}
-                    onClick={() => setSortMode(opt.id)}
-                    title={opt.tooltip}
-                    style={{
-                      padding: '2px 8px',
-                      fontSize: '9px', letterSpacing: '0.08em',
-                      fontFamily: 'var(--font-mono)',
-                      background: isActive ? 'var(--active-bg-med)' : 'transparent',
-                      color: isActive ? 'var(--active-text)' : 'var(--text-muted)',
-                      border: `1px solid ${isActive ? 'var(--active-border)' : 'transparent'}`,
-                      borderRadius: '2px',
-                      cursor: 'pointer',
-                      transition: 'all 0.1s',
-                      textTransform: 'uppercase',
-                    }}
-                    onMouseEnter={e => { if (!isActive) e.currentTarget.style.color = 'var(--text-secondary)'; }}
-                    onMouseLeave={e => { if (!isActive) e.currentTarget.style.color = 'var(--text-muted)'; }}
-                  >
-                    {opt.label}
-                  </button>
-                );
-              })}
+      {/* Main area: Agents + Action Queue side by side */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 280px',
+        gap: '16px',
+        minHeight: '360px',
+      }}>
+        {/* Left: Agent grid */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', minWidth: 0 }}>
+          {members.length > 0 ? (
+            <>
+              {/* Roster header with sort controls */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '9px', letterSpacing: '0.15em', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                  {t('dashboard.roster', { count: members.length })}
+                </span>
+                <div style={{ display: 'flex', gap: '2px', alignItems: 'center' }}>
+                  <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em', marginRight: '4px', textTransform: 'uppercase' }}>{t('dashboard.sort')}</span>
+                  {SORT_OPTS.map(opt => {
+                    const isActive = sortMode === opt.id;
+                    return (
+                      <button
+                        key={opt.id}
+                        onClick={() => setSortMode(opt.id)}
+                        title={opt.tooltip}
+                        style={{
+                          padding: '2px 8px',
+                          fontSize: '9px', letterSpacing: '0.08em',
+                          fontFamily: 'var(--font-mono)',
+                          background: isActive ? 'var(--active-bg-med)' : 'transparent',
+                          color: isActive ? 'var(--active-text)' : 'var(--text-muted)',
+                          border: `1px solid ${isActive ? 'var(--active-border)' : 'transparent'}`,
+                          borderRadius: '2px',
+                          cursor: 'pointer',
+                          transition: 'all 0.1s',
+                          textTransform: 'uppercase',
+                        }}
+                        onMouseEnter={e => { if (!isActive) e.currentTarget.style.color = 'var(--text-secondary)'; }}
+                        onMouseLeave={e => { if (!isActive) e.currentTarget.style.color = 'var(--text-muted)'; }}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Compact agent cards — auto-fill grid */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                gap: '6px',
+                flex: 1,
+                alignContent: 'start',
+                overflowY: 'auto',
+              }}>
+                {sortedMembers.map(member => {
+                  const blockingDetail = pendingHumanDetails.find(d => d.name === member.name)?.blocking;
+                  return (
+                    <CompactAgentCard
+                      key={member.agentId}
+                      member={member}
+                      tasks={team.tasks}
+                      onAgentSelect={onAgentSelect}
+                      awaitingInput={pendingHumanAgents.includes(member.name)}
+                      blockingTool={blockingDetail?.toolName}
+                      blockingDetail={blockingDetail?.detail}
+                      isLead={member.name === leadName}
+                      hasAlert={alertedAgentNames.has(member.name)}
+                      teamId={teamId}
+                    />
+                  );
+                })}
+              </div>
+            </>
+          ) : (
+            <div style={{ background: 'var(--surface-0)', border: '1px solid var(--border)', borderRadius: '4px', flex: 1 }}>
+              <CRTEmptyState title={t('dashboard.no_agents')} subtitle={t('dashboard.no_agents_sub')} />
             </div>
-          </div>
-
-
-          {/* Agent cards — wrap into as many rows as needed */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
-            gap: '10px',
-          }}>
-            {sortedMembers.map((member, idx) => {
-              const blockingDetail = pendingHumanDetails.find(d => d.name === member.name)?.blocking;
-              const unreadCount = inboxSummary[member.name]?.unread ?? 0;
-              return (
-                <AgentCard
-                  key={member.agentId}
-                  member={member}
-                  tasks={team.tasks}
-                  onAgentSelect={onAgentSelect}
-                  sortRank={sortMode !== 'default' ? idx + 1 : undefined}
-                  awaitingInput={pendingHumanAgents.includes(member.name)}
-                  blockingTool={blockingDetail?.toolName}
-                  blockingDetail={blockingDetail?.detail}
-                  isLead={member.name === leadName}
-                  unreadCount={unreadCount}
-                  teamId={teamId}
-                />
-              );
-            })}
-          </div>
+          )}
         </div>
-      ) : (
-        <div style={{ background: 'var(--surface-0)', border: '1px solid var(--border)', borderRadius: '4px' }}>
-          <CRTEmptyState title={t('dashboard.no_agents')} subtitle={t('dashboard.no_agents_sub')} />
-        </div>
-      )}
+
+        {/* Right: Action Queue */}
+        <ActionQueue
+          alerts={alerts}
+          pendingHumanDetails={pendingHumanDetails}
+          recentEvents={recentEvents}
+          teamId={teamId}
+          onDismissAlert={onDismissAlert ?? (() => {})}
+          onViewChange={onViewChange ?? (() => {})}
+        />
+      </div>
 
       {/* Session todos — inline, only when there are sessions with items */}
       {projectTodos.length > 0 && (
         <SessionTodoList sessions={projectTodos} />
       )}
 
+      {/* Task list — full width */}
+      <TaskList tasks={team.tasks} members={members} onTaskSelect={onTaskSelect} teamId={team.id} onTaskUpdated={onTeamUpdate} />
+
       {/* Heatmap — only when there are ≥2 agents */}
       {members.length >= 2 && (
         <AgentHeatmap teamId={team.id} agentNames={members.map(m => m.name)} />
       )}
-
-      {/* Task list — full width */}
-      <TaskList tasks={team.tasks} members={members} onTaskSelect={onTaskSelect} teamId={team.id} onTaskUpdated={onTeamUpdate} />
     </div>
   );
 }
@@ -222,13 +281,13 @@ function SessionTodoList({ sessions }: { sessions: SessionTodo[] }) {
             <span>{session.shortId}</span>
             {session.isLead && (
               <span style={{
-                fontSize: '8px', padding: '1px 5px',
+                fontSize: '9px', padding: '1px 5px',
                 color: 'var(--amber)', background: 'var(--amber-glow)',
                 border: '1px solid var(--amber-dim)', borderRadius: '2px',
                 letterSpacing: '0.1em', textTransform: 'uppercase',
               }}>{t('status.lead')}</span>
             )}
-            <span style={{ color: 'var(--text-muted)', opacity: 0.5, fontSize: '8px' }}>
+            <span style={{ color: 'var(--text-muted)', opacity: 0.5, fontSize: '9px' }}>
               {session.cwd}
             </span>
             <span style={{ marginLeft: 'auto', opacity: 0.6 }}>

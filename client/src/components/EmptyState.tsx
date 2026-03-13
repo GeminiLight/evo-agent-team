@@ -132,7 +132,7 @@ export default function EmptyState({ onEnableDemo }: EmptyStateProps) {
             {/* Getting started steps */}
             <div style={{ marginBottom: '20px' }}>
               <div style={{
-                fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.2em',
+                fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.2em',
                 marginBottom: '12px', textAlign: 'center',
                 textTransform: 'uppercase',
               }}>

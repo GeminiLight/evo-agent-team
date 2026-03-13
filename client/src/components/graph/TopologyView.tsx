@@ -13,7 +13,7 @@ import {
 import '@xyflow/react/dist/style.css';
 
 import type { TeamDetail, Task } from '../../types';
-import { buildGraphElements, type LayoutMode } from './graphLayout';
+import { buildGraphElements, type LayoutMode, type StatusFilter } from './graphLayout';
 import { AgentNode } from './AgentNode';
 import { TaskNode } from './TaskNode';
 import CRTEmptyState from '../shared/CRTEmptyState';
@@ -43,7 +43,18 @@ const LAYOUT_OPTIONS: { mode: LayoutMode; label: string; icon: string; desc: str
   { mode: 'circular',     label: 'RADIAL', icon: '◎', desc: 'Radial — agents in ring, tasks fan outward' },
 ];
 
-function LayoutToolbar({ layout, onChange }: { layout: LayoutMode; onChange: (m: LayoutMode) => void }) {
+function LayoutToolbar({ layout, onChange, statusFilter, onStatusFilterChange }: {
+  layout: LayoutMode;
+  onChange: (m: LayoutMode) => void;
+  statusFilter: StatusFilter;
+  onStatusFilterChange: (f: StatusFilter) => void;
+}) {
+  const STATUS_FILTER_OPTIONS: { mode: StatusFilter; label: string; desc: string }[] = [
+    { mode: 'all',     label: 'ALL',     desc: 'Show all tasks including completed' },
+    { mode: 'active',  label: 'ACTIVE',  desc: 'Hide completed tasks (default)' },
+    { mode: 'blocked', label: 'BLOCKED', desc: 'Show only blocked tasks' },
+  ];
+
   return (
     <div style={{
       position: 'absolute',
@@ -52,6 +63,7 @@ function LayoutToolbar({ layout, onChange }: { layout: LayoutMode; onChange: (m:
       transform: 'translateX(-50%)',
       zIndex: 10,
       display: 'flex',
+      alignItems: 'center',
       gap: '2px',
       background: 'var(--surface-1)',
       border: '1px solid var(--border)',
@@ -98,15 +110,54 @@ function LayoutToolbar({ layout, onChange }: { layout: LayoutMode; onChange: (m:
           </button>
         );
       })}
+
+      {/* Separator */}
+      <div style={{ width: '1px', height: '18px', background: 'var(--border)', margin: '0 4px', flexShrink: 0 }} />
+
+      {/* Status filter */}
+      {STATUS_FILTER_OPTIONS.map(opt => {
+        const isActive = statusFilter === opt.mode;
+        return (
+          <button
+            key={opt.mode}
+            title={opt.desc}
+            onClick={() => onStatusFilterChange(opt.mode)}
+            style={{
+              padding: '5px 10px',
+              background: isActive ? 'var(--active-bg-med)' : 'transparent',
+              border: isActive ? '1px solid var(--active-border-hi)' : '1px solid transparent',
+              borderRadius: '6px',
+              color: isActive ? 'var(--active-text)' : 'var(--text-muted)',
+              fontSize: '9px',
+              letterSpacing: '0.1em',
+              fontFamily: 'var(--font-mono, monospace)',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              textShadow: isActive ? '0 0 6px var(--phosphor-glow)' : 'none',
+              boxShadow: isActive ? 'var(--active-glow)' : 'none',
+              fontWeight: isActive ? 600 : 400,
+            }}
+            onMouseEnter={(e) => {
+              if (!isActive) (e.target as HTMLElement).style.color = 'var(--text-secondary)';
+            }}
+            onMouseLeave={(e) => {
+              if (!isActive) (e.target as HTMLElement).style.color = 'var(--text-muted)';
+            }}
+          >
+            {opt.label}
+          </button>
+        );
+      })}
     </div>
   );
 }
 
 function TopologyViewInner({ team, onTaskSelect, onAgentSelect, containerRef, selectedAgentId, alertedAgentNames }: TopologyViewProps) {
   const [layout, setLayout] = useState<LayoutMode>('hierarchical');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('active');
   const { fitView } = useReactFlow();
 
-  const { nodes: rawNodes, edges } = useMemo(() => buildGraphElements(team, layout, selectedAgentId ?? undefined), [team, layout, selectedAgentId]);
+  const { nodes: rawNodes, edges } = useMemo(() => buildGraphElements(team, layout, selectedAgentId ?? undefined, statusFilter), [team, layout, selectedAgentId, statusFilter]);
 
   const nodes = useMemo(() => {
     const hasSelection = !!selectedAgentId;
@@ -181,7 +232,7 @@ function TopologyViewInner({ team, onTaskSelect, onAgentSelect, containerRef, se
         .react-flow__node:hover { z-index: 10 !important; }
       `}</style>
 
-      <LayoutToolbar layout={layout} onChange={handleLayoutChange} />
+      <LayoutToolbar layout={layout} onChange={handleLayoutChange} statusFilter={statusFilter} onStatusFilterChange={setStatusFilter} />
 
       {nodes.length === 0 && (
         <div style={{

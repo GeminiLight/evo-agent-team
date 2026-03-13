@@ -150,7 +150,7 @@ export default function TimelineView({ teamId, teamDetail, onEventsChange }: Tim
               borderRadius: '3px',
               cursor: 'pointer',
               fontFamily: 'var(--font-mono)',
-              fontSize: '8px', letterSpacing: '0.1em',
+              fontSize: '9px', letterSpacing: '0.1em',
               color: isFollowing ? 'var(--active-text)' : 'var(--text-muted)',
               transition: 'all 0.15s',
             }}
@@ -229,7 +229,7 @@ function OrderBtn({ active, onClick, title, children }: { active: boolean; onCli
       onClick={onClick}
       title={title}
       style={{
-        padding: '2px 7px', fontSize: '8px', letterSpacing: '0.08em',
+        padding: '2px 7px', fontSize: '9px', letterSpacing: '0.08em',
         fontFamily: 'var(--font-mono)',
         background: active ? 'var(--active-bg-med)' : 'transparent',
         color: active ? 'var(--active-text)' : 'var(--text-muted)',

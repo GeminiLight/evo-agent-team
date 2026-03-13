@@ -19,6 +19,17 @@
     "settings": "Config",
     "settings_tooltip": "Settings — appearance, server config, and connection info"
   },
+  "sidebar": {
+    "overview": "Overview",
+    "topology": "Topology",
+    "activity": "Activity",
+    "sessions": "Sessions",
+    "stats": "Stats",
+    "review": "Review",
+    "expert_profile": "Expert",
+    "collapse": "Collapse",
+    "expand": "Expand"
+  },
   "stat": {
     "done": "Done",
     "run": "Run",
@@ -432,6 +443,43 @@
     "loading": "Loading...",
     "no_data": "No Data"
   },
+  "action_queue": {
+    "title": "Action Queue",
+    "needs_action": "Needs Action",
+    "alerts": "Alerts",
+    "recent": "Recent Events",
+    "respond": "Respond",
+    "dismiss": "Dismiss",
+    "all_clear": "All Clear",
+    "all_clear_sub": "No pending actions",
+    "event_created": "Created",
+    "event_started": "Started",
+    "event_completed": "Completed"
+  },
+  "expert": {
+    "title": "Expert // Profile",
+    "feedback_stats": "Feedback Stats",
+    "total_feedback": "Total",
+    "praise": "Praise",
+    "corrections": "Corrections",
+    "bookmarks": "Bookmarks",
+    "processed": "Processed",
+    "last_activity": "Last",
+    "by_agent": "By Agent",
+    "preferences_summary": "Preferences Summary",
+    "total_rules": "Rules",
+    "agents_covered": "Agents",
+    "no_preferences": "No preferences generated yet",
+    "response_stats": "Response Stats",
+    "pending_requests": "Pending",
+    "total_responses": "Responded",
+    "activity_heatmap": "Activity Heatmap",
+    "heatmap_less": "Less",
+    "heatmap_more": "More",
+    "recent_feedback": "Recent Feedback",
+    "team_guide": "Team Guide",
+    "guide_readonly": "READ-ONLY"
+  },
   "settings": {
     "title": "Settings // {{name}}",
     "appearance": "Appearance",
@@ -452,6 +500,20 @@
     "ws_status": "WebSocket",
     "server_port": "Server Port",
     "selected_team": "Selected Team",
-    "none": "None"
+    "none": "None",
+    "shortcuts_title": "Keyboard Shortcuts",
+    "shortcuts_view_switch": "1-6: Switch views",
+    "shortcuts_search": "/: Focus search",
+    "shortcuts_close": "Esc: Close panel",
+    "shortcuts_next": "n: Next notification",
+    "shortcuts_refresh": "r: Refresh"
+  },
+  "topology": {
+    "filter_all": "All",
+    "filter_active": "Active",
+    "filter_blocked": "Blocked",
+    "filter_all_tooltip": "Show all tasks including completed",
+    "filter_active_tooltip": "Hide completed tasks (default)",
+    "filter_blocked_tooltip": "Show only blocked tasks"
   }
 }

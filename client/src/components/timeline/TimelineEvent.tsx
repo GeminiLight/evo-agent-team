@@ -107,7 +107,7 @@ export default function TimelineEvent({ event }: TimelineEventProps) {
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
               width: '18px', height: '18px',
               borderRadius: '3px',
-              fontSize: '8px', fontWeight: 700, letterSpacing: '0.04em',
+              fontSize: '9px', fontWeight: 700, letterSpacing: '0.04em',
               fontFamily: 'var(--font-mono)',
               ...avatarStyle,
             }}>

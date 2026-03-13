@@ -312,10 +312,10 @@ function MessageRow({ message, activeKinds, toolFilter, search, teamId, agentNam
         flexShrink: 0, width: '44px', paddingTop: '2px',
         display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '3px',
       }}>
-        <span style={{ fontSize: '8px', fontWeight: 700, letterSpacing: '0.1em', color: roleColor }}>
+        <span style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '0.1em', color: roleColor }}>
           {isUser ? 'USER' : 'ASST'}
         </span>
-        <span style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.06em' }}>
+        <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.06em' }}>
           {fmtTime(message.timestamp)}
         </span>
       </div>
@@ -444,10 +444,10 @@ function EntryBlock({ entry, search }: { entry: SessionEntry; search: string }) 
         padding: '4px 8px',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: text ? '3px' : 0 }}>
-          <span style={{ fontSize: '8px', color, letterSpacing: '0.1em', fontFamily: 'var(--font-mono)' }}>
+          <span style={{ fontSize: '9px', color, letterSpacing: '0.1em', fontFamily: 'var(--font-mono)' }}>
             {isErr ? 'ERROR' : 'RESULT'}
           </span>
-          <span style={{ fontSize: '8px', color: 'var(--text-muted)', opacity: 0.5 }}>
+          <span style={{ fontSize: '9px', color: 'var(--text-muted)', opacity: 0.5 }}>
             {entry.toolResultId?.slice(0, 16)}
           </span>
         </div>
@@ -463,7 +463,7 @@ function EntryBlock({ entry, search }: { entry: SessionEntry; search: string }) 
         {truncated && (
           <button
             onClick={() => setShowFull(s => !s)}
-            style={{ fontSize: '8px', color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 0', letterSpacing: '0.06em' }}
+            style={{ fontSize: '9px', color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 0', letterSpacing: '0.06em' }}
           >
             {showFull ? '▲ show less' : `▼ show ${text.length - 300} more chars`}
           </button>
@@ -590,19 +590,19 @@ function FeedbackStrip({ teamId, agentName, messageUuid, sessionId, rowHovered, 
           {submitted ? (
             <>
               <span style={{
-                fontSize: '8px', color: submitted === 'praise' ? 'var(--phosphor)' : submitted === 'correction' ? 'var(--crimson)' : 'var(--ice)',
+                fontSize: '9px', color: submitted === 'praise' ? 'var(--phosphor)' : submitted === 'correction' ? 'var(--crimson)' : 'var(--ice)',
                 letterSpacing: '0.1em', fontFamily: 'var(--font-mono)',
                 opacity: 0.7,
               }}>
                 {submitted === 'praise' ? '👍 MARKED GOOD' : submitted === 'correction' ? '👎 CORRECTION SAVED' : '📌 BOOKMARKED'}
               </span>
               {phase === 'analyzing' && (
-                <span style={{ fontSize: '8px', color: 'var(--ice)', letterSpacing: '0.08em', fontFamily: 'var(--font-mono)', marginLeft: '8px', animation: 'pulse 1.5s ease-in-out infinite' }}>
+                <span style={{ fontSize: '9px', color: 'var(--ice)', letterSpacing: '0.08em', fontFamily: 'var(--font-mono)', marginLeft: '8px', animation: 'pulse 1.5s ease-in-out infinite' }}>
                   ✦ {t('review.analyzing')}
                 </span>
               )}
               {phase === 'done' && submitted && (
-                <span style={{ fontSize: '8px', color: 'var(--phosphor)', letterSpacing: '0.08em', fontFamily: 'var(--font-mono)', marginLeft: '8px' }}>
+                <span style={{ fontSize: '9px', color: 'var(--phosphor)', letterSpacing: '0.08em', fontFamily: 'var(--font-mono)', marginLeft: '8px' }}>
                   ✦ {t('review.applied')}
                 </span>
               )}
@@ -621,7 +621,7 @@ function FeedbackStrip({ teamId, agentName, messageUuid, sessionId, rowHovered, 
                   style={{
                     display: 'flex', alignItems: 'center', gap: '3px',
                     padding: '1px 6px',
-                    fontSize: '8px', letterSpacing: '0.08em',
+                    fontSize: '9px', letterSpacing: '0.08em',
                     fontFamily: 'var(--font-mono)',
                     background: correcting && btn.type === 'correction' ? `${btn.color}18` : 'transparent',
                     color: isDemo ? 'var(--text-muted)' : (correcting && btn.type === 'correction' ? btn.color : 'var(--text-muted)'),
@@ -639,10 +639,10 @@ function FeedbackStrip({ teamId, agentName, messageUuid, sessionId, rowHovered, 
                 </button>
               ))}
               {sending && (
-                <span style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.08em', fontFamily: 'var(--font-mono)' }}>...</span>
+                <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.08em', fontFamily: 'var(--font-mono)' }}>...</span>
               )}
               {error && (
-                <span style={{ fontSize: '8px', color: 'var(--crimson)', letterSpacing: '0.06em', fontFamily: 'var(--font-mono)' }}>{error}</span>
+                <span style={{ fontSize: '9px', color: 'var(--crimson)', letterSpacing: '0.06em', fontFamily: 'var(--font-mono)' }}>{error}</span>
               )}
             </>
           )}
@@ -677,7 +677,7 @@ function FeedbackStrip({ teamId, agentName, messageUuid, sessionId, rowHovered, 
             <button
               onClick={() => { setCorrecting(false); setNote(''); setError(null); }}
               style={{
-                padding: '2px 10px', fontSize: '8px', letterSpacing: '0.08em',
+                padding: '2px 10px', fontSize: '9px', letterSpacing: '0.08em',
                 fontFamily: 'var(--font-mono)',
                 background: 'transparent', color: 'var(--text-muted)',
                 border: '1px solid var(--border)', borderRadius: '2px', cursor: 'pointer',
@@ -687,7 +687,7 @@ function FeedbackStrip({ teamId, agentName, messageUuid, sessionId, rowHovered, 
               onClick={() => note.trim() && submit('correction', note)}
               disabled={!note.trim() || sending}
               style={{
-                padding: '2px 10px', fontSize: '8px', letterSpacing: '0.08em', fontWeight: 700,
+                padding: '2px 10px', fontSize: '9px', letterSpacing: '0.08em', fontWeight: 700,
                 fontFamily: 'var(--font-mono)',
                 background: 'rgba(255,59,92,0.1)', color: 'var(--crimson)',
                 border: '1px solid var(--crimson)', borderRadius: '2px',
@@ -702,7 +702,7 @@ function FeedbackStrip({ teamId, agentName, messageUuid, sessionId, rowHovered, 
       {/* Inline suggestions banner */}
       {phase === 'suggestions' && (
         <div style={{ marginTop: '6px', border: '1px solid var(--ice)33', borderRadius: '3px', padding: '8px', background: 'var(--surface-1)' }}>
-          <div style={{ fontSize: '8px', color: 'var(--ice)', letterSpacing: '0.1em', fontFamily: 'var(--font-mono)', marginBottom: '6px' }}>
+          <div style={{ fontSize: '9px', color: 'var(--ice)', letterSpacing: '0.1em', fontFamily: 'var(--font-mono)', marginBottom: '6px' }}>
             ✦ {t('review.suggestions_title')} — {t('history.analyze_banner', { count: suggestions.length })}
           </div>
           {suggestions.map(s => {
@@ -724,7 +724,7 @@ function FeedbackStrip({ teamId, agentName, messageUuid, sessionId, rowHovered, 
                   border: `1px solid ${checked ? 'var(--phosphor)' : 'var(--border)'}`,
                   background: checked ? 'var(--phosphor)' : 'transparent',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: '8px', color: 'var(--surface-0)',
+                  fontSize: '9px', color: 'var(--surface-0)',
                   transition: 'all 0.15s ease',
                 }}>
                   {checked && '✓'}
@@ -734,7 +734,7 @@ function FeedbackStrip({ teamId, agentName, messageUuid, sessionId, rowHovered, 
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                     {/* Target badge */}
                     <span style={{
-                      fontSize: '7px', letterSpacing: '0.1em', textTransform: 'uppercase' as const,
+                      fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase' as const,
                       padding: '1px 5px', borderRadius: '2px',
                       background: s.target === 'TEAM_GUIDE' ? 'var(--ice)18' : 'var(--phosphor)18',
                       color: s.target === 'TEAM_GUIDE' ? 'var(--ice)' : 'var(--phosphor)',
@@ -745,7 +745,7 @@ function FeedbackStrip({ teamId, agentName, messageUuid, sessionId, rowHovered, 
                     </span>
                     {/* Action label */}
                     <span style={{
-                      fontSize: '7px', letterSpacing: '0.08em', textTransform: 'uppercase' as const,
+                      fontSize: '9px', letterSpacing: '0.08em', textTransform: 'uppercase' as const,
                       color: ACTION_COLORS[s.action] ?? 'var(--text-muted)',
                       fontFamily: 'var(--font-mono)', fontWeight: 700,
                     }}>
@@ -769,7 +769,7 @@ function FeedbackStrip({ teamId, agentName, messageUuid, sessionId, rowHovered, 
             <button
               onClick={() => setPhase('done')}
               style={{
-                padding: '2px 10px', fontSize: '8px', letterSpacing: '0.08em',
+                padding: '2px 10px', fontSize: '9px', letterSpacing: '0.08em',
                 fontFamily: 'var(--font-mono)',
                 background: 'transparent', color: 'var(--text-muted)',
                 border: '1px solid var(--border)', borderRadius: '2px', cursor: 'pointer',
@@ -778,7 +778,7 @@ function FeedbackStrip({ teamId, agentName, messageUuid, sessionId, rowHovered, 
             <button
               onClick={applySelected}
               style={{
-                padding: '2px 10px', fontSize: '8px', letterSpacing: '0.08em', fontWeight: 700,
+                padding: '2px 10px', fontSize: '9px', letterSpacing: '0.08em', fontWeight: 700,
                 fontFamily: 'var(--font-mono)',
                 background: 'rgba(0,210,255,0.08)', color: 'var(--ice)',
                 border: '1px solid var(--ice)', borderRadius: '2px', cursor: 'pointer',
@@ -789,7 +789,7 @@ function FeedbackStrip({ teamId, agentName, messageUuid, sessionId, rowHovered, 
       )}
 
       {phase === 'applying' && (
-        <span style={{ fontSize: '8px', color: 'var(--ice)', letterSpacing: '0.08em', fontFamily: 'var(--font-mono)', marginTop: '4px' }}>
+        <span style={{ fontSize: '9px', color: 'var(--ice)', letterSpacing: '0.08em', fontFamily: 'var(--font-mono)', marginTop: '4px' }}>
           {t('review.applying')}
         </span>
       )}
@@ -823,7 +823,7 @@ function OrderBtn({ active, onClick, title, children }: { active: boolean; onCli
       onClick={onClick}
       title={title}
       style={{
-        padding: '2px 7px', fontSize: '8px', letterSpacing: '0.08em',
+        padding: '2px 7px', fontSize: '9px', letterSpacing: '0.08em',
         fontFamily: 'var(--font-mono)',
         background: active ? 'var(--active-bg-med)' : 'transparent',
         color: active ? 'var(--active-text)' : 'var(--text-muted)',
@@ -841,7 +841,7 @@ function OrderBtn({ active, onClick, title, children }: { active: boolean; onCli
 function FilterGroup({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-      <span style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>{label}</span>
+      <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>{label}</span>
       {children}
     </div>
   );
@@ -852,7 +852,7 @@ function FilterBtn({ active, onClick, children }: { active: boolean; onClick: ()
     <button
       onClick={onClick}
       style={{
-        padding: '2px 7px', fontSize: '8px', letterSpacing: '0.08em',
+        padding: '2px 7px', fontSize: '9px', letterSpacing: '0.08em',
         fontFamily: 'var(--font-mono)',
         background: active ? 'var(--active-bg-med)' : 'transparent',
         color: active ? 'var(--active-text)' : 'var(--text-muted)',

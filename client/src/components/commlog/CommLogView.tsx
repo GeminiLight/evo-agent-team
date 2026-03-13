@@ -2,8 +2,8 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TeamDetail, AgentMessage, CommLogResponse } from '../../types';
 import type { PendingHumanRequests } from '../../hooks/usePendingHumanRequests';
+import { useAgentRespond } from '../../hooks/useAgentRespond';
 import MessageBubble from './MessageBubble';
-import RespondModal from '../shared/RespondModal';
 import { agentColor } from '../../utils/agentColors';
 import CRTEmptyState from '../shared/CRTEmptyState';
 
@@ -164,7 +164,7 @@ function OrderBtn({ active, onClick, title, children }: { active: boolean; onCli
       onClick={onClick}
       title={title}
       style={{
-        padding: '2px 7px', fontSize: '8px', letterSpacing: '0.08em',
+        padding: '2px 7px', fontSize: '9px', letterSpacing: '0.08em',
         fontFamily: 'var(--font-mono)',
         background: active ? 'var(--active-bg-med)' : 'transparent',
         color: active ? 'var(--active-text)' : 'var(--text-muted)',
@@ -196,7 +196,10 @@ export default function CommLogView({ teamId, teamDetail, onMessagesChange, pend
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [order, setOrder] = useState<SortOrder>('desc');
-  const [respondingAgent, setRespondingAgent] = useState<string | null>(null);
+  const [expandedRespond, setExpandedRespond] = useState<string | null>(null);
+  const [respondText, setRespondText] = useState('');
+  const [sentAgent, setSentAgent] = useState<string | null>(null);
+  const { respond, sending } = useAgentRespond(teamId);
 
   // Auto-scroll state
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -309,69 +312,12 @@ export default function CommLogView({ teamId, teamDetail, onMessagesChange, pend
   return (
     <>
     <div style={{
-      display: 'grid',
-      gridTemplateColumns: 'minmax(120px, 160px) 1fr',
-      gap: '16px',
+      display: 'flex',
+      flexDirection: 'column',
       height: 'calc(100vh - 100px)',
       minHeight: '280px',
     }}>
-      {/* ── Left sidebar: agent filter ── */}
-      <div style={{
-        background: 'var(--surface-0)',
-        border: '1px solid var(--border)',
-        borderRadius: '4px',
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column',
-      }}>
-        <div style={{
-          padding: '10px 12px',
-          borderBottom: '1px solid var(--border)',
-          fontSize: '8px', letterSpacing: '0.18em', color: 'var(--text-muted)',
-          textTransform: 'uppercase',
-        }}>
-          {t('commlog.agents')}
-        </div>
-        <div style={{ overflowY: 'auto', padding: '6px' }}>
-          {['ALL', ...agentNames].map(agent => {
-            const isActive = activeAgent === agent;
-            const color = agent === 'ALL' ? 'var(--text-secondary)' : agentColor(agent);
-            return (
-              <button
-                key={agent}
-                onClick={() => setActiveAgent(agent)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '7px',
-                  width: '100%', textAlign: 'left',
-                  padding: '5px 8px', marginBottom: '2px',
-                  fontSize: '10px', letterSpacing: '0.06em',
-                  fontFamily: 'var(--font-mono)',
-                  background: isActive ? (agent === 'ALL' ? 'var(--active-bg-med)' : color + '1a') : 'transparent',
-                  color: isActive ? (agent === 'ALL' ? 'var(--active-text)' : color) : 'var(--text-muted)',
-                  border: `1px solid ${isActive ? (agent === 'ALL' ? 'var(--active-border)' : color + '55') : 'transparent'}`,
-                  borderRadius: '3px',
-                  cursor: 'pointer',
-                  transition: 'all 0.1s',
-                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                }}
-                onMouseEnter={e => { if (!isActive) e.currentTarget.style.color = 'var(--text-secondary)'; }}
-                onMouseLeave={e => { if (!isActive) e.currentTarget.style.color = 'var(--text-muted)'; }}
-              >
-                {agent !== 'ALL' && (
-                  <span style={{
-                    width: '7px', height: '7px', borderRadius: '50%',
-                    background: color, flexShrink: 0,
-                    boxShadow: isActive ? `0 0 5px ${color}` : 'none',
-                  }} />
-                )}
-                {agent.toUpperCase()}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* ── Right panel ── */}
+      {/* ── Single panel ── */}
       <div style={{
         background: 'var(--surface-0)',
         border: '1px solid var(--border)',
@@ -380,6 +326,7 @@ export default function CommLogView({ teamId, teamDetail, onMessagesChange, pend
         flexDirection: 'column',
         overflow: 'hidden',
         position: 'relative',
+        flex: 1,
       }}>
         {/* Panel header */}
         <div style={{
@@ -409,7 +356,7 @@ export default function CommLogView({ teamId, teamDetail, onMessagesChange, pend
                 borderRadius: '3px',
                 cursor: 'pointer',
                 fontFamily: 'var(--font-mono)',
-                fontSize: '8px', letterSpacing: '0.1em',
+                fontSize: '9px', letterSpacing: '0.1em',
                 color: isFollowing ? 'var(--active-text)' : 'var(--text-muted)',
                 transition: 'all 0.15s',
               }}
@@ -481,6 +428,48 @@ export default function CommLogView({ teamId, teamDetail, onMessagesChange, pend
           </div>
         </div>
 
+        {/* Agent filter chips */}
+        <div style={{
+          display: 'flex', gap: '4px', padding: '6px 12px',
+          borderBottom: '1px solid var(--border)',
+          background: 'var(--surface-0)', flexShrink: 0, overflowX: 'auto',
+        }}>
+          {['ALL', ...agentNames].map(agent => {
+            const isActive = activeAgent === agent;
+            const color = agent === 'ALL' ? 'var(--text-secondary)' : agentColor(agent);
+            return (
+              <button
+                key={agent}
+                onClick={() => setActiveAgent(agent)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '5px',
+                  padding: '3px 9px',
+                  border: `1px solid ${isActive ? (agent === 'ALL' ? 'var(--active-border)' : color + '55') : 'var(--border)'}`,
+                  borderRadius: '20px',
+                  background: isActive ? (agent === 'ALL' ? 'var(--active-bg-med)' : color + '1a') : 'transparent',
+                  color: isActive ? (agent === 'ALL' ? 'var(--active-text)' : color) : 'var(--text-muted)',
+                  fontSize: '9px', letterSpacing: '0.08em',
+                  fontFamily: 'var(--font-mono)', cursor: 'pointer',
+                  whiteSpace: 'nowrap', transition: 'all 0.15s',
+                  textTransform: 'uppercase',
+                  flexShrink: 0,
+                }}
+                onMouseEnter={e => { if (!isActive) e.currentTarget.style.color = 'var(--text-secondary)'; }}
+                onMouseLeave={e => { if (!isActive) e.currentTarget.style.color = 'var(--text-muted)'; }}
+              >
+                {agent !== 'ALL' && (
+                  <span style={{
+                    width: '6px', height: '6px', borderRadius: '50%',
+                    background: color, flexShrink: 0,
+                    boxShadow: isActive ? `0 0 4px ${color}` : 'none',
+                  }} />
+                )}
+                {agent === 'ALL' ? t('commlog.agents') : agent}
+              </button>
+            );
+          })}
+        </div>
+
         {/* Type filter chips */}
         <div style={{
           display: 'flex', gap: '4px', padding: '6px 12px',
@@ -501,7 +490,7 @@ export default function CommLogView({ teamId, teamDetail, onMessagesChange, pend
                   borderRadius: '20px',
                   background: isActive ? opt.color + '1a' : 'transparent',
                   color: isActive ? opt.color : 'var(--text-muted)',
-                  fontSize: '8px', letterSpacing: '0.12em',
+                  fontSize: '9px', letterSpacing: '0.12em',
                   fontFamily: 'var(--font-mono)',
                   cursor: 'pointer',
                   whiteSpace: 'nowrap',
@@ -518,39 +507,118 @@ export default function CommLogView({ teamId, teamDetail, onMessagesChange, pend
           })}
         </div>
 
-        {/* Human-input alert banner — driven by usePendingHumanRequests */}
+        {/* Human-input alert banner — inline respond */}
         {(pendingHumanRequests?.count ?? 0) > 0 && (
-          <div
-            style={{
+          <div style={{
+            borderBottom: '1px solid var(--amber-dim)',
+            background: 'var(--amber-glow)',
+            flexShrink: 0,
+          }}>
+            <div style={{
               display: 'flex', alignItems: 'center', gap: '10px',
               padding: '8px 14px',
-              background: 'var(--amber-glow)',
-              borderBottom: '1px solid var(--amber-dim)',
-              flexShrink: 0,
-            }}
-          >
-            <span style={{ fontSize: '13px', lineHeight: 1 }}>⚠</span>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <span style={{ fontSize: '9px', color: 'var(--amber)', letterSpacing: '0.12em', fontWeight: 700, textTransform: 'uppercase' }}>
+            }}>
+              <span style={{ fontSize: '13px', lineHeight: 1 }}>⚠</span>
+              <span style={{ flex: 1, fontSize: '9px', color: 'var(--amber)', letterSpacing: '0.12em', fontWeight: 700, textTransform: 'uppercase' }}>
                 {t('commlog.pending_alert', { count: pendingHumanRequests!.count })}
               </span>
-              <div style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.06em', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {pendingHumanRequests!.agentNames.join(', ')}
-              </div>
             </div>
-            <button
-              onClick={() => setRespondingAgent(pendingHumanRequests!.agentNames[0] ?? null)}
-              style={{
-                padding: '4px 12px', fontSize: '8px', letterSpacing: '0.12em', fontWeight: 700,
-                fontFamily: 'var(--font-mono)',
-                background: 'rgba(245,166,35,0.15)', color: 'var(--amber)',
-                border: '1px solid var(--amber-dim)', borderRadius: '2px', cursor: 'pointer',
-                flexShrink: 0,
-                animation: 'status-pulse 2s ease-in-out infinite',
-              }}
-            >
-              <span style={{ textTransform: 'uppercase' }}>{t('alert.respond')}</span>
-            </button>
+            {pendingHumanRequests!.details.map(detail => {
+              const isExpanded = expandedRespond === detail.name;
+              const isSent = sentAgent === detail.name;
+              return (
+                <div key={detail.name} style={{ borderTop: '1px solid var(--amber-dim)' }}>
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: '8px',
+                    padding: '6px 14px 6px 36px',
+                    cursor: 'pointer',
+                  }}
+                    onClick={() => {
+                      if (isSent) return;
+                      setExpandedRespond(isExpanded ? null : detail.name);
+                      setRespondText('');
+                    }}
+                  >
+                    <span style={{ fontSize: '9px', color: 'var(--text-muted)' }}>{isExpanded ? '▾' : '▸'}</span>
+                    <span style={{ fontSize: '9px', color: 'var(--amber)', fontWeight: 600, letterSpacing: '0.08em' }}>{detail.name}</span>
+                    {detail.blocking.toolName && (
+                      <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.06em' }}>[{detail.blocking.toolName}]</span>
+                    )}
+                    {detail.blocking.detail && (
+                      <span style={{ flex: 1, fontSize: '9px', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {detail.blocking.detail.slice(0, 80)}
+                      </span>
+                    )}
+                    {isSent && (
+                      <span style={{ fontSize: '9px', color: 'var(--phosphor)', letterSpacing: '0.1em' }}>✓ Sent</span>
+                    )}
+                  </div>
+                  {isExpanded && !isSent && (
+                    <div style={{ padding: '4px 14px 8px 36px' }}>
+                      <textarea
+                        autoFocus
+                        rows={2}
+                        value={respondText}
+                        onChange={e => setRespondText(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === 'Escape') { setExpandedRespond(null); setRespondText(''); }
+                          if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && respondText.trim()) {
+                            e.preventDefault();
+                            respond(detail.name, respondText.trim()).then(ok => {
+                              if (ok) {
+                                setSentAgent(detail.name);
+                                setRespondText('');
+                                setTimeout(() => { setSentAgent(null); setExpandedRespond(null); }, 1500);
+                              }
+                            });
+                          }
+                        }}
+                        placeholder={t('agent_card.respond_to', { name: detail.name })}
+                        style={{
+                          width: '100%', boxSizing: 'border-box',
+                          padding: '6px 8px', resize: 'vertical',
+                          background: 'var(--surface-1)', color: 'var(--text-primary)',
+                          border: '1px solid var(--border)', borderRadius: '3px',
+                          fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '0.06em',
+                          outline: 'none',
+                        }}
+                      />
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px', marginTop: '4px' }}>
+                        <button
+                          onClick={() => { setExpandedRespond(null); setRespondText(''); }}
+                          style={{
+                            padding: '3px 10px', fontSize: '9px', letterSpacing: '0.1em',
+                            fontFamily: 'var(--font-mono)',
+                            background: 'transparent', color: 'var(--text-muted)',
+                            border: '1px solid var(--border)', borderRadius: '2px', cursor: 'pointer',
+                          }}
+                        >{t('common.cancel')}</button>
+                        <button
+                          disabled={!respondText.trim() || sending}
+                          onClick={() => {
+                            if (!respondText.trim()) return;
+                            respond(detail.name, respondText.trim()).then(ok => {
+                              if (ok) {
+                                setSentAgent(detail.name);
+                                setRespondText('');
+                                setTimeout(() => { setSentAgent(null); setExpandedRespond(null); }, 1500);
+                              }
+                            });
+                          }}
+                          style={{
+                            padding: '3px 10px', fontSize: '9px', letterSpacing: '0.1em',
+                            fontFamily: 'var(--font-mono)', fontWeight: 700,
+                            background: 'rgba(245,166,35,0.15)', color: 'var(--amber)',
+                            border: '1px solid var(--amber-dim)', borderRadius: '2px', cursor: 'pointer',
+                            opacity: !respondText.trim() || sending ? 0.5 : 1,
+                          }}
+                        >{sending ? '...' : t('message.send')} ⏎</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
 
@@ -611,16 +679,6 @@ export default function CommLogView({ teamId, teamDetail, onMessagesChange, pend
       </div>
     </div>
 
-    {/* Respond modal — opened from pending bar */}
-    {respondingAgent && (
-      <RespondModal
-        agentName={respondingAgent}
-        toolName={pendingHumanRequests?.details.find(d => d.name === respondingAgent)?.blocking.toolName}
-        detail={pendingHumanRequests?.details.find(d => d.name === respondingAgent)?.blocking.detail}
-        teamId={teamId}
-        onClose={() => setRespondingAgent(null)}
-      />
-    )}
     </>
   );
 }

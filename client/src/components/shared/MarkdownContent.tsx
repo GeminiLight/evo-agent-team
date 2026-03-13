@@ -29,7 +29,7 @@ export default function MarkdownContent({ content }: { content: string }) {
           fontFamily: 'var(--font-mono)', letterSpacing: '0.02em',
           margin: '10px 0',
         }}>
-          {lang && <div style={{ fontSize: '8px', color: 'var(--text-muted)', marginBottom: '6px', letterSpacing: '0.1em' }}>{lang.toUpperCase()}</div>}
+          {lang && <div style={{ fontSize: '9px', color: 'var(--text-muted)', marginBottom: '6px', letterSpacing: '0.1em' }}>{lang.toUpperCase()}</div>}
           {codeLines.join('\n')}
         </pre>
       );

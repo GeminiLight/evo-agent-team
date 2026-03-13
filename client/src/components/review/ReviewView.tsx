@@ -47,6 +47,7 @@ export default function ReviewView({ teamId, agentNames, isDemoMode }: ReviewVie
   const [guideRules, setGuideRules] = useState<string[]>([]);
   const [loadingFeedback, setLoadingFeedback] = useState(true);
   const [generatingPrefs, setGeneratingPrefs] = useState(false);
+  const [genError, setGenError] = useState<string | null>(null);
   const [filterType, setFilterType] = useState<'all' | 'praise' | 'correction' | 'bookmark'>('all');
   const [filterAgent, setFilterAgent] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'applied'>('all');
@@ -105,13 +106,21 @@ export default function ReviewView({ teamId, agentNames, isDemoMode }: ReviewVie
 
   const generatePreferences = useCallback(async () => {
     setGeneratingPrefs(true);
+    setGenError(null);
     try {
       const res = await fetch(`/api/teams/${teamId}/preferences/generate`, { method: 'POST' });
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        setGenError((json as { error?: string }).error ?? 'Failed to generate');
+        return;
+      }
       const json = await res.json();
       if (json.preferences) setPreferences(json.preferences);
-      // Re-fetch feedback to reflect processedAt changes
       await fetchFeedback();
-    } catch { /* ignore */ } finally {
+      setGenError(null);
+    } catch {
+      setGenError('Network error');
+    } finally {
       setGeneratingPrefs(false);
     }
   }, [teamId, fetchFeedback]);
@@ -160,7 +169,7 @@ export default function ReviewView({ teamId, agentNames, isDemoMode }: ReviewVie
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <div style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.2em', marginBottom: '4px', textTransform: 'uppercase' }}>
+          <div style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.2em', marginBottom: '4px', textTransform: 'uppercase' }}>
             {t('review.title', { id: teamId.toUpperCase() })}
           </div>
           <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
@@ -257,7 +266,12 @@ export default function ReviewView({ teamId, agentNames, isDemoMode }: ReviewVie
 
       {/* PREFERENCES */}
       <Section label={t('review.preferences')} subtitle={t('review.preferences_subtitle')}>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '12px' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+          {genError && (
+            <span style={{ fontSize: '9px', color: 'var(--amber)', letterSpacing: '0.06em', fontFamily: 'var(--font-mono)' }}>
+              {genError}
+            </span>
+          )}
           {!isDemoMode && (
             <button
               onClick={generatePreferences}
@@ -294,12 +308,12 @@ export default function ReviewView({ teamId, agentNames, isDemoMode }: ReviewVie
                 TEAM GUIDE
               </span>
               <span style={{
-                fontSize: '8px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)',
+                fontSize: '9px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)',
               }}>
                 {t('review.guide_source_file')}
               </span>
               <span style={{
-                fontSize: '7px', color: 'var(--text-muted)', opacity: 0.5, letterSpacing: '0.08em',
+                fontSize: '9px', color: 'var(--text-muted)', opacity: 0.5, letterSpacing: '0.08em',
                 fontFamily: 'var(--font-mono)',
               }}>
                 {t('review.guide_readonly')}
@@ -352,7 +366,7 @@ export default function ReviewView({ teamId, agentNames, isDemoMode }: ReviewVie
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--border)' }}>
                   {[t('review.th_agent'), t('review.th_total'), t('review.th_praise'), t('review.th_correction'), t('review.th_bookmark')].map(h => (
-                    <th key={h} style={{ padding: '6px 12px', textAlign: 'left', fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.12em', fontWeight: 400 }}>{h}</th>
+                    <th key={h} style={{ padding: '6px 12px', textAlign: 'left', fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.12em', fontWeight: 400 }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -385,7 +399,7 @@ function Section({ label, subtitle, count, children }: { label: string; subtitle
   return (
     <div style={{ background: 'var(--surface-0)', border: '1px solid var(--border)', borderRadius: '4px', padding: '20px' }}>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '16px' }}>
-        <span style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.2em', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>{label}</span>
+        <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.2em', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>{label}</span>
         {subtitle && <span style={{ fontSize: '9px', color: 'var(--text-muted)', opacity: 0.6 }}>{subtitle}</span>}
         {count !== undefined && <span style={{ fontSize: '9px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', marginLeft: 'auto' }}>{t('review.entries_count', { count })}</span>}
         <div style={{ flex: 1, height: '1px', background: 'var(--border)', marginLeft: '8px' }} />
@@ -421,7 +435,7 @@ function FeedbackRow({ entry, onDelete }: { entry: FeedbackEntry; onDelete?: (id
         marginTop: '1px',
       }}>
         <span>{meta.emoji}</span>
-        <span style={{ fontSize: '8px', color: meta.color, letterSpacing: '0.1em', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>{meta.label}</span>
+        <span style={{ fontSize: '9px', color: meta.color, letterSpacing: '0.1em', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>{meta.label}</span>
       </div>
 
       {/* Agent */}
@@ -438,7 +452,7 @@ function FeedbackRow({ entry, onDelete }: { entry: FeedbackEntry; onDelete?: (id
       <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: '6px', marginTop: '1px', whiteSpace: 'nowrap' }}>
         {isProcessed && (
           <span style={{
-            fontSize: '7px', letterSpacing: '0.1em',
+            fontSize: '9px', letterSpacing: '0.1em',
             color: 'var(--phosphor)', fontFamily: 'var(--font-mono)',
             padding: '1px 4px', border: '1px solid var(--phosphor)40',
             borderRadius: '2px',
@@ -762,7 +776,7 @@ function NewEntryModal({ teamId, agentNames, onClose, onSubmitted }: {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
                       {/* Target badge */}
                       <span style={{
-                        fontSize: '8px', letterSpacing: '0.1em', textTransform: 'uppercase',
+                        fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase',
                         padding: '2px 6px', borderRadius: '2px',
                         background: sug.target === 'TEAM_GUIDE' ? 'var(--ice)18' : 'var(--phosphor)18',
                         color: sug.target === 'TEAM_GUIDE' ? 'var(--ice)' : 'var(--phosphor)',
@@ -772,7 +786,7 @@ function NewEntryModal({ teamId, agentNames, onClose, onSubmitted }: {
                       </span>
                       {/* Action badge */}
                       <span style={{
-                        fontSize: '8px', letterSpacing: '0.08em', textTransform: 'uppercase',
+                        fontSize: '9px', letterSpacing: '0.08em', textTransform: 'uppercase',
                         color: ACTION_COLORS[sug.action] ?? 'var(--text-muted)',
                       }}>
                         {t(`review.suggestion_action_${sug.action}`)}
@@ -828,7 +842,7 @@ function NewEntryModal({ teamId, agentNames, onClose, onSubmitted }: {
 function ModalField({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div style={{ marginBottom: '16px' }}>
-      <div style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.15em', marginBottom: '6px' }}>{label}</div>
+      <div style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.15em', marginBottom: '6px' }}>{label}</div>
       {children}
     </div>
   );

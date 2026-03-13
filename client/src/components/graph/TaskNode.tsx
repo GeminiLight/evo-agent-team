@@ -3,6 +3,7 @@ import { Handle, Position } from '@xyflow/react';
 import { Loader2 } from 'lucide-react';
 import type { Task } from '../../types';
 import { STATUS_COLORS, type StatusKey } from '../../utils/statusColors';
+import { agentColor } from '../../utils/agentColors';
 
 interface TaskNodeData {
   task: Task;
@@ -86,7 +87,7 @@ function TaskTooltip({ task, derivedStatus }: { task: Task; derivedStatus: Statu
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px' }}>
           <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.08em' }}>OWNER</span>
-          <span style={{ fontSize: '9px', color: task.owner ? colors.text : 'var(--text-muted)', letterSpacing: '0.06em' }}>
+          <span style={{ fontSize: '9px', color: task.owner ? agentColor(task.owner) : 'var(--text-muted)', letterSpacing: '0.06em' }}>
             {task.owner || 'UNASSIGNED'}
           </span>
         </div>
@@ -178,14 +179,14 @@ export function TaskNode({ data }: { data: TaskNodeData }) {
               {STATUS_ICONS[derivedStatus]}
             </span>
             <span style={{
-              fontSize: '8px', fontFamily: 'monospace',
+              fontSize: '9px', fontFamily: 'monospace',
               color: 'var(--text-muted)', letterSpacing: '0.06em',
             }}>
               #{task.id}
             </span>
           </div>
           <span style={{
-            fontSize: '7px', color: colors.text,
+            fontSize: '9px', color: colors.text,
             background: colors.bg, border: `1px solid ${colors.border}35`,
             borderRadius: '3px', padding: '1px 5px',
             letterSpacing: '0.1em', fontWeight: 600,
@@ -213,7 +214,7 @@ export function TaskNode({ data }: { data: TaskNodeData }) {
         {isInProgress && task.activeForm && (
           <div style={{
             display: 'flex', alignItems: 'center', gap: '4px',
-            fontSize: '8px', color: 'var(--amber)',
+            fontSize: '9px', color: 'var(--amber)',
             marginBottom: '3px', letterSpacing: '0.04em',
           }}>
             <Loader2 size={8} style={{ animation: 'spin-slow 2.5s linear infinite', flexShrink: 0 }} />
@@ -230,19 +231,19 @@ export function TaskNode({ data }: { data: TaskNodeData }) {
         }}>
           {task.owner ? (
             <span style={{
-              fontSize: '8px', color: colors.text, letterSpacing: '0.04em',
+              fontSize: '9px', color: agentColor(task.owner), letterSpacing: '0.04em',
               maxWidth: '110px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
               opacity: 0.8,
             }}>
               {task.owner}
             </span>
           ) : (
-            <span style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.06em', opacity: 0.6 }}>
+            <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.06em', opacity: 0.6 }}>
               unassigned
             </span>
           )}
 
-          <div style={{ display: 'flex', gap: '4px', fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.04em' }}>
+          <div style={{ display: 'flex', gap: '4px', fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.04em' }}>
             {task.blockedBy.length > 0 && <span title={`Blocked by #${task.blockedBy.join(', #')}`} style={{ color: 'var(--crimson, #ff3b5c)' }}>↑{task.blockedBy.length}</span>}
             {task.blocks.length > 0 && <span title={`Blocks #${task.blocks.join(', #')}`} style={{ color: 'var(--ice)' }}>↓{task.blocks.length}</span>}
           </div>

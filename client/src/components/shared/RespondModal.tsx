@@ -89,18 +89,18 @@ export default function RespondModal({ agentName, toolName, detail, teamId, onCl
         {/* Agent info */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '14px', padding: '10px 12px', background: 'var(--surface-0)', border: '1px solid var(--border)', borderRadius: '3px' }}>
           <div style={{ display: 'flex', gap: '12px' }}>
-            <span style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.12em', minWidth: '52px', textTransform: 'uppercase' }}>{t('respond.agent')}</span>
+            <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.12em', minWidth: '52px', textTransform: 'uppercase' }}>{t('respond.agent')}</span>
             <span style={{ fontSize: '9px', color: 'var(--phosphor)', letterSpacing: '0.06em' }}>{agentName}</span>
           </div>
           {toolName && (
             <div style={{ display: 'flex', gap: '12px' }}>
-              <span style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.12em', minWidth: '52px', textTransform: 'uppercase' }}>{t('respond.tool')}</span>
+              <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.12em', minWidth: '52px', textTransform: 'uppercase' }}>{t('respond.tool')}</span>
               <span style={{ fontSize: '9px', color: 'var(--text-secondary)', letterSpacing: '0.06em' }}>{toolName}</span>
             </div>
           )}
           {detail && (
             <div style={{ display: 'flex', gap: '12px' }}>
-              <span style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.12em', minWidth: '52px', textTransform: 'uppercase' }}>{t('respond.context')}</span>
+              <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.12em', minWidth: '52px', textTransform: 'uppercase' }}>{t('respond.context')}</span>
               <span style={{ fontSize: '9px', color: 'var(--text-secondary)', letterSpacing: '0.04em', lineHeight: 1.5, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' }}>
                 {detail.slice(0, 200)}
               </span>

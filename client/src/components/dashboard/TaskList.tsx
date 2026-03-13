@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { CheckCircle2, Loader2, Clock, Lock, ChevronRight, ExternalLink } from 'lucide-react';
 import type { Task, TeamMember } from '../../types';
 import { getTaskStatus, STATUS_COLORS, type StatusKey } from '../../utils/statusColors';
+import { agentColor } from '../../utils/agentColors';
 import CRTEmptyState from '../shared/CRTEmptyState';
 
 interface TaskListProps {
@@ -86,7 +87,7 @@ function StatusPopover({ currentStatus, onSelect, onClose }: StatusPopoverProps)
             onMouseEnter={e => { if (!isCurrent) e.currentTarget.style.background = 'var(--surface-2)'; }}
             onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
           >
-            <span style={{ fontSize: '8px', opacity: isCurrent ? 1 : 0.5 }}>
+            <span style={{ fontSize: '9px', opacity: isCurrent ? 1 : 0.5 }}>
               {isCurrent ? '●' : '○'}
             </span>
             {opt.label}
@@ -105,6 +106,7 @@ export default function TaskList({ tasks, onTaskSelect, teamId, onTaskUpdated }:
   const [filter, setFilter] = useState<StatusKey | 'all'>('all');
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [openPopoverId, setOpenPopoverId] = useState<string | null>(null);
+  const [completedCollapsed, setCompletedCollapsed] = useState(true);
   const [undoToast, setUndoToast] = useState<{ taskId: string; prevStatus: Task['status']; nextStatus: Task['status']; subject: string } | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -208,6 +210,10 @@ export default function TaskList({ tasks, onTaskSelect, teamId, onTaskUpdated }:
     blocked: tasks.filter(t => getTaskStatus(t, allTasksSimple) === 'blocked').length,
   };
 
+  // Split filtered tasks into active and completed for folding
+  const activeTasks = filtered.filter(t => getTaskStatus(t, allTasksSimple) !== 'completed');
+  const completedTasks = filtered.filter(t => getTaskStatus(t, allTasksSimple) === 'completed');
+
   return (
     <>
     <div style={{
@@ -273,257 +279,59 @@ export default function TaskList({ tasks, onTaskSelect, teamId, onTaskUpdated }:
             subtitle={filter !== 'all' ? t('task_list.no_matching_sub') : undefined}
           />
         )}
-        {filtered.map((task, idx) => {
+        {activeTasks.map((task, idx) => {
           const status = getTaskStatus(task, allTasksSimple);
           const colors = STATUS_COLORS[status];
           const isExpanded = expandedId === task.id;
 
           return (
-            <div
-              key={task.id}
-              onClick={() => setExpandedId(isExpanded ? null : task.id)}
-              style={{
-                borderBottom: '1px solid var(--border)',
-                cursor: 'pointer',
-                transition: 'background 0.1s',
-                borderLeft: `2px solid ${colors.border}`,
-                animation: `fade-up 0.3s ease-out ${idx * 0.03}s both`,
-              }}
-              onMouseEnter={e => (e.currentTarget.style.background = 'var(--active-bg)')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-            >
-              {/* Main row */}
-              <div style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                {/* Status icon */}
-                <StatusIcon status={status} />
-
-                {/* ID */}
-                <span style={{
-                  fontSize: '10px',
-                  fontFamily: 'var(--font-mono)',
-                  color: 'var(--text-muted)',
-                  minWidth: '28px',
-                }}>
-                  #{task.id}
-                </span>
-
-                {/* Subject */}
-                <span style={{
-                  fontSize: '12px',
-                  color: status === 'completed' ? 'var(--text-muted)' : 'var(--text-primary)',
-                  flex: 1,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  textDecoration: status === 'completed' ? 'line-through' : 'none',
-                  letterSpacing: '0.02em',
-                }}>
-                  {task.subject}
-                </span>
-
-                {/* Active form when in progress */}
-                {status === 'in_progress' && task.activeForm && (
-                  <span style={{
-                    fontSize: '9px',
-                    color: 'var(--amber)',
-                    background: 'var(--amber-glow)',
-                    border: '1px solid var(--amber-dim)',
-                    borderRadius: '2px',
-                    padding: '2px 6px',
-                    letterSpacing: '0.04em',
-                    maxWidth: '200px',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}>
-                    {task.activeForm}
-                  </span>
-                )}
-
-                {/* Owner */}
-                {task.owner && (
-                  <span style={{
-                    fontSize: '9px',
-                    color: colors.text,
-                    background: colors.bg,
-                    border: `1px solid ${colors.border}40`,
-                    borderRadius: '2px',
-                    padding: '2px 6px',
-                    letterSpacing: '0.06em',
-                    whiteSpace: 'nowrap',
-                    flexShrink: 0,
-                  }}>
-                    {task.owner}
-                  </span>
-                )}
-
-                {/* Time in status */}
-                {(status === 'in_progress' || status === 'pending') && task.updatedAt && (
-                  <span style={{
-                    fontSize: '8px', color: 'var(--text-muted)',
-                    letterSpacing: '0.05em', whiteSpace: 'nowrap',
-                    flexShrink: 0, fontFamily: 'var(--font-mono)',
-                  }}>
-                    {timeInStatus(task.updatedAt)}
-                  </span>
-                )}
-
-                {/* Created / updated timestamps */}
-                {task.createdAt && (
-                  <span style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.05em', whiteSpace: 'nowrap', flexShrink: 0, fontFamily: 'var(--font-mono)' }} title={`Created: ${new Date(task.createdAt).toLocaleString()}`}>
-                    +{timeAgo(task.createdAt)}
-                  </span>
-                )}
-
-                {/* Clickable status label — popover or Ctrl+Click cycle */}
-                <div style={{ position: 'relative', flexShrink: 0 }}>
-                  <button
-                    onClick={e => handleStatusClick(e, task, status)}
-                    title={
-                      !teamId ? undefined
-                      : status === 'blocked' ? t('task_list.blocked_hint')
-                      : t('task_list.status_hint', { status })
-                    }
-                    style={{
-                      fontSize: '9px',
-                      color: colors.text,
-                      background: updatingId === task.id ? 'var(--surface-2)' : colors.bg,
-                      border: `1px solid ${colors.border}40`,
-                      borderRadius: '2px',
-                      padding: '2px 6px',
-                      letterSpacing: '0.1em',
-                      minWidth: '52px',
-                      textAlign: 'center',
-                      fontFamily: 'var(--font-mono)',
-                      cursor: (!teamId || status === 'blocked') ? 'default' : 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '3px',
-                      transition: 'opacity 0.15s',
-                      opacity: updatingId === task.id ? 0.5 : 1,
-                      textTransform: 'uppercase',
-                    }}
-                    onMouseEnter={e => { if (teamId && updatingId !== task.id && status !== 'blocked') e.currentTarget.style.opacity = '0.75'; }}
-                    onMouseLeave={e => { if (updatingId !== task.id) e.currentTarget.style.opacity = '1'; }}
-                  >
-                    {updatingId === task.id
-                      ? <Loader2 size={10} style={{ animation: 'spin-slow 1s linear infinite' }} />
-                      : <>
-                          {STATUS_LABELS[status]}
-                          {teamId && status !== 'blocked' && (
-                            <span style={{ fontSize: '7px', opacity: 0.55, marginLeft: '1px' }}>▾</span>
-                          )}
-                        </>
-                    }
-                  </button>
-                  {openPopoverId === task.id && (
-                    <StatusPopover
-                      currentStatus={task.status}
-                      onSelect={next => patchStatus(task, next)}
-                      onClose={() => setOpenPopoverId(null)}
-                    />
-                  )}
-                </div>
-
-                {/* Open detail button */}
-                <button
-                  onClick={e => { e.stopPropagation(); onTaskSelect(task.id); }}
-                  style={{
-                    background: 'transparent',
-                    border: 'none',
-                    cursor: 'pointer',
-                    padding: '2px',
-                    color: 'var(--text-muted)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    flexShrink: 0,
-                  }}
-                  onMouseEnter={e => (e.currentTarget.style.color = 'var(--phosphor)')}
-                  onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
-                >
-                  <ExternalLink size={11} />
-                </button>
-
-                {/* Chevron */}
-                <ChevronRight style={{
-                  width: '12px', height: '12px',
-                  color: 'var(--text-muted)',
-                  flexShrink: 0,
-                  transform: isExpanded ? 'rotate(90deg)' : 'rotate(0)',
-                  transition: 'transform 0.2s',
-                }} />
-              </div>
-
-              {/* Expanded detail */}
-              {isExpanded && (
-                <div style={{
-                  padding: '0 16px 12px 56px',
-                  animation: 'fade-up 0.2s ease-out',
-                }}>
-                  {task.description && (
-                    <p style={{
-                      fontSize: '11px',
-                      color: 'var(--text-secondary)',
-                      lineHeight: 1.6,
-                      marginBottom: '8px',
-                      letterSpacing: '0.02em',
-                    }}>
-                      {task.description}
-                    </p>
-                  )}
-
-                  {/* Metadata row: CREATED / UPDATED / DURATION */}
-                  {(task.createdAt || task.updatedAt) && (
-                    <div style={{
-                      display: 'flex', gap: '16px', flexWrap: 'wrap',
-                      marginBottom: '8px', paddingBottom: '8px',
-                      borderBottom: '1px solid var(--border)',
-                    }}>
-                      {task.createdAt && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{t('task_list.created')}</span>
-                          <span style={{ fontSize: '9px', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', letterSpacing: '0.04em' }}>
-                            {fmtAbsoluteTime(task.createdAt)}
-                          </span>
-                        </div>
-                      )}
-                      {task.updatedAt && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{t('task_list.updated')}</span>
-                          <span style={{ fontSize: '9px', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', letterSpacing: '0.04em' }}>
-                            {fmtAbsoluteTime(task.updatedAt)}
-                          </span>
-                        </div>
-                      )}
-                      {task.createdAt && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{t('task_list.duration')}</span>
-                          <span style={{ fontSize: '9px', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', letterSpacing: '0.04em' }}>
-                            {durationSince(task.createdAt)}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                    {task.blockedBy.length > 0 && (
-                      <span style={{ fontSize: '10px', color: 'var(--crimson)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-                        {t('task_list.blocked_by')} {task.blockedBy.map(id => `#${id}`).join(', ')}
-                      </span>
-                    )}
-                    {task.blocks.length > 0 && (
-                      <span style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-                        {t('task_list.blocks')} {task.blocks.map(id => `#${id}`).join(', ')}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
+            <TaskRow key={task.id} task={task} status={status} colors={colors} isExpanded={isExpanded} idx={idx}
+              expandedId={expandedId} setExpandedId={setExpandedId} updatingId={updatingId}
+              openPopoverId={openPopoverId} handleStatusClick={handleStatusClick} patchStatus={patchStatus}
+              setOpenPopoverId={setOpenPopoverId} onTaskSelect={onTaskSelect} teamId={teamId}
+              allTasksSimple={allTasksSimple} t={t} STATUS_LABELS={STATUS_LABELS} />
           );
         })}
+
+        {/* Completed tasks section with folding */}
+        {completedTasks.length > 0 && (
+          <>
+            <div
+              onClick={() => setCompletedCollapsed(c => !c)}
+              style={{
+                padding: '8px 16px',
+                display: 'flex', alignItems: 'center', gap: '8px',
+                cursor: 'pointer',
+                borderBottom: '1px solid var(--border)',
+                background: 'var(--surface-0)',
+                transition: 'background 0.1s',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = 'var(--active-bg)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'var(--surface-0)')}
+            >
+              <span style={{ fontSize: '10px', color: 'var(--phosphor)', opacity: 0.7 }}>✓</span>
+              <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.08em' }}>
+                {completedTasks.length} {t('task_list.done').toLowerCase()}
+              </span>
+              <span style={{ fontSize: '9px', color: 'var(--text-muted)', opacity: 0.5, marginLeft: 'auto' }}>
+                {completedCollapsed ? '▸' : '▾'}
+              </span>
+            </div>
+            {!completedCollapsed && completedTasks.map((task, idx) => {
+              const status = getTaskStatus(task, allTasksSimple);
+              const colors = STATUS_COLORS[status];
+              const isExpanded = expandedId === task.id;
+
+              return (
+                <TaskRow key={task.id} task={task} status={status} colors={colors} isExpanded={isExpanded} idx={activeTasks.length + idx}
+                  expandedId={expandedId} setExpandedId={setExpandedId} updatingId={updatingId}
+                  openPopoverId={openPopoverId} handleStatusClick={handleStatusClick} patchStatus={patchStatus}
+                  setOpenPopoverId={setOpenPopoverId} onTaskSelect={onTaskSelect} teamId={teamId}
+                  allTasksSimple={allTasksSimple} t={t} STATUS_LABELS={STATUS_LABELS} />
+              );
+            })}
+          </>
+        )}
       </div>
     </div>
 
@@ -593,6 +401,149 @@ export default function TaskList({ tasks, onTaskSelect, teamId, onTaskUpdated }:
       </div>
     )}
     </>
+  );
+}
+
+function TaskRow({ task, status, colors, isExpanded, idx, expandedId, setExpandedId, updatingId, openPopoverId, handleStatusClick, patchStatus, setOpenPopoverId, onTaskSelect, teamId, allTasksSimple, t, STATUS_LABELS }: {
+  task: Task; status: StatusKey; colors: typeof STATUS_COLORS[StatusKey]; isExpanded: boolean; idx: number;
+  expandedId: string | null; setExpandedId: (id: string | null) => void; updatingId: string | null;
+  openPopoverId: string | null; handleStatusClick: (e: React.MouseEvent, task: Task, status: StatusKey) => void;
+  patchStatus: (task: Task, next: Task['status']) => void; setOpenPopoverId: (id: string | null) => void;
+  onTaskSelect: (taskId: string | null) => void; teamId?: string;
+  allTasksSimple: { id: string; status: Task['status'] }[];
+  t: (key: string, opts?: Record<string, unknown>) => string;
+  STATUS_LABELS: Record<StatusKey, string>;
+}) {
+  return (
+    <div
+      onClick={() => setExpandedId(isExpanded ? null : task.id)}
+      style={{
+        borderBottom: '1px solid var(--border)',
+        cursor: 'pointer',
+        transition: 'background 0.1s',
+        borderLeft: `2px solid ${colors.border}`,
+        animation: `fade-up 0.3s ease-out ${idx * 0.03}s both`,
+      }}
+      onMouseEnter={e => (e.currentTarget.style.background = 'var(--active-bg)')}
+      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+    >
+      <div style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <StatusIcon status={status} />
+        <span style={{ fontSize: '10px', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)', minWidth: '28px' }}>#{task.id}</span>
+        <span style={{
+          fontSize: '12px', color: status === 'completed' ? 'var(--text-muted)' : 'var(--text-primary)',
+          flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          textDecoration: status === 'completed' ? 'line-through' : 'none', letterSpacing: '0.02em',
+        }}>{task.subject}</span>
+
+        {status === 'in_progress' && task.activeForm && (
+          <span style={{
+            fontSize: '9px', color: 'var(--amber)', background: 'var(--amber-glow)',
+            border: '1px solid var(--amber-dim)', borderRadius: '2px', padding: '2px 6px',
+            letterSpacing: '0.04em', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          }}>{task.activeForm}</span>
+        )}
+
+        {task.owner && (
+          <span style={{
+            fontSize: '9px', color: agentColor(task.owner), background: `${agentColor(task.owner)}14`,
+            border: `1px solid ${agentColor(task.owner)}40`, borderRadius: '2px', padding: '2px 6px',
+            letterSpacing: '0.06em', whiteSpace: 'nowrap', flexShrink: 0,
+          }}>{task.owner}</span>
+        )}
+
+        {(status === 'in_progress' || status === 'pending') && task.updatedAt && (
+          <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.05em', whiteSpace: 'nowrap', flexShrink: 0, fontFamily: 'var(--font-mono)' }}>
+            {timeInStatus(task.updatedAt)}
+          </span>
+        )}
+
+        {task.createdAt && (
+          <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.05em', whiteSpace: 'nowrap', flexShrink: 0, fontFamily: 'var(--font-mono)' }} title={`Created: ${new Date(task.createdAt).toLocaleString()}`}>
+            +{timeAgo(task.createdAt)}
+          </span>
+        )}
+
+        <div style={{ position: 'relative', flexShrink: 0 }}>
+          <button
+            onClick={e => handleStatusClick(e, task, status)}
+            title={!teamId ? undefined : status === 'blocked' ? t('task_list.blocked_hint') : t('task_list.status_hint', { status })}
+            style={{
+              fontSize: '9px', color: colors.text,
+              background: updatingId === task.id ? 'var(--surface-2)' : colors.bg,
+              border: `1px solid ${colors.border}40`, borderRadius: '2px', padding: '2px 6px',
+              letterSpacing: '0.1em', minWidth: '52px', textAlign: 'center', fontFamily: 'var(--font-mono)',
+              cursor: (!teamId || status === 'blocked') ? 'default' : 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px',
+              transition: 'opacity 0.15s', opacity: updatingId === task.id ? 0.5 : 1, textTransform: 'uppercase',
+            }}
+            onMouseEnter={e => { if (teamId && updatingId !== task.id && status !== 'blocked') e.currentTarget.style.opacity = '0.75'; }}
+            onMouseLeave={e => { if (updatingId !== task.id) e.currentTarget.style.opacity = '1'; }}
+          >
+            {updatingId === task.id
+              ? <Loader2 size={10} style={{ animation: 'spin-slow 1s linear infinite' }} />
+              : <>{STATUS_LABELS[status]}{teamId && status !== 'blocked' && <span style={{ fontSize: '9px', opacity: 0.55, marginLeft: '1px' }}>▾</span>}</>
+            }
+          </button>
+          {openPopoverId === task.id && (
+            <StatusPopover currentStatus={task.status} onSelect={next => patchStatus(task, next)} onClose={() => setOpenPopoverId(null)} />
+          )}
+        </div>
+
+        <button
+          onClick={e => { e.stopPropagation(); onTaskSelect(task.id); }}
+          style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '2px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', flexShrink: 0 }}
+          onMouseEnter={e => (e.currentTarget.style.color = 'var(--phosphor)')}
+          onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
+        >
+          <ExternalLink size={11} />
+        </button>
+
+        <ChevronRight style={{ width: '12px', height: '12px', color: 'var(--text-muted)', flexShrink: 0, transform: isExpanded ? 'rotate(90deg)' : 'rotate(0)', transition: 'transform 0.2s' }} />
+      </div>
+
+      {isExpanded && (
+        <div style={{ padding: '0 16px 12px 56px', animation: 'fade-up 0.2s ease-out' }}>
+          {task.description && (
+            <p style={{ fontSize: '11px', color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: '8px', letterSpacing: '0.02em' }}>{task.description}</p>
+          )}
+          {(task.createdAt || task.updatedAt) && (
+            <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginBottom: '8px', paddingBottom: '8px', borderBottom: '1px solid var(--border)' }}>
+              {task.createdAt && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{t('task_list.created')}</span>
+                  <span style={{ fontSize: '9px', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', letterSpacing: '0.04em' }}>{fmtAbsoluteTime(task.createdAt)}</span>
+                </div>
+              )}
+              {task.updatedAt && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{t('task_list.updated')}</span>
+                  <span style={{ fontSize: '9px', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', letterSpacing: '0.04em' }}>{fmtAbsoluteTime(task.updatedAt)}</span>
+                </div>
+              )}
+              {task.createdAt && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{t('task_list.duration')}</span>
+                  <span style={{ fontSize: '9px', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', letterSpacing: '0.04em' }}>{durationSince(task.createdAt)}</span>
+                </div>
+              )}
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+            {task.blockedBy.length > 0 && (
+              <span style={{ fontSize: '10px', color: 'var(--crimson)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                {t('task_list.blocked_by')} {task.blockedBy.map(id => `#${id}`).join(', ')}
+              </span>
+            )}
+            {task.blocks.length > 0 && (
+              <span style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                {t('task_list.blocks')} {task.blocks.map(id => `#${id}`).join(', ')}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 

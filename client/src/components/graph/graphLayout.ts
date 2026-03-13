@@ -3,6 +3,7 @@ import type { TeamDetail, Task } from '../../types';
 import { getTaskStatus, getEdgeColor } from '../../utils/statusColors';
 
 export type LayoutMode = 'hierarchical' | 'circular' | 'force';
+export type StatusFilter = 'all' | 'active' | 'blocked';
 
 // ─── Shared helpers ──────────────────────────────────────────────────────────
 
@@ -361,8 +362,20 @@ export function buildGraphElements(
   team: TeamDetail,
   layout: LayoutMode = 'hierarchical',
   _selectedAgentId?: string,
+  statusFilter: StatusFilter = 'all',
 ): { nodes: Node[]; edges: Edge[] } {
-  if (layout === 'circular') return buildCircularLayout(team);
-  if (layout === 'force') return buildForceLayout(team);
-  return buildHierarchicalLayout(team);
+  // Pre-filter tasks based on status filter
+  const filteredTeam = statusFilter === 'all' ? team : {
+    ...team,
+    tasks: team.tasks.filter(t => {
+      const s = getTaskStatus(t, team.tasks.map(tt => ({ id: tt.id, status: tt.status })));
+      if (statusFilter === 'active') return s !== 'completed';
+      if (statusFilter === 'blocked') return s === 'blocked';
+      return true;
+    }),
+  };
+
+  if (layout === 'circular') return buildCircularLayout(filteredTeam);
+  if (layout === 'force') return buildForceLayout(filteredTeam);
+  return buildHierarchicalLayout(filteredTeam);
 }

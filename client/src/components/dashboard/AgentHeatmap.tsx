@@ -148,7 +148,7 @@ export default function AgentHeatmap({ teamId, agentNames }: AgentHeatmapProps) 
             {agents.map((name, ci) => (
               <div key={ci} style={{ width: cellSize, flexShrink: 0, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: '6px', height: '48px' }}>
                 <span style={{
-                  fontSize: '8px', color: agentColor(name), letterSpacing: '0.08em',
+                  fontSize: '9px', color: agentColor(name), letterSpacing: '0.08em',
                   writingMode: 'vertical-rl', transform: 'rotate(180deg)',
                   whiteSpace: 'nowrap', maxHeight: '44px', overflow: 'hidden', textOverflow: 'ellipsis',
                 }}>
@@ -157,7 +157,7 @@ export default function AgentHeatmap({ teamId, agentNames }: AgentHeatmapProps) 
               </div>
             ))}
             <div style={{ width: 40, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: '6px', height: '48px' }}>
-              <span style={{ fontSize: '7px', color: 'var(--text-muted)', letterSpacing: '0.08em', writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
+              <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.08em', writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
                 TOTAL
               </span>
             </div>
@@ -215,7 +215,7 @@ export default function AgentHeatmap({ teamId, agentNames }: AgentHeatmapProps) 
                         {val}
                       </span>
                     )}
-                    {isSelf && <span style={{ fontSize: '8px', color: 'var(--text-muted)', opacity: 0.4 }}>—</span>}
+                    {isSelf && <span style={{ fontSize: '9px', color: 'var(--text-muted)', opacity: 0.4 }}>—</span>}
                   </div>
                 );
               })}
@@ -229,7 +229,7 @@ export default function AgentHeatmap({ teamId, agentNames }: AgentHeatmapProps) 
                   boxShadow: `0 0 4px ${agentColor(rowName)}88`,
                   transition: 'width 0.4s ease-out',
                 }} />
-                <span style={{ fontSize: '8px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+                <span style={{ fontSize: '9px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
                   {workload[ri]}
                 </span>
               </div>
@@ -238,10 +238,10 @@ export default function AgentHeatmap({ teamId, agentNames }: AgentHeatmapProps) 
 
           {/* Legend */}
           <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '8px', paddingLeft: labelWidth + 4 }}>
-            <span style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>LOW</span>
+            <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>LOW</span>
             <div style={{ height: '6px', width: '80px', borderRadius: '2px', background: 'linear-gradient(90deg, transparent, var(--ice))' }} />
-            <span style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>HIGH</span>
-            <span style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.06em', marginLeft: '8px' }}>
+            <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>HIGH</span>
+            <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.06em', marginLeft: '8px' }}>
               (ROW = SENDER, COL = RECIPIENT)
             </span>
           </div>
@@ -275,11 +275,11 @@ export default function AgentHeatmap({ teamId, agentNames }: AgentHeatmapProps) 
                 {activeCell.recipient.toUpperCase()}
               </span>
               {!selectedCell && (
-                <span style={{ fontSize: '7px', color: 'var(--text-muted)', letterSpacing: '0.1em', border: '1px solid var(--border)', padding: '1px 4px', borderRadius: '2px', flexShrink: 0 }}>
+                <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em', border: '1px solid var(--border)', padding: '1px 4px', borderRadius: '2px', flexShrink: 0 }}>
                   TOP
                 </span>
               )}
-              <span style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.1em', flexShrink: 0 }}>
+              <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em', flexShrink: 0 }}>
                 · {selectedMessages.length}
               </span>
             </div>

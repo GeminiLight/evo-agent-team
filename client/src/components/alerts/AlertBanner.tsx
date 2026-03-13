@@ -87,12 +87,12 @@ export default function AlertBanner({ alerts, onDismiss, teamId, pendingHumanDet
                   {alert.title.toUpperCase()}
                 </span>
                 {alert.durationMs !== undefined && (
-                  <span style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.08em' }}>
+                  <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.08em' }}>
                     {fmtDuration(alert.durationMs)}
                   </span>
                 )}
                 <span style={{
-                  fontSize: '8px', letterSpacing: '0.12em', padding: '1px 5px',
+                  fontSize: '9px', letterSpacing: '0.12em', padding: '1px 5px',
                   background: `${color}20`, border: `1px solid ${color}40`,
                   borderRadius: '2px', color,
                 }}>
@@ -114,7 +114,7 @@ export default function AlertBanner({ alerts, onDismiss, teamId, pendingHumanDet
                 style={{
                   flexShrink: 0,
                   padding: '3px 10px',
-                  fontSize: '8px', letterSpacing: '0.12em', fontWeight: 700,
+                  fontSize: '9px', letterSpacing: '0.12em', fontWeight: 700,
                   fontFamily: 'var(--font-mono)',
                   background: 'rgba(245,166,35,0.12)',
                   color: 'var(--amber)',
@@ -158,7 +158,7 @@ export default function AlertBanner({ alerts, onDismiss, teamId, pendingHumanDet
       {/* Summary line if multiple */}
       {alerts.length > 1 && (
         <div style={{
-          fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.1em',
+          fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em',
           fontFamily: 'var(--font-mono)', paddingLeft: '4px',
         }}>
           <span style={{ textTransform: 'uppercase' }}>{t('alert.active_alert', { count: alerts.length })}</span>

@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
 import { useTeamData } from './hooks/useTeamData';
 import { usePendingHumanRequests } from './hooks/usePendingHumanRequests';
 import { useProjectTodos } from './hooks/useProjectTodos';
@@ -6,6 +6,7 @@ import { useInboxSummary } from './hooks/useInboxSummary';
 import { useSessionStats } from './hooks/useSessionStats';
 import { useAlerts } from './hooks/useAlerts';
 import { useCostData } from './hooks/useCostData';
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import Layout, { type ViewType } from './components/Layout';
 import EmptyState from './components/EmptyState';
 import DashboardView from './components/dashboard/DashboardView';
@@ -18,9 +19,9 @@ import TimelineView from './components/timeline/TimelineView';
 import SessionHistoryContainer from './components/history/SessionHistoryContainer';
 import CostView from './components/cost/CostView';
 import ReviewView from './components/review/ReviewView';
+import ExpertProfilePanel from './components/ExpertProfilePanel';
 import SettingsView from './components/settings/SettingsView';
 import AlertBanner from './components/alerts/AlertBanner';
-import MiniFeedBar from './components/shared/MiniFeedBar';
 import { exportGraphAsPng, exportTeamAsJson, exportTasksCsv, exportCommLogCsv, exportTimelineCsv } from './utils/exportUtils';
 import type { AgentMessage, TaskChangeEvent, Task } from './types';
 
@@ -40,8 +41,18 @@ export default function App() {
   const { alerts, loading: alertsLoading } = useAlerts(selectedTeamId);
   const { data: costData, loading: costLoading } = useCostData(selectedTeamId);
   const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(new Set());
+  const [showExpertProfile, setShowExpertProfile] = useState(false);
 
   const leadName = teamDetail?.config?.leadAgentId?.split('@')[0] ?? null;
+
+  // Keyboard shortcuts
+  const shortcutConfig = useMemo(() => ({
+    onViewChange: setView,
+    onClosePanel: () => { setSelectedTaskId(null); setSelectedAgentId(null); },
+    onNextNotification: () => setView('activity'),
+    onRefresh: () => { /* trigger re-render by bumping state — polling handles actual refresh */ },
+  }), []);
+  useKeyboardShortcuts(shortcutConfig);
 
   const handleTaskUpdated = useCallback((updatedTask: Task) => {
     setTeamDetail(prev => {
@@ -134,9 +145,12 @@ export default function App() {
         pendingHumanAgents={pendingHuman.agentNames}
         alertCount={visibleAlerts.length}
         criticalAlertCount={visibleAlerts.filter(a => a.severity === 'critical').length}
+        onAgentSelect={setSelectedAgentId}
+        alertedAgentNames={alertedAgentNames}
+        onExpertProfile={selectedTeamId ? () => setShowExpertProfile(true) : undefined}
       >
-        {/* Alert banner — shown on dashboard and graph views */}
-        {visibleAlerts.length > 0 && (view === 'dashboard' || view === 'graph') && (
+        {/* Alert banner — shown on graph view (dashboard uses ActionQueue instead) */}
+        {visibleAlerts.length > 0 && view === 'graph' && (
           <AlertBanner
             alerts={visibleAlerts}
             onDismiss={id => setDismissedAlerts(prev => new Set([...prev, id]))}
@@ -158,6 +172,9 @@ export default function App() {
             leadName={leadName}
             projectTodos={projectTodos}
             teamId={selectedTeamId ?? undefined}
+            alerts={visibleAlerts}
+            onDismissAlert={id => setDismissedAlerts(prev => new Set([...prev, id]))}
+            onViewChange={setView}
           />
         )}
         {view === 'graph' && teamDetail && (
@@ -220,13 +237,6 @@ export default function App() {
           </div>
         )}
       </Layout>
-      {/* Global mini-feed bar — shown on non-stream views */}
-      {view !== 'activity' && view !== 'commlog' && view !== 'timeline' && view !== 'history' && (
-        <MiniFeedBar
-          teamId={selectedTeamId}
-          onOpenActivity={() => setView('activity')}
-        />
-      )}
       {selectedTask && (
         <TaskDetailPanel
           task={selectedTask}
@@ -243,6 +253,13 @@ export default function App() {
           isLead={selectedAgent.name === leadName}
           sessionStats={sessionStats[selectedAgent.name]}
           onClose={() => setSelectedAgentId(null)}
+        />
+      )}
+      {showExpertProfile && selectedTeamId && (
+        <ExpertProfilePanel
+          teamId={selectedTeamId}
+          teamName={teams.find(t => t.id === selectedTeamId)?.name}
+          onClose={() => setShowExpertProfile(false)}
         />
       )}
     </>

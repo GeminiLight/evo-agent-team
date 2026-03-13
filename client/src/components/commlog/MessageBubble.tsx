@@ -132,7 +132,7 @@ function HumanResponseInline({ agentName, messageId, teamId, pendingAgentNames }
             <button
               onClick={() => { clearError(); handleSend(); }}
               style={{
-                padding: '3px 10px', fontSize: '8px', letterSpacing: '0.1em',
+                padding: '3px 10px', fontSize: '9px', letterSpacing: '0.1em',
                 fontFamily: 'var(--font-mono)',
                 background: 'rgba(255,68,102,0.1)', color: 'var(--crimson)',
                 border: '1px solid rgba(255,68,102,0.4)', borderRadius: '2px', cursor: 'pointer',
@@ -146,7 +146,7 @@ function HumanResponseInline({ agentName, messageId, teamId, pendingAgentNames }
               onClick={handleSend}
               disabled={!text.trim() || sending || isDemo}
               style={{
-                padding: '3px 12px', fontSize: '8px', letterSpacing: '0.12em', fontWeight: 700,
+                padding: '3px 12px', fontSize: '9px', letterSpacing: '0.12em', fontWeight: 700,
                 fontFamily: 'var(--font-mono)',
                 background: 'rgba(57,255,106,0.1)', color: 'var(--phosphor)',
                 border: '1px solid var(--phosphor)', borderRadius: '2px',
@@ -230,7 +230,7 @@ export default function MessageBubble({ message, compact = false, teamId, pendin
             width: '22px', height: '22px',
             borderRadius: '3px',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '8px', fontWeight: 700, letterSpacing: '0.04em',
+            fontSize: '9px', fontWeight: 700, letterSpacing: '0.04em',
             fontFamily: 'var(--font-mono)',
             ...avatarStyle,
           }}>
@@ -263,7 +263,7 @@ export default function MessageBubble({ message, compact = false, teamId, pendin
             {/* Type badge */}
             {badge && (
               <span style={{
-                fontSize: '8px',
+                fontSize: '9px',
                 letterSpacing: '0.12em',
                 color: badge.color,
                 border: `1px solid ${badge.color}`,
@@ -299,7 +299,7 @@ export default function MessageBubble({ message, compact = false, teamId, pendin
             </span>
             {badge && (
               <span style={{
-                fontSize: '8px', letterSpacing: '0.12em',
+                fontSize: '9px', letterSpacing: '0.12em',
                 color: badge.color, border: `1px solid ${badge.color}`,
                 padding: '1px 5px', borderRadius: '2px', opacity: 0.85,
                 textTransform: 'uppercase',

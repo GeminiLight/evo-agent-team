@@ -220,7 +220,7 @@ export default function AgentProfilePanel({ member, tasks, teamId, isLead = fals
                 </span>
                 {isLead && (
                   <span style={{
-                    padding: '1px 6px', fontSize: '8px', fontWeight: 700,
+                    padding: '1px 6px', fontSize: '9px', fontWeight: 700,
                     letterSpacing: '0.12em', color: 'var(--amber)',
                     background: 'rgba(255,140,66,0.12)',
                     border: '1px solid rgba(255,140,66,0.35)',
@@ -436,7 +436,7 @@ export default function AgentProfilePanel({ member, tasks, teamId, isLead = fals
               ].map(s => (
                 <div key={s.label} style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: '3px', padding: '10px 8px', textAlign: 'center' }}>
                   <div style={{ fontSize: '20px', fontWeight: 700, color: s.color, fontFamily: 'var(--font-mono)', lineHeight: 1, marginBottom: '4px' }}>{s.value}</div>
-                  <div style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>{s.label}</div>
+                  <div style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>{s.label}</div>
                 </div>
               ))}
             </div>
@@ -491,7 +491,7 @@ export default function AgentProfilePanel({ member, tasks, teamId, isLead = fals
                     <div style={{ fontSize: '18px', fontWeight: 700, color: s.color, fontFamily: 'var(--font-mono)', lineHeight: 1, marginBottom: '4px' }}>
                       {s.value}
                     </div>
-                    <div style={{ fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>{s.label}</div>
+                    <div style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>{s.label}</div>
                   </div>
                 ))}
               </div>
@@ -551,7 +551,7 @@ export default function AgentProfilePanel({ member, tasks, teamId, isLead = fals
                       }}>
                         {t.subject}
                       </span>
-                      <span style={{ fontSize: '8px', color: c.text, background: c.bg, border: `1px solid ${c.border}40`, borderRadius: '2px', padding: '1px 5px', letterSpacing: '0.08em', flexShrink: 0 }}>
+                      <span style={{ fontSize: '9px', color: c.text, background: c.bg, border: `1px solid ${c.border}40`, borderRadius: '2px', padding: '1px 5px', letterSpacing: '0.08em', flexShrink: 0 }}>
                         {STATUS_LABELS[s]}
                       </span>
                     </div>

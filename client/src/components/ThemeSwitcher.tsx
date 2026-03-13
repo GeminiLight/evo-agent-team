@@ -96,7 +96,7 @@ export default function ThemeSwitcher() {
           <div style={{
             padding: '8px 12px 6px',
             borderBottom: '1px solid var(--border)',
-            fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.18em',
+            fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.18em',
             fontFamily: 'var(--font-mono)',
             textTransform: 'uppercase',
           }}>
@@ -174,7 +174,7 @@ export default function ThemeSwitcher() {
                       {t(`theme.${themeItem.id}.label`)}
                     </div>
                     <div style={{
-                      fontSize: '8px', color: 'var(--text-muted)', letterSpacing: '0.03em',
+                      fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.03em',
                       fontFamily: 'var(--font-mono)',
                       whiteSpace: 'nowrap',
                     }}>

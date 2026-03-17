@@ -647,8 +647,8 @@ function NewEntryModal({ teamId, agentNames, onClose, onSubmitted }: {
 
   return (
     <>
-      <div onClick={phase === 'form' ? onClose : undefined} style={{ position: 'fixed', inset: 0, background: 'rgba(4,6,8,0.7)', zIndex: 200 }} />
-      <div style={{
+      <div onClick={phase === 'form' ? onClose : undefined} style={{ position: 'fixed', inset: 0, background: 'var(--overlay-backdrop)', zIndex: 200 }} />
+      <div role="dialog" aria-modal="true" aria-label="Add feedback entry" style={{
         position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
         zIndex: 201, width: phase === 'suggestions' ? '520px' : '420px',
         background: 'var(--surface-0)', border: '1px solid var(--border-bright)',

@@ -496,7 +496,7 @@ function TeamGuidePanel({ teamId, teamName, onClose }: { teamId: string; teamNam
       <div
         onClick={onClose}
         aria-hidden="true"
-        style={{ position: 'fixed', inset: 0, background: 'rgba(4,6,8,0.6)', zIndex: 99 }}
+        style={{ position: 'fixed', inset: 0, background: 'var(--overlay-backdrop)', zIndex: 99 }}
       />
 
       {/* Panel */}
@@ -512,7 +512,7 @@ function TeamGuidePanel({ teamId, teamName, onClose }: { teamId: string; teamNam
         borderLeft: '1px solid var(--border-bright)',
         display: 'flex', flexDirection: 'column',
         animation: 'slide-in-right 0.25s ease-out',
-        boxShadow: '-4px 0 30px rgba(57,255,106,0.05)',
+        boxShadow: '-4px 0 30px var(--phosphor-glow)',
       }}>
         {/* Header */}
         <div style={{

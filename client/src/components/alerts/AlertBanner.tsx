@@ -52,6 +52,7 @@ export default function AlertBanner({ alerts, onDismiss, teamId, pendingHumanDet
         return (
           <div
             key={alert.id}
+            role={isCrit ? 'alert' : 'status'}
             style={{
               display: 'flex',
               alignItems: 'flex-start',
@@ -116,14 +117,14 @@ export default function AlertBanner({ alerts, onDismiss, teamId, pendingHumanDet
                   padding: '3px 10px',
                   fontSize: '9px', letterSpacing: '0.12em', fontWeight: 700,
                   fontFamily: 'var(--font-mono)',
-                  background: 'rgba(245,166,35,0.12)',
+                  background: 'var(--amber-bg-subtle)',
                   color: 'var(--amber)',
                   border: '1px solid var(--amber-dim)',
                   borderRadius: '2px',
                   cursor: 'pointer',
                 }}
-                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(245,166,35,0.2)')}
-                onMouseLeave={e => (e.currentTarget.style.background = 'rgba(245,166,35,0.12)')}
+                onMouseEnter={e => (e.currentTarget.style.background = 'var(--amber-border-subtle)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'var(--amber-bg-subtle)')}
               >
                 <span style={{ textTransform: 'uppercase' }}>{t('alert.respond')}</span>
               </button>

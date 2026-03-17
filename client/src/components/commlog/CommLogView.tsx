@@ -608,7 +608,7 @@ export default function CommLogView({ teamId, teamDetail, onMessagesChange, pend
                           style={{
                             padding: '3px 10px', fontSize: '9px', letterSpacing: '0.1em',
                             fontFamily: 'var(--font-mono)', fontWeight: 700,
-                            background: 'rgba(245,166,35,0.15)', color: 'var(--amber)',
+                            background: 'var(--amber-bg-subtle)', color: 'var(--amber)',
                             border: '1px solid var(--amber-dim)', borderRadius: '2px', cursor: 'pointer',
                             opacity: !respondText.trim() || sending ? 0.5 : 1,
                           }}

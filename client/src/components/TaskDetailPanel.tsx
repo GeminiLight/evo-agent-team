@@ -71,7 +71,7 @@ export default function TaskDetailPanel({ task, allTasks, members, onClose }: Ta
         style={{
           position: 'fixed',
           inset: 0,
-          background: 'rgba(4,6,8,0.6)',
+          background: 'var(--overlay-backdrop)',
           zIndex: 99,
         }}
       />

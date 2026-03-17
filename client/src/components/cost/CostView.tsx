@@ -52,7 +52,7 @@ function TokenBar({ agent, maxTokens, index }: { agent: AgentCostSummary; maxTok
       {/* Bar segments */}
       <div style={{
         flex: 1, height: '10px',
-        background: 'var(--surface-2, rgba(255,255,255,0.04))',
+        background: 'var(--surface-2)',
         borderRadius: '2px', overflow: 'hidden',
         display: 'flex',
       }}>
@@ -167,7 +167,7 @@ function TokenSparkline({ series, allAgents }: { series: AgentTimeSeries[]; allA
             <line
               x1={LEFT} y1={t.y}
               x2={LEFT + W} y2={t.y}
-              stroke="rgba(255,255,255,0.07)"
+              stroke="var(--border)"
               strokeWidth="0.5"
               strokeDasharray={t.val === 0 ? undefined : '3,3'}
             />
@@ -175,7 +175,7 @@ function TokenSparkline({ series, allAgents }: { series: AgentTimeSeries[]; allA
               x={LEFT - 4} y={t.y + 3}
               textAnchor="end"
               fontSize="8"
-              fill="rgba(255,255,255,0.35)"
+              fill="var(--text-muted)"
               fontFamily="monospace"
             >
               {t.label}
@@ -184,18 +184,18 @@ function TokenSparkline({ series, allAgents }: { series: AgentTimeSeries[]; allA
         ))}
 
         {/* X-axis baseline */}
-        <line x1={LEFT} y1={H} x2={LEFT + W} y2={H} stroke="rgba(255,255,255,0.15)" strokeWidth="0.5" />
+        <line x1={LEFT} y1={H} x2={LEFT + W} y2={H} stroke="var(--border-bright)" strokeWidth="0.5" />
 
         {/* X-axis ticks + labels */}
         {xTicks.map((t, i) => (
           <g key={i}>
-            <line x1={t.x} y1={H} x2={t.x} y2={H + 4} stroke="rgba(255,255,255,0.2)" strokeWidth="0.5" />
+            <line x1={t.x} y1={H} x2={t.x} y2={H + 4} stroke="var(--border-bright)" strokeWidth="0.5" />
             <text
               x={t.x}
               y={H + 14}
               textAnchor={i === 0 ? 'start' : i === xTicks.length - 1 ? 'end' : 'middle'}
               fontSize="8"
-              fill="rgba(255,255,255,0.4)"
+              fill="var(--text-secondary)"
               fontFamily="monospace"
             >
               {t.label}
@@ -284,7 +284,7 @@ function ToolChart({ tools }: { tools: ToolCostSummary[] }) {
           </div>
           <div style={{
             flex: 1, height: '8px',
-            background: 'var(--surface-2, rgba(255,255,255,0.04))',
+            background: 'var(--surface-2)',
             borderRadius: '2px', overflow: 'hidden',
           }}>
             <div style={{

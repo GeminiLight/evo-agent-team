@@ -166,7 +166,7 @@ function MessageItem({ message }: { message: AgentMessage }) {
         transition: 'background 0.1s',
         alignItems: 'flex-start',
       }}
-      onMouseEnter={e => { e.currentTarget.style.background = isHumanRequest ? 'rgba(245,166,35,0.12)' : 'var(--surface-2)'; }}
+      onMouseEnter={e => { e.currentTarget.style.background = isHumanRequest ? 'var(--amber-bg-subtle)' : 'var(--surface-2)'; }}
       onMouseLeave={e => { e.currentTarget.style.background = isHumanRequest ? 'var(--amber-glow)' : 'var(--surface-1)'; }}
     >
       {/* Avatar */}

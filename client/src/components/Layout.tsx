@@ -5,7 +5,7 @@ import type { TeamSummary, TeamDetail } from '../types';
 import Sidebar from './layout/Sidebar';
 import StatusBar from './layout/StatusBar';
 
-export type ViewType = 'dashboard' | 'graph' | 'activity' | 'commlog' | 'timeline' | 'history' | 'cost' | 'review' | 'settings';
+export type ViewType = 'dashboard' | 'graph' | 'activity' | 'commlog' | 'timeline' | 'history' | 'chat' | 'cost' | 'review' | 'settings';
 
 interface LayoutProps {
   teams: TeamSummary[];
@@ -181,13 +181,13 @@ export default function Layout({
                 style={{
                   display: 'flex', alignItems: 'center', gap: '4px',
                   padding: '2px 7px',
-                  background: criticalAlertCount > 0 ? 'rgba(255,68,102,0.12)' : 'rgba(245,166,35,0.1)',
-                  border: `1px solid ${criticalAlertCount > 0 ? 'var(--crimson, #ff4466)' : 'var(--amber)'}`,
+                  background: criticalAlertCount > 0 ? 'var(--crimson-bg-subtle)' : 'var(--amber-bg-subtle)',
+                  border: `1px solid ${criticalAlertCount > 0 ? 'var(--crimson)' : 'var(--amber)'}`,
                   borderRadius: '3px',
                   cursor: 'pointer',
                   fontFamily: 'var(--font-mono)',
                   fontSize: '9px', letterSpacing: '0.1em', lineHeight: '14px',
-                  color: criticalAlertCount > 0 ? 'var(--crimson, #ff4466)' : 'var(--amber)',
+                  color: criticalAlertCount > 0 ? 'var(--crimson)' : 'var(--amber)',
                   animation: criticalAlertCount > 0 ? 'status-pulse 2s ease-in-out infinite' : 'none',
                   flexShrink: 0,
                   textTransform: 'uppercase',

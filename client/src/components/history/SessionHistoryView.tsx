@@ -437,8 +437,8 @@ function EntryBlock({ entry, search }: { entry: SessionEntry; search: string }) 
 
     return (
       <div style={{
-        background: isErr ? 'rgba(255,59,92,0.06)' : 'var(--surface-1)',
-        border: `1px solid ${isErr ? 'rgba(255,59,92,0.2)' : 'var(--border)'}`,
+        background: isErr ? 'var(--crimson-bg-subtle)' : 'var(--surface-1)',
+        border: `1px solid ${isErr ? 'var(--crimson-border-subtle)' : 'var(--border)'}`,
         borderLeft: `3px solid ${color}`,
         borderRadius: '3px',
         padding: '4px 8px',
@@ -689,7 +689,7 @@ function FeedbackStrip({ teamId, agentName, messageUuid, sessionId, rowHovered, 
               style={{
                 padding: '2px 10px', fontSize: '9px', letterSpacing: '0.08em', fontWeight: 700,
                 fontFamily: 'var(--font-mono)',
-                background: 'rgba(255,59,92,0.1)', color: 'var(--crimson)',
+                background: 'var(--crimson-bg-subtle)', color: 'var(--crimson)',
                 border: '1px solid var(--crimson)', borderRadius: '2px',
                 cursor: (!note.trim() || sending) ? 'default' : 'pointer',
                 opacity: (!note.trim() || sending) ? 0.4 : 1,
@@ -780,7 +780,7 @@ function FeedbackStrip({ teamId, agentName, messageUuid, sessionId, rowHovered, 
               style={{
                 padding: '2px 10px', fontSize: '9px', letterSpacing: '0.08em', fontWeight: 700,
                 fontFamily: 'var(--font-mono)',
-                background: 'rgba(0,210,255,0.08)', color: 'var(--ice)',
+                background: 'var(--ice-bg-subtle)', color: 'var(--ice)',
                 border: '1px solid var(--ice)', borderRadius: '2px', cursor: 'pointer',
               }}
             >{t('review.apply_selected', { count: accepted.size })}</button>

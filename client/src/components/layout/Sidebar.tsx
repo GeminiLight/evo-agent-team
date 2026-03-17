@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { LayoutDashboard, Network, Activity, ScrollText, DollarSign, Star, ChevronLeft, ChevronRight, Settings, User } from 'lucide-react';
+import { LayoutDashboard, Network, Activity, ScrollText, MessageSquare, DollarSign, Star, ChevronLeft, ChevronRight, Settings, User } from 'lucide-react';
 import type { ViewType } from '../Layout';
 import type { TeamDetail } from '../../types';
 import { agentColor, agentInitials } from '../../utils/agentColors';
@@ -26,6 +26,7 @@ const NAV_ITEMS: { key: ViewType; icon: typeof LayoutDashboard; labelKey: string
   { key: 'graph',     icon: Network,         labelKey: 'sidebar.topology' },
   { key: 'activity',  icon: Activity,        labelKey: 'sidebar.activity', family: ACTIVITY_FAMILY },
   { key: 'history',   icon: ScrollText,      labelKey: 'sidebar.sessions' },
+  { key: 'chat',      icon: MessageSquare,   labelKey: 'sidebar.chat' },
   { key: 'cost',      icon: DollarSign,      labelKey: 'sidebar.stats' },
   { key: 'review',    icon: Star,            labelKey: 'sidebar.review' },
 ];
@@ -85,7 +86,7 @@ export default function Sidebar({
       flexShrink: 0,
     }}>
       {/* ─── Navigation ─── */}
-      <nav style={{ padding: collapsed ? '10px 6px 6px' : '10px 8px 6px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+      <nav aria-label="Main navigation" style={{ padding: collapsed ? '10px 6px 6px' : '10px 8px 6px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
         {NAV_ITEMS.map(({ key, icon: Icon, labelKey, family }) => {
           const active = family ? family.includes(view) : view === key;
           const hasBadge = key === 'activity' && pendingHumanCount > 0;
@@ -93,6 +94,7 @@ export default function Sidebar({
             <button
               key={key}
               onClick={() => onViewChange(key)}
+              aria-current={active ? 'page' : undefined}
               title={collapsed ? t(labelKey) : undefined}
               style={{
                 display: 'flex',
@@ -101,7 +103,7 @@ export default function Sidebar({
                 padding: collapsed ? '8px 0' : '7px 10px',
                 justifyContent: collapsed ? 'center' : 'flex-start',
                 background: active ? 'var(--active-bg-med)' : 'transparent',
-                color: active ? 'var(--active-text)' : 'var(--text-muted)',
+                color: active ? 'var(--active-text)' : 'var(--text-secondary)',
                 border: 'none',
                 borderLeft: active ? '2px solid var(--phosphor)' : '2px solid transparent',
                 borderRadius: '0 3px 3px 0',
@@ -116,8 +118,8 @@ export default function Sidebar({
                 whiteSpace: 'nowrap',
                 width: '100%',
               }}
-              onMouseEnter={e => { if (!active) { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.background = 'var(--surface-1)'; } }}
-              onMouseLeave={e => { if (!active) { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'transparent'; } }}
+              onMouseEnter={e => { if (!active) { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.background = 'var(--surface-1)'; } }}
+              onMouseLeave={e => { if (!active) { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.background = 'transparent'; } }}
             >
               <Icon size={14} style={{ flexShrink: 0 }} />
               {!collapsed && <span>{t(labelKey)}</span>}
@@ -263,7 +265,7 @@ export default function Sidebar({
               justifyContent: collapsed ? 'center' : 'flex-start',
               width: '100%',
               background: 'transparent',
-              color: 'var(--text-muted)',
+              color: 'var(--text-secondary)',
               border: 'none',
               borderLeft: '2px solid transparent',
               borderRadius: '0 3px 3px 0',
@@ -274,8 +276,8 @@ export default function Sidebar({
               textTransform: 'uppercase',
               transition: 'all 0.15s',
             }}
-            onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.background = 'var(--surface-1)'; }}
-            onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'transparent'; }}
+            onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.background = 'var(--surface-1)'; }}
+            onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.background = 'transparent'; }}
           >
             <User size={13} style={{ flexShrink: 0 }} />
             {!collapsed && <span>{t('sidebar.expert_profile')}</span>}
@@ -292,7 +294,7 @@ export default function Sidebar({
             justifyContent: collapsed ? 'center' : 'flex-start',
             width: '100%',
             background: view === 'settings' ? 'var(--active-bg-med)' : 'transparent',
-            color: view === 'settings' ? 'var(--phosphor)' : 'var(--text-muted)',
+            color: view === 'settings' ? 'var(--phosphor)' : 'var(--text-secondary)',
             border: 'none',
             borderLeft: view === 'settings' ? '2px solid var(--phosphor)' : '2px solid transparent',
             borderRadius: '0 3px 3px 0',
@@ -303,8 +305,8 @@ export default function Sidebar({
             textTransform: 'uppercase',
             transition: 'all 0.15s',
           }}
-          onMouseEnter={e => { if (view !== 'settings') { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.background = 'var(--surface-1)'; } }}
-          onMouseLeave={e => { if (view !== 'settings') { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'transparent'; } }}
+          onMouseEnter={e => { if (view !== 'settings') { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.background = 'var(--surface-1)'; } }}
+          onMouseLeave={e => { if (view !== 'settings') { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.background = 'transparent'; } }}
         >
           <Settings size={13} style={{ flexShrink: 0 }} />
           {!collapsed && <span>{t('nav.settings')}</span>}
@@ -321,7 +323,7 @@ export default function Sidebar({
             justifyContent: collapsed ? 'center' : 'flex-start',
             width: '100%',
             background: 'transparent',
-            color: 'var(--text-muted)',
+            color: 'var(--text-secondary)',
             border: 'none',
             borderRadius: '3px',
             cursor: 'pointer',
@@ -330,8 +332,8 @@ export default function Sidebar({
             letterSpacing: '0.08em',
             transition: 'all 0.15s',
           }}
-          onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-secondary)'; }}
-          onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; }}
+          onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; }}
+          onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-secondary)'; }}
         >
           {collapsed ? <ChevronRight size={13} /> : <ChevronLeft size={13} />}
           {!collapsed && <span style={{ textTransform: 'uppercase' }}>{t('sidebar.collapse')}</span>}

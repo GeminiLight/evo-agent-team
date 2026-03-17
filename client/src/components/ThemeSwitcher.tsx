@@ -148,7 +148,7 @@ export default function ThemeSwitcher() {
                   <div style={{
                     width: '32px', height: '22px', borderRadius: '2px', flexShrink: 0,
                     background: themeItem.bg,
-                    border: `1px solid ${isActive ? themeItem.accent : 'rgba(255,255,255,0.08)'}`,
+                    border: `1px solid ${isActive ? themeItem.accent : 'var(--border)'}`,
                     display: 'flex', flexDirection: 'column',
                     justifyContent: 'center', alignItems: 'flex-start',
                     gap: '2px', padding: '3px',

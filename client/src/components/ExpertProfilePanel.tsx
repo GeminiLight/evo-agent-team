@@ -97,10 +97,10 @@ export default function ExpertProfilePanel({ teamId, teamName, onClose }: Expert
   return (
     <>
       {/* Backdrop */}
-      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(4,6,8,0.5)', zIndex: 300 }} />
+      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'var(--overlay-backdrop)', zIndex: 300 }} />
 
       {/* Panel */}
-      <div style={{
+      <div role="dialog" aria-modal="true" aria-label="Expert profile" style={{
         position: 'fixed', top: 0, right: 0, bottom: 0,
         width: '400px', maxWidth: '90vw',
         background: 'var(--surface-0)',
@@ -109,7 +109,7 @@ export default function ExpertProfilePanel({ teamId, teamName, onClose }: Expert
         zIndex: 301,
         display: 'flex', flexDirection: 'column',
         fontFamily: 'var(--font-mono)',
-        animation: 'fade-up 0.2s ease-out',
+        animation: 'slide-in-right 0.25s ease-out',
         overflow: 'hidden',
       }}>
         {/* Header */}

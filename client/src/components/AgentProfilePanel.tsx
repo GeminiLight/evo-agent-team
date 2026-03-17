@@ -58,7 +58,7 @@ function StatusIcon({ status }: { status: StatusKey }) {
   if (status === 'completed')  return <CheckCircle2 size={size} style={{ color: 'var(--phosphor)', flexShrink: 0 }} />;
   if (status === 'in_progress') return <Loader2     size={size} style={{ color: 'var(--amber)',   flexShrink: 0, animation: 'spin-slow 2.5s linear infinite' }} />;
   if (status === 'blocked')    return <Lock         size={size} style={{ color: 'var(--crimson)', flexShrink: 0 }} />;
-  return <Clock size={size} style={{ color: '#4a6070', flexShrink: 0 }} />;
+  return <Clock size={size} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />;
 }
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
@@ -156,7 +156,7 @@ export default function AgentProfilePanel({ member, tasks, teamId, isLead = fals
   return (
     <>
       {/* Backdrop */}
-      <div onClick={onClose} aria-hidden="true" style={{ position: 'fixed', inset: 0, background: 'rgba(4,6,8,0.6)', zIndex: 99 }} />
+      <div onClick={onClose} aria-hidden="true" style={{ position: 'fixed', inset: 0, background: 'var(--overlay-backdrop)', zIndex: 99 }} />
 
       {/* Panel */}
       <div
@@ -222,8 +222,8 @@ export default function AgentProfilePanel({ member, tasks, teamId, isLead = fals
                   <span style={{
                     padding: '1px 6px', fontSize: '9px', fontWeight: 700,
                     letterSpacing: '0.12em', color: 'var(--amber)',
-                    background: 'rgba(255,140,66,0.12)',
-                    border: '1px solid rgba(255,140,66,0.35)',
+                    background: 'var(--amber-bg-subtle)',
+                    border: '1px solid var(--amber-border-subtle)',
                     borderRadius: '2px', fontFamily: 'var(--font-mono)',
                     flexShrink: 0,
                   }}>

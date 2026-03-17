@@ -26,7 +26,7 @@ function SectionLabel({ label }: { label: string }) {
       marginBottom: '12px', marginTop: '28px',
     }}>
       <span style={{
-        fontSize: '8px', letterSpacing: '0.18em', color: 'var(--text-muted)',
+        fontSize: '9px', letterSpacing: '0.18em', color: 'var(--text-muted)',
         fontFamily: 'var(--font-mono)', flexShrink: 0, textTransform: 'uppercase',
       }}>{label}</span>
       <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
@@ -170,7 +170,7 @@ export default function SettingsView({ teamId, wsConnected }: SettingsViewProps)
                   <div style={{
                     width: '28px', height: '18px', borderRadius: '2px', flexShrink: 0,
                     background: themeItem.bg,
-                    border: `1px solid ${isActive ? themeItem.accent : 'rgba(255,255,255,0.08)'}`,
+                    border: `1px solid ${isActive ? themeItem.accent : 'var(--border)'}`,
                     display: 'flex', flexDirection: 'column',
                     justifyContent: 'center', alignItems: 'flex-start',
                     gap: '2px', padding: '3px',
@@ -333,7 +333,7 @@ export default function SettingsView({ teamId, wsConnected }: SettingsViewProps)
               fontFamily: 'var(--font-mono)',
               letterSpacing: '0.1em',
               textTransform: 'uppercase',
-              background: saveState === 'saved' ? 'rgba(57,255,106,0.12)' : 'var(--surface-1)',
+              background: saveState === 'saved' ? 'var(--phosphor-bg-subtle)' : 'var(--surface-1)',
               color: saveState === 'saved' ? 'var(--status-ok)' : 'var(--phosphor)',
               border: `1px solid ${saveState === 'saved' ? 'var(--status-ok)' : 'var(--phosphor)'}`,
               borderRadius: '3px',

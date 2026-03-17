@@ -33,7 +33,7 @@ function StatusPopover({ currentStatus, onSelect, onClose }: StatusPopoverProps)
   const ref = useRef<HTMLDivElement>(null);
 
   const POPOVER_OPTIONS: { status: Task['status']; label: string; color: string }[] = [
-    { status: 'pending',     label: t('task_list.queue'),  color: '#4a6070' },
+    { status: 'pending',     label: t('task_list.queue'),  color: 'var(--color-pending)' },
     { status: 'in_progress', label: t('task_list.active'), color: 'var(--amber)' },
     { status: 'completed',   label: t('task_list.done'),   color: 'var(--phosphor)' },
   ];
@@ -236,17 +236,20 @@ export default function TaskList({ tasks, onTaskSelect, teamId, onTaskUpdated }:
         </span>
 
         {/* Filter tabs */}
-        <div style={{ display: 'flex', gap: '2px' }}>
+        <div role="tablist" aria-label="Task status filter" style={{ display: 'flex', gap: '2px' }}>
           {(['all', 'in_progress', 'completed', 'pending', 'blocked'] as const).map(f => {
             const isActive = filter === f;
             const color = f === 'all' ? 'var(--text-secondary)'
               : f === 'in_progress' ? 'var(--amber)'
               : f === 'completed' ? 'var(--phosphor)'
               : f === 'blocked' ? 'var(--crimson)'
-              : '#4a6070';
+              : 'var(--color-pending)';
             return (
               <button
                 key={f}
+                role="tab"
+                aria-selected={isActive}
+                aria-controls="task-list-panel"
                 onClick={() => setFilter(f)}
                 title={FILTER_TOOLTIPS[f]}
                 style={{
@@ -272,7 +275,7 @@ export default function TaskList({ tasks, onTaskSelect, teamId, onTaskUpdated }:
       </div>
 
       {/* Task list */}
-      <div style={{ maxHeight: '60vh', overflowY: 'auto', overflowX: 'visible' }}>
+      <div id="task-list-panel" role="tabpanel" style={{ maxHeight: '60vh', overflowY: 'auto', overflowX: 'visible' }}>
         {filtered.length === 0 && (
           <CRTEmptyState
             title={filter !== 'all' ? t('task_list.no_matching') : t('task_list.no_tasks')}
@@ -568,7 +571,7 @@ function StatusIcon({ status }: { status: StatusKey }) {
   if (status === 'completed') return <CheckCircle2 size={size} style={{ color: 'var(--phosphor)', flexShrink: 0 }} />;
   if (status === 'in_progress') return <Loader2 size={size} style={{ color: 'var(--amber)', flexShrink: 0, animation: 'spin-slow 2.5s linear infinite' }} />;
   if (status === 'blocked') return <Lock size={size} style={{ color: 'var(--crimson)', flexShrink: 0 }} />;
-  return <Clock size={size} style={{ color: '#4a6070', flexShrink: 0 }} />;
+  return <Clock size={size} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />;
 }
 
 function fmtAbsoluteTime(iso?: string): string {

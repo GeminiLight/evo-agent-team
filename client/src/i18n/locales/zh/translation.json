@@ -24,6 +24,7 @@
     "topology": "拓扑",
     "activity": "活动",
     "sessions": "会话",
+    "chat": "对话",
     "stats": "统计",
     "review": "评审",
     "expert_profile": "专家",
@@ -79,6 +80,10 @@
     "amber": { "label": "雷达", "desc": "深空琥珀色" },
     "neural": { "label": "神经网络", "desc": "冷电蓝" },
     "paper": { "label": "纸面", "desc": "浅色编辑风" },
+    "daylight": { "label": "晴空", "desc": "冷蓝灰工作台" },
+    "sakura": { "label": "樱花", "desc": "暖玫瑰编辑风" },
+    "matcha": { "label": "抹茶", "desc": "暖绿自然系" },
+    "solarized": { "label": "曝光", "desc": "经典 Solarized 亮色" },
     "crimson": { "label": "赤红行动", "desc": "血红战术风" },
     "slate": { "label": "石板", "desc": "冷炭灰专业风" },
     "aurora": { "label": "极光", "desc": "北极光" },
@@ -507,6 +512,17 @@
     "shortcuts_close": "Esc: 关闭面板",
     "shortcuts_next": "n: 下一通知",
     "shortcuts_refresh": "r: 刷新"
+  },
+  "chat": {
+    "title": "对话 // {{name}}",
+    "select_agent": "— 选择一个代理开始对话 —",
+    "loading": "加载中...",
+    "no_messages": "暂无消息",
+    "no_messages_sub": "代理活跃时将显示对话历史",
+    "input_placeholder": "给 {{name}} 发消息...（Ctrl+Enter 发送）",
+    "send_hint": "Ctrl+Enter 发送 · Esc 清空",
+    "sending": "发送中...",
+    "sent": "✓ 已发送"
   },
   "topology": {
     "filter_all": "全部",

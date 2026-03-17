@@ -17,6 +17,7 @@ import ActivityView from './components/activity/ActivityView';
 import CommLogView from './components/commlog/CommLogView';
 import TimelineView from './components/timeline/TimelineView';
 import SessionHistoryContainer from './components/history/SessionHistoryContainer';
+import ChatView from './components/chat/ChatView';
 import CostView from './components/cost/CostView';
 import ReviewView from './components/review/ReviewView';
 import ExpertProfilePanel from './components/ExpertProfilePanel';
@@ -206,6 +207,12 @@ export default function App() {
         )}
         {view === 'history' && selectedTeamId && (
           <SessionHistoryContainer
+            teamId={selectedTeamId}
+            teamDetail={teamDetail}
+          />
+        )}
+        {view === 'chat' && selectedTeamId && (
+          <ChatView
             teamId={selectedTeamId}
             teamDetail={teamDetail}
           />

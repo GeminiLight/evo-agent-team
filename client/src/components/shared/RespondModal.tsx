@@ -48,12 +48,15 @@ export default function RespondModal({ agentName, toolName, detail, teamId, onCl
       onClick={onClose}
       style={{
         position: 'fixed', inset: 0,
-        background: 'rgba(0,0,0,0.65)',
+        background: 'var(--overlay-backdrop)',
         zIndex: 1000,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Respond to agent"
         onClick={e => e.stopPropagation()}
         style={{
           background: 'var(--surface-1)',
@@ -110,7 +113,7 @@ export default function RespondModal({ agentName, toolName, detail, teamId, onCl
 
         {/* Demo warning */}
         {isDemo && (
-          <div style={{ marginBottom: '12px', padding: '7px 10px', background: 'rgba(245,166,35,0.08)', border: '1px solid var(--amber-dim)', borderRadius: '3px', fontSize: '9px', color: 'var(--amber)', letterSpacing: '0.06em' }}>
+          <div style={{ marginBottom: '12px', padding: '7px 10px', background: 'var(--amber-bg-subtle)', border: '1px solid var(--amber-dim)', borderRadius: '3px', fontSize: '9px', color: 'var(--amber)', letterSpacing: '0.06em' }}>
             {t('respond.demo_unavailable')}
           </div>
         )}
@@ -174,7 +177,7 @@ export default function RespondModal({ agentName, toolName, detail, teamId, onCl
             style={{
               padding: '5px 18px', fontSize: '9px', letterSpacing: '0.12em', fontWeight: 700,
               fontFamily: 'var(--font-mono)',
-              background: sent ? 'rgba(57,255,106,0.12)' : 'rgba(57,255,106,0.1)',
+              background: sent ? 'var(--phosphor-bg-subtle)' : 'var(--active-bg-med)',
               color: sent ? 'var(--phosphor)' : 'var(--phosphor)',
               border: '1px solid var(--phosphor)',
               borderRadius: '3px',

@@ -208,8 +208,8 @@ export default function AgentHeatmap({ teamId, agentNames }: AgentHeatmapProps) 
                   >
                     {!isSelf && val > 0 && (
                       <span style={{
-                        fontSize: cellSize >= 36 ? '9px' : '7px',
-                        color: val / maxVal > 0.5 ? 'rgba(0,0,0,0.7)' : agentColor(rowName),
+                        fontSize: '9px',
+                        color: val / maxVal > 0.5 ? 'var(--void, #000)' : agentColor(rowName),
                         fontFamily: 'var(--font-mono)', fontWeight: 600, letterSpacing: 0, lineHeight: 1,
                       }}>
                         {val}

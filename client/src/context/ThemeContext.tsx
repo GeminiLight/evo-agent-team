@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 
-export type ThemeId = 'phosphor' | 'amber' | 'neural' | 'paper' | 'crimson' | 'slate' | 'aurora' | 'void';
+export type ThemeId = 'phosphor' | 'amber' | 'neural' | 'paper' | 'daylight' | 'sakura' | 'matcha' | 'solarized' | 'crimson' | 'slate' | 'aurora' | 'void';
 
 export interface ThemeMeta {
   id: ThemeId;
@@ -43,6 +43,38 @@ export const THEMES: ThemeMeta[] = [
     accent: '#1a1a2e',
     bg: '#faf7f2',
     font: 'Playfair Display',
+  },
+  {
+    id: 'daylight',
+    label: 'DAYLIGHT',
+    description: 'Cool blue-gray workspace',
+    accent: '#2563eb',
+    bg: '#f8fafc',
+    font: 'Inter',
+  },
+  {
+    id: 'sakura',
+    label: 'SAKURA',
+    description: 'Warm rose editorial',
+    accent: '#be185d',
+    bg: '#fef7fb',
+    font: 'Noto Serif',
+  },
+  {
+    id: 'matcha',
+    label: 'MATCHA',
+    description: 'Warm green natural',
+    accent: '#15803d',
+    bg: '#f7faf6',
+    font: 'Inter',
+  },
+  {
+    id: 'solarized',
+    label: 'SOLARIZED',
+    description: 'Classic Solarized Light',
+    accent: '#268bd2',
+    bg: '#fdf6e3',
+    font: 'JetBrains Mono',
   },
   {
     id: 'crimson',

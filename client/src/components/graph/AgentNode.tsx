@@ -186,9 +186,9 @@ export function AgentNode({ data }: { data: AgentNodeData }) {
             </div>
             {isLead && (
               <span style={{
-                fontSize: '6px', padding: '1px 3px',
-                color: 'var(--amber)', background: 'rgba(245,166,35,0.12)',
-                border: '1px solid rgba(245,166,35,0.35)', borderRadius: '2px',
+                fontSize: '9px', padding: '1px 3px',
+                color: 'var(--amber)', background: 'var(--amber-bg-subtle)',
+                border: '1px solid var(--amber-border-subtle)', borderRadius: '2px',
                 fontFamily: 'var(--font-mono)', letterSpacing: '0.12em', fontWeight: 700,
               }}>LEAD</span>
             )}

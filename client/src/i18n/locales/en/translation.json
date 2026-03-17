@@ -24,6 +24,7 @@
     "topology": "Topology",
     "activity": "Activity",
     "sessions": "Sessions",
+    "chat": "Chat",
     "stats": "Stats",
     "review": "Review",
     "expert_profile": "Expert",
@@ -79,6 +80,10 @@
     "amber": { "label": "Radar", "desc": "Deep space amber" },
     "neural": { "label": "Neural", "desc": "Cold electric blue" },
     "paper": { "label": "Paper", "desc": "Light editorial" },
+    "daylight": { "label": "Daylight", "desc": "Cool blue-gray workspace" },
+    "sakura": { "label": "Sakura", "desc": "Warm rose editorial" },
+    "matcha": { "label": "Matcha", "desc": "Warm green natural" },
+    "solarized": { "label": "Solarized", "desc": "Classic Solarized Light" },
     "crimson": { "label": "Crimson Ops", "desc": "Blood red tactical" },
     "slate": { "label": "Slate", "desc": "Cool charcoal pro" },
     "aurora": { "label": "Aurora", "desc": "Northern lights" },
@@ -507,6 +512,17 @@
     "shortcuts_close": "Esc: Close panel",
     "shortcuts_next": "n: Next notification",
     "shortcuts_refresh": "r: Refresh"
+  },
+  "chat": {
+    "title": "Chat // {{name}}",
+    "select_agent": "— Select an agent to start chatting —",
+    "loading": "LOADING...",
+    "no_messages": "No Messages",
+    "no_messages_sub": "Conversation history will appear when the agent is active",
+    "input_placeholder": "Message {{name}}... (Ctrl+Enter to send)",
+    "send_hint": "Ctrl+Enter to send · Esc to clear",
+    "sending": "Sending...",
+    "sent": "✓ Sent"
   },
   "topology": {
     "filter_all": "All",

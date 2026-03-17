@@ -26,7 +26,7 @@ export default function SessionTodoPanel({ sessions, onClose }: SessionTodoPanel
         onClick={onClose}
         style={{
           position: 'fixed', inset: 0,
-          background: 'rgba(4,6,8,0.6)',
+          background: 'var(--overlay-backdrop)',
           zIndex: 99,
         }}
       />
@@ -153,7 +153,7 @@ function TodoRow({ item }: { item: TodoItem }) {
       <div style={{ flexShrink: 0, marginTop: '1px' }}>
         {isDone    && <CheckCircle2 size={12} style={{ color: 'var(--phosphor)' }} />}
         {isActive  && <Loader2 size={12} style={{ color: 'var(--amber)', animation: 'spin-slow 2.5s linear infinite' }} />}
-        {!isDone && !isActive && <Clock size={12} style={{ color: '#4a6070' }} />}
+        {!isDone && !isActive && <Clock size={12} style={{ color: 'var(--text-muted)' }} />}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{

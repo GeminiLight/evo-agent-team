@@ -60,8 +60,8 @@ function HumanResponseInline({ agentName, messageId, teamId, pendingAgentNames }
       style={{
         marginTop: '8px',
         padding: '10px 12px',
-        background: 'rgba(245,166,35,0.06)',
-        border: '1px solid rgba(245,166,35,0.28)',
+        background: 'var(--amber-bg-subtle)',
+        border: '1px solid var(--amber-border-subtle)',
         borderRadius: '3px',
       }}
     >
@@ -134,8 +134,8 @@ function HumanResponseInline({ agentName, messageId, teamId, pendingAgentNames }
               style={{
                 padding: '3px 10px', fontSize: '9px', letterSpacing: '0.1em',
                 fontFamily: 'var(--font-mono)',
-                background: 'rgba(255,68,102,0.1)', color: 'var(--crimson)',
-                border: '1px solid rgba(255,68,102,0.4)', borderRadius: '2px', cursor: 'pointer',
+                background: 'var(--crimson-bg-subtle)', color: 'var(--crimson)',
+                border: '1px solid var(--crimson-border-subtle)', borderRadius: '2px', cursor: 'pointer',
               }}
             >
               <span style={{ textTransform: 'uppercase' }}>{t('message.retry')}</span>
@@ -148,7 +148,7 @@ function HumanResponseInline({ agentName, messageId, teamId, pendingAgentNames }
               style={{
                 padding: '3px 12px', fontSize: '9px', letterSpacing: '0.12em', fontWeight: 700,
                 fontFamily: 'var(--font-mono)',
-                background: 'rgba(57,255,106,0.1)', color: 'var(--phosphor)',
+                background: 'var(--phosphor-bg-subtle)', color: 'var(--phosphor)',
                 border: '1px solid var(--phosphor)', borderRadius: '2px',
                 cursor: (!text.trim() || sending || isDemo) ? 'default' : 'pointer',
                 opacity: (!text.trim() || sending || isDemo) ? 0.4 : 1,
@@ -220,7 +220,7 @@ export default function MessageBubble({ message, compact = false, teamId, pendin
         background: isHumanRequest ? 'var(--amber-glow)' : 'var(--surface-1)',
         marginBottom: '1px',
       }}
-      onMouseEnter={e => { e.currentTarget.style.background = isHumanRequest ? 'rgba(245,166,35,0.12)' : 'var(--surface-2)'; }}
+      onMouseEnter={e => { e.currentTarget.style.background = isHumanRequest ? 'var(--amber-bg-subtle)' : 'var(--surface-2)'; }}
       onMouseLeave={e => { e.currentTarget.style.background = isHumanRequest ? 'var(--amber-glow)' : 'var(--surface-1)'; }}
     >
       {/* Avatar column */}

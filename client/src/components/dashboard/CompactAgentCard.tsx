@@ -103,8 +103,8 @@ export default function CompactAgentCard({
             {isLead && (
               <span style={{
                 fontSize: '9px', padding: '0 3px', fontWeight: 700,
-                color: 'var(--amber)', background: 'rgba(255,140,66,0.12)',
-                border: '1px solid rgba(255,140,66,0.35)',
+                color: 'var(--amber)', background: 'var(--amber-bg-subtle)',
+                border: '1px solid var(--amber-border-subtle)',
                 borderRadius: '2px', letterSpacing: '0.1em',
                 fontFamily: 'var(--font-mono)', textTransform: 'uppercase',
               }}>
@@ -163,7 +163,7 @@ export default function CompactAgentCard({
             style={{
               padding: '2px 8px', fontSize: '9px', letterSpacing: '0.08em', fontWeight: 700,
               fontFamily: 'var(--font-mono)',
-              background: isDemo ? 'transparent' : 'rgba(245,166,35,0.15)',
+              background: isDemo ? 'transparent' : 'var(--amber-bg-subtle)',
               color: isDemo ? 'var(--text-muted)' : 'var(--amber)',
               border: `1px solid ${isDemo ? 'var(--border)' : 'var(--amber-dim)'}`,
               borderRadius: '2px', cursor: isDemo ? 'default' : 'pointer',

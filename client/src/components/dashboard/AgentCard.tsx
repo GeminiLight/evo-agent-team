@@ -66,7 +66,7 @@ export default function AgentCard({ member, tasks, onAgentSelect, sortRank, awai
     <div
       onClick={() => onAgentSelect(member.agentId)}
       style={{
-        background: awaitingInput ? 'rgba(255,140,66,0.04)' : isActive ? `${accent}08` : 'var(--surface-0)',
+        background: awaitingInput ? 'var(--amber-bg-subtle)' : isActive ? `${accent}08` : 'var(--surface-0)',
         border: `1px solid ${awaitingInput ? 'var(--amber-dim)' : isActive ? accentBorder : 'var(--border)'}`,
         borderRadius: '4px',
         padding: '14px',
@@ -104,8 +104,8 @@ export default function AgentCard({ member, tasks, onAgentSelect, sortRank, awai
           padding: '1px 5px',
           fontSize: '9px', fontWeight: 700, letterSpacing: '0.12em',
           color: 'var(--amber)',
-          background: 'rgba(255,140,66,0.12)',
-          border: '1px solid rgba(255,140,66,0.35)',
+          background: 'var(--amber-bg-subtle)',
+          border: '1px solid var(--amber-border-subtle)',
           borderRadius: '2px',
           fontFamily: 'var(--font-mono)',
           textTransform: 'uppercase',
@@ -271,7 +271,7 @@ export default function AgentCard({ member, tasks, onAgentSelect, sortRank, awai
             style={{
               padding: '3px 10px', fontSize: '9px', letterSpacing: '0.1em', fontWeight: 700,
               fontFamily: 'var(--font-mono)',
-              background: isDemo ? 'transparent' : 'rgba(245,166,35,0.15)',
+              background: isDemo ? 'transparent' : 'var(--amber-bg-subtle)',
               color: isDemo ? 'var(--text-muted)' : 'var(--amber)',
               border: `1px solid ${isDemo ? 'var(--border)' : 'var(--amber-dim)'}`,
               borderRadius: '2px',

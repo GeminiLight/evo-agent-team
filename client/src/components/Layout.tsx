@@ -5,7 +5,7 @@ import type { TeamSummary, TeamDetail } from '../types';
 import Sidebar from './layout/Sidebar';
 import StatusBar from './layout/StatusBar';
 
-export type ViewType = 'dashboard' | 'graph' | 'activity' | 'commlog' | 'timeline' | 'history' | 'chat' | 'cost' | 'review' | 'settings';
+export type ViewType = 'dashboard' | 'graph' | 'activity' | 'commlog' | 'timeline' | 'history' | 'chat' | 'cost' | 'review' | 'memory' | 'context' | 'settings' | 'expert';
 
 interface LayoutProps {
   teams: TeamSummary[];
@@ -27,7 +27,6 @@ interface LayoutProps {
   criticalAlertCount?: number;
   onAgentSelect?: (agentId: string) => void;
   alertedAgentNames?: Set<string>;
-  onExpertProfile?: () => void;
 }
 
 export default function Layout({
@@ -50,7 +49,6 @@ export default function Layout({
   criticalAlertCount = 0,
   onAgentSelect,
   alertedAgentNames = new Set(),
-  onExpertProfile,
 }: LayoutProps) {
   const { t } = useTranslation();
 
@@ -224,11 +222,10 @@ export default function Layout({
           pendingHumanAgents={pendingHumanAgents}
           alertedAgentNames={alertedAgentNames}
           onAgentSelect={onAgentSelect}
-          onExpertProfile={onExpertProfile}
         />
         <main style={{
           flex: 1, overflow: 'auto',
-          padding: '20px 24px',
+          padding: 'var(--content-padding-y) var(--content-padding-x)',
         }}>
           {children}
         </main>

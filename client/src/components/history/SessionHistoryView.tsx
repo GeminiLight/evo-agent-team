@@ -33,20 +33,7 @@ function toolColor(name: string) {
   return TOOL_COLORS[name] ?? 'var(--text-secondary)';
 }
 
-function fmtTime(ts: string) {
-  if (!ts) return '';
-  try {
-    const d = new Date(ts);
-    return d.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  } catch { return ts.slice(11, 19); }
-}
-
-function fmtDate(ts: string) {
-  if (!ts) return '';
-  try {
-    return new Date(ts).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  } catch { return ts.slice(0, 10); }
-}
+import { fmtTime, fmtDateOnly } from '../../utils/formatters';
 
 // Summarize tool input into a one-liner
 function summarizeInput(toolName: string, input: Record<string, unknown>): string {
@@ -125,7 +112,7 @@ export default function SessionHistoryView({ messages, sessionId, loading, teamI
     const ordered = order === 'desc' ? [...filtered].reverse() : filtered;
     const map = new Map<string, SessionMessage[]>();
     for (const m of ordered) {
-      const date = fmtDate(m.timestamp);
+      const date = fmtDateOnly(m.timestamp);
       if (!map.has(date)) map.set(date, []);
       map.get(date)!.push(m);
     }

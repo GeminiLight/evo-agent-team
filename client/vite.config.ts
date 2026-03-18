@@ -11,7 +11,20 @@ export default defineConfig(({ mode, command }) => {
     plugins: [react(), tailwindcss()],
     // In build mode, output directly into server/dist/public so the server
     // can serve them without any extra copy step.
-    ...(command === 'build' ? { build: { outDir: '../server/dist/public', emptyOutDir: true } } : {}),
+    ...(command === 'build' ? {
+      build: {
+        outDir: '../server/dist/public',
+        emptyOutDir: true,
+        rollupOptions: {
+          output: {
+            manualChunks: {
+              graph: ['@xyflow/react'],
+              icons: ['lucide-react'],
+            },
+          },
+        },
+      },
+    } : {}),
     test: {
       globals: true,
       environment: 'happy-dom',

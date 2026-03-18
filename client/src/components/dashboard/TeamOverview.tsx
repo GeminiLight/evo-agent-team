@@ -506,7 +506,7 @@ function TeamGuidePanel({ teamId, teamName, onClose }: { teamId: string; teamNam
         aria-modal="true"
         aria-label={`Team guide for ${teamName}`}
         style={{
-        position: 'fixed', right: 0, top: 0, bottom: 0, width: '520px', maxWidth: '100vw',
+        position: 'fixed', right: 0, top: 0, bottom: 0, width: 'min(520px, 90vw)', maxWidth: '100vw',
         zIndex: 100,
         background: 'var(--surface-0)',
         borderLeft: '1px solid var(--border-bright)',

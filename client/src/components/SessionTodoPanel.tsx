@@ -35,7 +35,7 @@ export default function SessionTodoPanel({ sessions, onClose }: SessionTodoPanel
       <div style={{
         position: 'fixed',
         right: 0, top: 0, bottom: 0,
-        width: '400px',
+        width: 'min(400px, 90vw)',
         zIndex: 100,
         background: 'var(--surface-0)',
         borderLeft: '1px solid var(--border-bright)',

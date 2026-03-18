@@ -1221,6 +1221,33 @@ html[data-theme-switching] *::after {
   body::after  { display: none !important; }  /* vignette */
 }
 
+/* ── Responsive: CSS custom properties ── */
+:root {
+  --content-padding-x: 24px;
+  --content-padding-y: 20px;
+}
+
+@media (max-width: 1199px) {
+  :root {
+    --content-padding-x: 16px;
+    --content-padding-y: 16px;
+  }
+}
+
+@media (max-width: 1023px) {
+  :root {
+    --content-padding-x: 12px;
+    --content-padding-y: 12px;
+  }
+}
+
+@media (max-width: 767px) {
+  :root {
+    --content-padding-x: 8px;
+    --content-padding-y: 8px;
+  }
+}
+
 /* ── Responsive: narrow viewport guard ── */
 @media (max-width: 900px) {
   /* Prevent overlay panels from exceeding viewport */

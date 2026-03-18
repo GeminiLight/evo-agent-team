@@ -4,28 +4,13 @@ import { X } from 'lucide-react';
 import type { Task, TeamMember } from '../types';
 import { getTaskStatus, STATUS_COLORS } from '../utils/statusColors';
 import { useFocusTrap } from '../hooks/useFocusTrap';
+import { timeAgo, fmtDatetime } from '../utils/formatters';
 
 interface TaskDetailPanelProps {
   task: Task | null;
   allTasks: Task[];
   members: TeamMember[];
   onClose: () => void;
-}
-
-function timeAgo(iso?: string): string | null {
-  if (!iso) return null;
-  const ms = Date.now() - new Date(iso).getTime();
-  const m = Math.floor(ms / 60000);
-  if (m < 1) return '<1m ago';
-  if (m < 60) return `${m}m ago`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ago`;
-  return `${Math.floor(h / 24)}d ago`;
-}
-
-function fmtDatetime(iso?: string): string | null {
-  if (!iso) return null;
-  return new Date(iso).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
 export default function TaskDetailPanel({ task, allTasks, members, onClose }: TaskDetailPanelProps) {
@@ -87,7 +72,7 @@ export default function TaskDetailPanel({ task, allTasks, members, onClose }: Ta
         right: 0,
         top: 0,
         bottom: 0,
-        width: '380px',
+        width: 'min(380px, 90vw)',
         maxWidth: '100vw',
         zIndex: 100,
         background: 'var(--surface-0)',

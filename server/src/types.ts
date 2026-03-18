@@ -257,3 +257,22 @@ export interface SessionHistoryResponse {
   sessionId: string | null;
   messages: SessionMessage[];
 }
+
+// ── E1: Structured preference rules ──
+
+export interface PreferenceRule {
+  id: string;                          // "pref-{timestamp}-{random}"
+  rule: string;                        // Rule text
+  confidence: 'tentative' | 'confirmed';
+  supportCount: number;                // Number of supporting feedback entries
+  sourceEntryIds: string[];            // Feedback IDs that support this rule
+  createdAt: string;                   // ISO timestamp
+  promotedAt?: string;                 // When promoted to higher confidence
+  source: 'manual' | 'auto';          // Manual edit vs auto-discovered
+}
+
+/** A preference entry is either a legacy string or a structured rule */
+export type PreferenceEntry = string | PreferenceRule;
+
+/** preferences.json shape: agent name → array of entries */
+export type PreferencesMap = Record<string, PreferenceEntry[]>;

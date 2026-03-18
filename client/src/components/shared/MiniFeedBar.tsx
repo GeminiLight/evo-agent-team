@@ -50,13 +50,7 @@ type FeedEntry =
 
 // ─── Time formatting ─────────────────────────────────────────────────────────
 
-function timeAgo(ts: number): string {
-  const diff = Math.floor((Date.now() - ts) / 1000);
-  if (diff < 60) return `${diff}s`;
-  if (diff < 3600) return `${Math.floor(diff / 60)}m`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h`;
-  return `${Math.floor(diff / 86400)}d`;
-}
+import { timeAgoFromTs } from '../../utils/formatters';
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
@@ -167,7 +161,7 @@ function FeedChip({ entry }: { entry: FeedEntry }) {
         flexShrink: 0, maxWidth: '260px',
       }}>
         <span style={{ fontSize: '9px', color: 'var(--text-muted)', opacity: 0.5, flexShrink: 0 }}>
-          {timeAgo(entry.ts)}
+          {timeAgoFromTs(entry.ts)}
         </span>
         <span style={{
           width: '5px', height: '5px', borderRadius: '50%',
@@ -209,7 +203,7 @@ function FeedChip({ entry }: { entry: FeedEntry }) {
       flexShrink: 0, maxWidth: '240px',
     }}>
       <span style={{ fontSize: '9px', color: 'var(--text-muted)', opacity: 0.5, flexShrink: 0 }}>
-        {timeAgo(entry.ts)}
+        {timeAgoFromTs(entry.ts)}
       </span>
       <span style={{
         width: '5px', height: '5px', borderRadius: '50%',

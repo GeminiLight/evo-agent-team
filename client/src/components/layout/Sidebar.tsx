@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { LayoutDashboard, Network, Activity, ScrollText, MessageSquare, DollarSign, Star, ChevronLeft, ChevronRight, Settings, User } from 'lucide-react';
+import { LayoutDashboard, Network, Activity, ScrollText, MessageSquare, DollarSign, Star, Brain, FileText, ChevronLeft, ChevronRight, Settings, User } from 'lucide-react';
 import type { ViewType } from '../Layout';
 import type { TeamDetail } from '../../types';
 import { agentColor, agentInitials } from '../../utils/agentColors';
+import { useIsTablet } from '../../hooks/useMediaQuery';
 
 const STORAGE_KEY = 'sidebar-collapsed';
 
@@ -18,7 +19,6 @@ interface SidebarProps {
   pendingHumanAgents?: string[];
   alertedAgentNames?: Set<string>;
   onAgentSelect?: (agentId: string) => void;
-  onExpertProfile?: () => void;
 }
 
 const NAV_ITEMS: { key: ViewType; icon: typeof LayoutDashboard; labelKey: string; family?: ViewType[] }[] = [
@@ -29,6 +29,9 @@ const NAV_ITEMS: { key: ViewType; icon: typeof LayoutDashboard; labelKey: string
   { key: 'chat',      icon: MessageSquare,   labelKey: 'sidebar.chat' },
   { key: 'cost',      icon: DollarSign,      labelKey: 'sidebar.stats' },
   { key: 'review',    icon: Star,            labelKey: 'sidebar.review' },
+  { key: 'memory',    icon: Brain,           labelKey: 'sidebar.memory' },
+  { key: 'context',   icon: FileText,        labelKey: 'sidebar.context' },
+  { key: 'expert',    icon: User,            labelKey: 'sidebar.expert_profile' },
 ];
 
 export default function Sidebar({
@@ -39,16 +42,19 @@ export default function Sidebar({
   pendingHumanAgents = [],
   alertedAgentNames = new Set(),
   onAgentSelect,
-  onExpertProfile,
 }: SidebarProps) {
   const { t } = useTranslation();
-  const [collapsed, setCollapsed] = useState(() => {
+  const isTablet = useIsTablet();
+  const [userCollapsed, setUserCollapsed] = useState(() => {
     try { return localStorage.getItem(STORAGE_KEY) === '1'; } catch { return false; }
   });
 
+  // Force collapsed on tablet-width viewports; otherwise respect user preference
+  const collapsed = isTablet || userCollapsed;
+
   useEffect(() => {
-    try { localStorage.setItem(STORAGE_KEY, collapsed ? '1' : '0'); } catch { /* noop */ }
-  }, [collapsed]);
+    try { localStorage.setItem(STORAGE_KEY, userCollapsed ? '1' : '0'); } catch { /* noop */ }
+  }, [userCollapsed]);
 
   const width = collapsed ? 48 : 200;
   const members = teamDetail?.config?.members ?? [];
@@ -245,7 +251,7 @@ export default function Sidebar({
         </div>
       )}
 
-      {/* ─── Bottom: Expert Profile + Settings + Collapse ─── */}
+      {/* ─── Bottom: Settings + Collapse ─── */}
       <div style={{
         borderTop: '1px solid var(--border)',
         padding: collapsed ? '4px 6px' : '4px 8px',
@@ -253,36 +259,6 @@ export default function Sidebar({
         flexDirection: 'column',
         gap: '1px',
       }}>
-        {onExpertProfile && (
-          <button
-            onClick={onExpertProfile}
-            title={collapsed ? t('sidebar.expert_profile') : undefined}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              padding: collapsed ? '6px 0' : '5px 10px',
-              justifyContent: collapsed ? 'center' : 'flex-start',
-              width: '100%',
-              background: 'transparent',
-              color: 'var(--text-secondary)',
-              border: 'none',
-              borderLeft: '2px solid transparent',
-              borderRadius: '0 3px 3px 0',
-              cursor: 'pointer',
-              fontFamily: 'var(--font-mono)',
-              fontSize: '10px',
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-              transition: 'all 0.15s',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.background = 'var(--surface-1)'; }}
-            onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.background = 'transparent'; }}
-          >
-            <User size={13} style={{ flexShrink: 0 }} />
-            {!collapsed && <span>{t('sidebar.expert_profile')}</span>}
-          </button>
-        )}
         <button
           onClick={() => onViewChange('settings')}
           title={collapsed ? t('nav.settings') : undefined}
@@ -312,8 +288,9 @@ export default function Sidebar({
           {!collapsed && <span>{t('nav.settings')}</span>}
         </button>
 
+        {!isTablet && (
         <button
-          onClick={() => setCollapsed(c => !c)}
+          onClick={() => setUserCollapsed(c => !c)}
           title={collapsed ? t('sidebar.expand') : t('sidebar.collapse')}
           style={{
             display: 'flex',
@@ -338,6 +315,7 @@ export default function Sidebar({
           {collapsed ? <ChevronRight size={13} /> : <ChevronLeft size={13} />}
           {!collapsed && <span style={{ textTransform: 'uppercase' }}>{t('sidebar.collapse')}</span>}
         </button>
+        )}
       </div>
     </aside>
   );

@@ -1,12 +1,11 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, User, Star, MessageSquare, Bookmark, Clock, FileText, Activity } from 'lucide-react';
+import { User, Star, MessageSquare, Bookmark, Clock, FileText, Activity } from 'lucide-react';
 import type { FeedbackEntry } from './review/ReviewView';
 
 interface ExpertProfilePanelProps {
   teamId: string;
   teamName?: string;
-  onClose: () => void;
 }
 
 interface GuideData {
@@ -19,7 +18,7 @@ interface HumanInputStatus {
   details: { agentName: string; waitingSince: string; context: string }[];
 }
 
-export default function ExpertProfilePanel({ teamId, teamName, onClose }: ExpertProfilePanelProps) {
+export default function ExpertProfilePanel({ teamId, teamName }: ExpertProfilePanelProps) {
   const { t } = useTranslation();
   const [entries, setEntries] = useState<FeedbackEntry[]>([]);
   const [preferences, setPreferences] = useState<Record<string, string[]>>({});
@@ -95,66 +94,47 @@ export default function ExpertProfilePanel({ teamId, teamName, onClose }: Expert
   }, [guide]);
 
   return (
-    <>
-      {/* Backdrop */}
-      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'var(--overlay-backdrop)', zIndex: 300 }} />
-
-      {/* Panel */}
-      <div role="dialog" aria-modal="true" aria-label="Expert profile" style={{
-        position: 'fixed', top: 0, right: 0, bottom: 0,
-        width: '400px', maxWidth: '90vw',
-        background: 'var(--surface-0)',
-        borderLeft: '1px solid var(--border)',
-        boxShadow: '0 0 40px rgba(0,0,0,0.6)',
-        zIndex: 301,
-        display: 'flex', flexDirection: 'column',
-        fontFamily: 'var(--font-mono)',
-        animation: 'slide-in-right 0.25s ease-out',
-        overflow: 'hidden',
+    <div style={{
+      maxWidth: '800px',
+      margin: '0 auto',
+      fontFamily: 'var(--font-mono)',
+    }}>
+      {/* Header */}
+      <div style={{
+        padding: '0 0 16px',
+        marginBottom: '20px',
+        borderBottom: '1px solid var(--border)',
+        display: 'flex', alignItems: 'center', gap: '10px',
       }}>
-        {/* Header */}
         <div style={{
-          padding: '16px 20px',
-          borderBottom: '1px solid var(--border)',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          width: '32px', height: '32px', borderRadius: '50%',
+          background: 'var(--phosphor-glow)',
+          border: '1.5px solid var(--phosphor)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{
-              width: '32px', height: '32px', borderRadius: '50%',
-              background: 'var(--phosphor-glow)',
-              border: '1.5px solid var(--phosphor)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <User size={15} style={{ color: 'var(--phosphor)' }} />
-            </div>
-            <div>
-              <div style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
-                {t('expert.title')}
-              </div>
-              <div style={{ fontSize: '12px', color: 'var(--phosphor)', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-                {teamName?.toUpperCase() ?? teamId.toUpperCase()}
-              </div>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', padding: '4px' }}
-            onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-primary)')}
-            onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
-          >
-            <X size={14} />
-          </button>
+          <User size={15} style={{ color: 'var(--phosphor)' }} />
         </div>
+        <div>
+          <div style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
+            {t('expert.title')}
+          </div>
+          <div style={{ fontSize: '12px', color: 'var(--phosphor)', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+            {teamName?.toUpperCase() ?? teamId.toUpperCase()}
+          </div>
+        </div>
+      </div>
 
-        {/* Body */}
-        <div style={{ flex: 1, overflow: 'auto', padding: '20px' }}>
-          {loading ? (
-            <div style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '24px 0', textAlign: 'center' }}>
-              {t('common.loading')}
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      {/* Body */}
+      <div>
+        {loading ? (
+          <div style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '24px 0', textAlign: 'center' }}>
+            {t('common.loading')}
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
+            {/* Feedback Stats + Response Stats — side by side on wide screens */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
               {/* Feedback Stats */}
               <SectionBlock label={t('expert.feedback_stats')}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
@@ -198,176 +178,176 @@ export default function ExpertProfilePanel({ teamId, teamName, onClose }: Expert
                   </div>
                 )}
               </SectionBlock>
+            </div>
 
-              {/* Activity Heatmap */}
-              {entries.length > 0 && (
-                <SectionBlock label={t('expert.activity_heatmap')} icon={<Activity size={10} />}>
-                  <HeatmapGrid data={heatmapData} />
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px' }}>
-                    <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.06em' }}>
-                      {t('expert.heatmap_less')}
-                    </span>
-                    <div style={{ display: 'flex', gap: '2px', alignItems: 'center' }}>
-                      {[0, 1, 2, 3, 4].map(level => (
-                        <div key={level} style={{
-                          width: '10px', height: '10px', borderRadius: '2px',
-                          background: level === 0 ? 'var(--surface-1)' : `var(--phosphor)`,
-                          opacity: level === 0 ? 1 : 0.2 + level * 0.2,
-                          border: '1px solid var(--border)',
-                        }} />
-                      ))}
-                    </div>
-                    <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.06em' }}>
-                      {t('expert.heatmap_more')}
-                    </span>
+            {/* Activity Heatmap */}
+            {entries.length > 0 && (
+              <SectionBlock label={t('expert.activity_heatmap')} icon={<Activity size={10} />}>
+                <HeatmapGrid data={heatmapData} />
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px' }}>
+                  <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.06em' }}>
+                    {t('expert.heatmap_less')}
+                  </span>
+                  <div style={{ display: 'flex', gap: '2px', alignItems: 'center' }}>
+                    {[0, 1, 2, 3, 4].map(level => (
+                      <div key={level} style={{
+                        width: '10px', height: '10px', borderRadius: '2px',
+                        background: level === 0 ? 'var(--surface-1)' : `var(--phosphor)`,
+                        opacity: level === 0 ? 1 : 0.2 + level * 0.2,
+                        border: '1px solid var(--border)',
+                      }} />
+                    ))}
                   </div>
-                </SectionBlock>
-              )}
+                  <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.06em' }}>
+                    {t('expert.heatmap_more')}
+                  </span>
+                </div>
+              </SectionBlock>
+            )}
 
-              {/* Per-Agent Breakdown */}
-              {agentNames.length > 0 && (
-                <SectionBlock label={t('expert.by_agent')}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    {agentNames.map(name => {
-                      const ag = entries.filter(e => e.agentName === name);
-                      const p = ag.filter(e => e.type === 'praise').length;
-                      const c = ag.filter(e => e.type === 'correction').length;
-                      const b = ag.filter(e => e.type === 'bookmark').length;
-                      return (
-                        <div key={name} style={{
-                          display: 'flex', alignItems: 'center', gap: '10px',
-                          padding: '6px 10px',
-                          background: 'var(--surface-1)',
-                          borderRadius: '3px',
-                          border: '1px solid var(--border)',
-                        }}>
-                          <span style={{ fontSize: '10px', color: 'var(--text-primary)', letterSpacing: '0.04em', flex: 1 }}>{name}</span>
-                          <span style={{ fontSize: '9px', color: 'var(--phosphor)' }}>👍{p}</span>
-                          <span style={{ fontSize: '9px', color: 'var(--amber)' }}>👎{c}</span>
-                          <span style={{ fontSize: '9px', color: 'var(--ice)' }}>📌{b}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </SectionBlock>
-              )}
-
-              {/* Recent Feedback */}
-              {recentEntries.length > 0 && (
-                <SectionBlock label={t('expert.recent_feedback')}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    {recentEntries.map(entry => (
-                      <div key={entry.id} style={{
-                        padding: '8px 10px',
+            {/* Per-Agent Breakdown */}
+            {agentNames.length > 0 && (
+              <SectionBlock label={t('expert.by_agent')}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {agentNames.map(name => {
+                    const ag = entries.filter(e => e.agentName === name);
+                    const p = ag.filter(e => e.type === 'praise').length;
+                    const c = ag.filter(e => e.type === 'correction').length;
+                    const b = ag.filter(e => e.type === 'bookmark').length;
+                    return (
+                      <div key={name} style={{
+                        display: 'flex', alignItems: 'center', gap: '10px',
+                        padding: '6px 10px',
                         background: 'var(--surface-1)',
                         borderRadius: '3px',
                         border: '1px solid var(--border)',
-                        borderLeftWidth: '2px',
-                        borderLeftColor: entry.type === 'praise' ? 'var(--phosphor)'
-                          : entry.type === 'correction' ? 'var(--amber)' : 'var(--ice)',
                       }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                          <span style={{
-                            fontSize: '9px', fontWeight: 600, letterSpacing: '0.06em',
-                            color: entry.type === 'praise' ? 'var(--phosphor)'
-                              : entry.type === 'correction' ? 'var(--amber)' : 'var(--ice)',
-                          }}>
-                            {entry.type === 'praise' ? '👍' : entry.type === 'correction' ? '👎' : '📌'}
-                          </span>
-                          <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.06em', flex: 1 }}>
-                            {entry.agentName}
-                          </span>
-                          <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.04em' }}>
-                            {fmtRelative(entry.createdAt)}
-                          </span>
+                        <span style={{ fontSize: '10px', color: 'var(--text-primary)', letterSpacing: '0.04em', flex: 1 }}>{name}</span>
+                        <span style={{ fontSize: '9px', color: 'var(--phosphor)' }}>👍{p}</span>
+                        <span style={{ fontSize: '9px', color: 'var(--amber)' }}>👎{c}</span>
+                        <span style={{ fontSize: '9px', color: 'var(--ice)' }}>📌{b}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </SectionBlock>
+            )}
+
+            {/* Recent Feedback */}
+            {recentEntries.length > 0 && (
+              <SectionBlock label={t('expert.recent_feedback')}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {recentEntries.map(entry => (
+                    <div key={entry.id} style={{
+                      padding: '8px 10px',
+                      background: 'var(--surface-1)',
+                      borderRadius: '3px',
+                      border: '1px solid var(--border)',
+                      borderLeftWidth: '2px',
+                      borderLeftColor: entry.type === 'praise' ? 'var(--phosphor)'
+                        : entry.type === 'correction' ? 'var(--amber)' : 'var(--ice)',
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                        <span style={{
+                          fontSize: '9px', fontWeight: 600, letterSpacing: '0.06em',
+                          color: entry.type === 'praise' ? 'var(--phosphor)'
+                            : entry.type === 'correction' ? 'var(--amber)' : 'var(--ice)',
+                        }}>
+                          {entry.type === 'praise' ? '👍' : entry.type === 'correction' ? '👎' : '📌'}
+                        </span>
+                        <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.06em', flex: 1 }}>
+                          {entry.agentName}
+                        </span>
+                        <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.04em' }}>
+                          {fmtRelative(entry.createdAt)}
+                        </span>
+                      </div>
+                      {entry.content && (
+                        <div style={{
+                          fontSize: '10px', color: 'var(--text-primary)', lineHeight: 1.5,
+                          overflow: 'hidden', textOverflow: 'ellipsis',
+                          display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+                        }}>
+                          {entry.content}
                         </div>
-                        {entry.content && (
-                          <div style={{
-                            fontSize: '10px', color: 'var(--text-primary)', lineHeight: 1.5,
-                            overflow: 'hidden', textOverflow: 'ellipsis',
-                            display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
-                          }}>
-                            {entry.content}
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </SectionBlock>
+            )}
+
+            {/* Preferences Summary */}
+            <SectionBlock label={t('expert.preferences_summary')}>
+              <div style={{ display: 'flex', gap: '16px', marginBottom: totalPrefRules > 0 ? '12px' : '0' }}>
+                <MiniStat label={t('expert.total_rules')} value={String(totalPrefRules)} />
+                <MiniStat label={t('expert.agents_covered')} value={String(agentsCovered)} />
+              </div>
+
+              {totalPrefRules > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {Object.entries(preferences).map(([agentName, rules]) => (
+                    <div key={agentName}>
+                      <div style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.12em', marginBottom: '4px', textTransform: 'uppercase' }}>
+                        {agentName}
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', paddingLeft: '8px', borderLeft: '2px solid var(--border)' }}>
+                        {rules.slice(0, 3).map((rule, i) => (
+                          <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
+                            <span style={{ color: 'var(--ice)', fontSize: '9px', flexShrink: 0, marginTop: '2px' }}>▸</span>
+                            <span style={{ fontSize: '10px', color: 'var(--text-primary)', lineHeight: 1.5 }}>{rule}</span>
                           </div>
+                        ))}
+                        {rules.length > 3 && (
+                          <span style={{ fontSize: '9px', color: 'var(--text-muted)', paddingLeft: '14px', letterSpacing: '0.06em' }}>
+                            +{rules.length - 3} more
+                          </span>
                         )}
                       </div>
-                    ))}
-                  </div>
-                </SectionBlock>
-              )}
-
-              {/* Preferences Summary */}
-              <SectionBlock label={t('expert.preferences_summary')}>
-                <div style={{ display: 'flex', gap: '16px', marginBottom: totalPrefRules > 0 ? '12px' : '0' }}>
-                  <MiniStat label={t('expert.total_rules')} value={String(totalPrefRules)} />
-                  <MiniStat label={t('expert.agents_covered')} value={String(agentsCovered)} />
+                    </div>
+                  ))}
                 </div>
-
-                {totalPrefRules > 0 ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    {Object.entries(preferences).map(([agentName, rules]) => (
-                      <div key={agentName}>
-                        <div style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.12em', marginBottom: '4px', textTransform: 'uppercase' }}>
-                          {agentName}
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', paddingLeft: '8px', borderLeft: '2px solid var(--border)' }}>
-                          {rules.slice(0, 3).map((rule, i) => (
-                            <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
-                              <span style={{ color: 'var(--ice)', fontSize: '9px', flexShrink: 0, marginTop: '2px' }}>▸</span>
-                              <span style={{ fontSize: '10px', color: 'var(--text-primary)', lineHeight: 1.5 }}>{rule}</span>
-                            </div>
-                          ))}
-                          {rules.length > 3 && (
-                            <span style={{ fontSize: '9px', color: 'var(--text-muted)', paddingLeft: '14px', letterSpacing: '0.06em' }}>
-                              +{rules.length - 3} more
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div style={{ fontSize: '10px', color: 'var(--text-muted)', padding: '12px 0', textAlign: 'center', letterSpacing: '0.06em' }}>
-                    {t('expert.no_preferences')}
-                  </div>
-                )}
-              </SectionBlock>
-
-              {/* Team Guide Rules */}
-              {guide?.content && guideRules.length > 0 && (
-                <SectionBlock label={t('expert.team_guide')} icon={<FileText size={10} />}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-                    <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.08em', fontFamily: 'var(--font-mono)' }}>
-                      {guide.filename}
-                    </span>
-                    <span style={{
-                      fontSize: '9px', padding: '1px 5px', borderRadius: '2px',
-                      background: 'var(--surface-1)', border: '1px solid var(--border)',
-                      color: 'var(--text-muted)', letterSpacing: '0.1em',
-                    }}>
-                      {t('expert.guide_readonly')}
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', paddingLeft: '8px', borderLeft: '2px solid var(--phosphor)', borderLeftStyle: 'dashed' }}>
-                    {guideRules.map((rule, i) => (
-                      <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
-                        <span style={{ color: 'var(--phosphor)', fontSize: '9px', flexShrink: 0, marginTop: '2px' }}>▹</span>
-                        <span style={{ fontSize: '10px', color: 'var(--text-primary)', lineHeight: 1.5 }}>{rule}</span>
-                      </div>
-                    ))}
-                    {guide.content.split('\n').filter(l => /^\s*[-*]\s+/.test(l)).length > 10 && (
-                      <span style={{ fontSize: '9px', color: 'var(--text-muted)', paddingLeft: '14px', letterSpacing: '0.06em' }}>
-                        +{guide.content.split('\n').filter(l => /^\s*[-*]\s+/.test(l)).length - 10} more
-                      </span>
-                    )}
-                  </div>
-                </SectionBlock>
+              ) : (
+                <div style={{ fontSize: '10px', color: 'var(--text-muted)', padding: '12px 0', textAlign: 'center', letterSpacing: '0.06em' }}>
+                  {t('expert.no_preferences')}
+                </div>
               )}
-            </div>
-          )}
-        </div>
+            </SectionBlock>
+
+            {/* Team Guide Rules */}
+            {guide?.content && guideRules.length > 0 && (
+              <SectionBlock label={t('expert.team_guide')} icon={<FileText size={10} />}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                  <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.08em', fontFamily: 'var(--font-mono)' }}>
+                    {guide.filename}
+                  </span>
+                  <span style={{
+                    fontSize: '9px', padding: '1px 5px', borderRadius: '2px',
+                    background: 'var(--surface-1)', border: '1px solid var(--border)',
+                    color: 'var(--text-muted)', letterSpacing: '0.1em',
+                  }}>
+                    {t('expert.guide_readonly')}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', paddingLeft: '8px', borderLeft: '2px solid var(--phosphor)', borderLeftStyle: 'dashed' }}>
+                  {guideRules.map((rule, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
+                      <span style={{ color: 'var(--phosphor)', fontSize: '9px', flexShrink: 0, marginTop: '2px' }}>▹</span>
+                      <span style={{ fontSize: '10px', color: 'var(--text-primary)', lineHeight: 1.5 }}>{rule}</span>
+                    </div>
+                  ))}
+                  {guide.content.split('\n').filter(l => /^\s*[-*]\s+/.test(l)).length > 10 && (
+                    <span style={{ fontSize: '9px', color: 'var(--text-muted)', paddingLeft: '14px', letterSpacing: '0.06em' }}>
+                      +{guide.content.split('\n').filter(l => /^\s*[-*]\s+/.test(l)).length - 10} more
+                    </span>
+                  )}
+                </div>
+              </SectionBlock>
+            )}
+          </div>
+        )}
       </div>
-    </>
+    </div>
   );
 }
 

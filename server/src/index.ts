@@ -3,8 +3,7 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { config } from './config.js';
-import teamsRouter from './routes/teams.js';
-import messagesRouter from './routes/messages.js';
+import apiRouter from './routes/index.js';
 import { initWebSocket } from './websocket.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -16,8 +15,7 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
-app.use('/api', teamsRouter);
-app.use('/api', messagesRouter);
+app.use('/api', apiRouter);
 
 // Serve built client in production
 app.use(express.static(clientDist));

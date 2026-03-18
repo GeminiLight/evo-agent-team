@@ -5,7 +5,7 @@
  * Falls back to rule-based stats if LLM is unavailable or not configured.
  */
 
-import OpenAI from 'openai';
+import { llmComplete, isLLMConfigured } from './llm.js';
 import type { Task, AgentSessionStats, TaskChangeEvent } from './types.js';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -176,28 +176,14 @@ export async function getSummary(input: SummaryInput): Promise<SummaryResult> {
     cached.result.isStale = true;
   }
 
-  const apiKey = process.env.LLM_API_KEY;
-  const baseURL = process.env.LLM_BASE_URL ?? 'http://v2.open.venus.oa.com/llmproxy/v1';
-  const model = process.env.LLM_MODEL ?? 'claude-sonnet-4-6';
   let result: SummaryResult;
 
-  if (apiKey) {
+  if (isLLMConfigured()) {
     try {
-      const client = new OpenAI({
-        baseURL,
-        apiKey,
-      });
-
       const snippet = extractSessionSnippet(sessionMessages);
       const prompt = buildPrompt(teamName, tasks, events, agentStats, snippet);
 
-      const completion = await client.chat.completions.create({
-        model,
-        messages: [{ role: 'user', content: prompt }],
-        max_tokens: 600,
-      });
-
-      const text = completion.choices[0]?.message?.content ?? '';
+      const text = await llmComplete(prompt, 600);
 
       result = {
         teamId,

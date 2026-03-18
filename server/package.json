@@ -11,12 +11,10 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@ai-sdk/openai": "^3.0.41",
-    "ai": "^6.0.116",
+    "@mariozechner/pi-ai": "^0.60.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
-    "openai": "^6.27.0",
     "ws": "^8.18.0"
   },
   "devDependencies": {

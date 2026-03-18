@@ -4,6 +4,7 @@ import { CheckCircle2, Loader2, Clock, Lock, ChevronRight, ExternalLink } from '
 import type { Task, TeamMember } from '../../types';
 import { getTaskStatus, STATUS_COLORS, type StatusKey } from '../../utils/statusColors';
 import { agentColor } from '../../utils/agentColors';
+import { timeAgoShort } from '../../utils/formatters';
 import CRTEmptyState from '../shared/CRTEmptyState';
 
 interface TaskListProps {
@@ -463,7 +464,7 @@ function TaskRow({ task, status, colors, isExpanded, idx, expandedId, setExpande
 
         {task.createdAt && (
           <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.05em', whiteSpace: 'nowrap', flexShrink: 0, fontFamily: 'var(--font-mono)' }} title={`Created: ${new Date(task.createdAt).toLocaleString()}`}>
-            +{timeAgo(task.createdAt)}
+            +{timeAgoShort(task.createdAt)}
           </span>
         )}
 
@@ -552,18 +553,7 @@ function TaskRow({ task, status, colors, isExpanded, idx, expandedId, setExpande
 
 function timeInStatus(updatedAt?: string): string | null {
   if (!updatedAt) return null;
-  return timeAgo(updatedAt);
-}
-
-function timeAgo(iso?: string): string {
-  if (!iso) return '?';
-  const ms = Date.now() - new Date(iso).getTime();
-  const m = Math.floor(ms / 60000);
-  if (m < 1) return '<1m';
-  if (m < 60) return `${m}m`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h`;
-  return `${Math.floor(h / 24)}d`;
+  return timeAgoShort(updatedAt);
 }
 
 function StatusIcon({ status }: { status: StatusKey }) {

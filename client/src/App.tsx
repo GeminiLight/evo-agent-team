@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useMemo } from 'react';
+import { useState, useRef, useCallback, useMemo, lazy, Suspense } from 'react';
 import { useTeamData } from './hooks/useTeamData';
 import { usePendingHumanRequests } from './hooks/usePendingHumanRequests';
 import { useProjectTodos } from './hooks/useProjectTodos';
@@ -10,21 +10,25 @@ import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import Layout, { type ViewType } from './components/Layout';
 import EmptyState from './components/EmptyState';
 import DashboardView from './components/dashboard/DashboardView';
-import { TopologyView } from './components/graph/TopologyView';
 import TaskDetailPanel from './components/TaskDetailPanel';
 import AgentProfilePanel from './components/AgentProfilePanel';
-import ActivityView from './components/activity/ActivityView';
-import CommLogView from './components/commlog/CommLogView';
-import TimelineView from './components/timeline/TimelineView';
-import SessionHistoryContainer from './components/history/SessionHistoryContainer';
-import ChatView from './components/chat/ChatView';
-import CostView from './components/cost/CostView';
-import ReviewView from './components/review/ReviewView';
-import ExpertProfilePanel from './components/ExpertProfilePanel';
-import SettingsView from './components/settings/SettingsView';
 import AlertBanner from './components/alerts/AlertBanner';
 import { exportGraphAsPng, exportTeamAsJson, exportTasksCsv, exportCommLogCsv, exportTimelineCsv } from './utils/exportUtils';
 import type { AgentMessage, TaskChangeEvent, Task } from './types';
+
+// ── Lazy-loaded views (non-dashboard) ────────────────────────────────────────
+const TopologyView = lazy(() => import('./components/graph/TopologyView').then(m => ({ default: m.TopologyView })));
+const ActivityView = lazy(() => import('./components/activity/ActivityView'));
+const CommLogView = lazy(() => import('./components/commlog/CommLogView'));
+const TimelineView = lazy(() => import('./components/timeline/TimelineView'));
+const SessionHistoryContainer = lazy(() => import('./components/history/SessionHistoryContainer'));
+const ChatView = lazy(() => import('./components/chat/ChatView'));
+const CostView = lazy(() => import('./components/cost/CostView'));
+const ReviewView = lazy(() => import('./components/review/ReviewView'));
+const MemoryView = lazy(() => import('./components/memory/MemoryView'));
+const ContextSummaryView = lazy(() => import('./components/context/ContextSummaryView'));
+const ExpertProfilePanel = lazy(() => import('./components/ExpertProfilePanel'));
+const SettingsView = lazy(() => import('./components/settings/SettingsView'));
 
 export default function App() {
   const [view, setView] = useState<ViewType>('dashboard');
@@ -42,7 +46,6 @@ export default function App() {
   const { alerts, loading: alertsLoading } = useAlerts(selectedTeamId);
   const { data: costData, loading: costLoading } = useCostData(selectedTeamId);
   const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(new Set());
-  const [showExpertProfile, setShowExpertProfile] = useState(false);
 
   const leadName = teamDetail?.config?.leadAgentId?.split('@')[0] ?? null;
 
@@ -148,7 +151,6 @@ export default function App() {
         criticalAlertCount={visibleAlerts.filter(a => a.severity === 'critical').length}
         onAgentSelect={setSelectedAgentId}
         alertedAgentNames={alertedAgentNames}
-        onExpertProfile={selectedTeamId ? () => setShowExpertProfile(true) : undefined}
       >
         {/* Alert banner — shown on graph view (dashboard uses ActionQueue instead) */}
         {visibleAlerts.length > 0 && view === 'graph' && (
@@ -178,6 +180,11 @@ export default function App() {
             onViewChange={setView}
           />
         )}
+        <Suspense fallback={
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '200px', fontSize: '11px', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>
+            LOADING...
+          </div>
+        }>
         {view === 'graph' && teamDetail && (
           <TopologyView team={teamDetail} onTaskSelect={setSelectedTaskId} onAgentSelect={setSelectedAgentId} containerRef={graphContainerRef} selectedAgentId={selectedAgentId} alertedAgentNames={alertedAgentNames} />
         )}
@@ -231,9 +238,28 @@ export default function App() {
             isDemoMode={isDemoMode}
           />
         )}
+        {view === 'memory' && selectedTeamId && (
+          <MemoryView
+            teamId={selectedTeamId}
+            isDemoMode={isDemoMode}
+          />
+        )}
+        {view === 'context' && selectedTeamId && (
+          <ContextSummaryView
+            teamId={selectedTeamId}
+            isDemoMode={isDemoMode}
+          />
+        )}
         {view === 'settings' && (
           <SettingsView teamId={selectedTeamId} wsConnected={wsConnected} />
         )}
+        {view === 'expert' && selectedTeamId && (
+          <ExpertProfilePanel
+            teamId={selectedTeamId}
+            teamName={teams.find(t => t.id === selectedTeamId)?.name}
+          />
+        )}
+        </Suspense>
         {!teamDetail && (
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -260,13 +286,6 @@ export default function App() {
           isLead={selectedAgent.name === leadName}
           sessionStats={sessionStats[selectedAgent.name]}
           onClose={() => setSelectedAgentId(null)}
-        />
-      )}
-      {showExpertProfile && selectedTeamId && (
-        <ExpertProfilePanel
-          teamId={selectedTeamId}
-          teamName={teams.find(t => t.id === selectedTeamId)?.name}
-          onClose={() => setShowExpertProfile(false)}
         />
       )}
     </>

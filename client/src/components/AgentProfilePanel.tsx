@@ -165,7 +165,7 @@ export default function AgentProfilePanel({ member, tasks, teamId, isLead = fals
         aria-modal="true"
         aria-label={`Agent profile: ${member.name}`}
         style={{
-        position: 'fixed', right: 0, top: 0, bottom: 0, width: '400px', maxWidth: '100vw',
+        position: 'fixed', right: 0, top: 0, bottom: 0, width: 'min(400px, 90vw)', maxWidth: '100vw',
         zIndex: 100,
         background: 'var(--surface-0)',
         borderLeft: `1px solid ${isActive ? `${accent}55` : 'var(--border-bright)'}`,

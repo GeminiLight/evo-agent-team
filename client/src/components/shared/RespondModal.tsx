@@ -63,7 +63,7 @@ export default function RespondModal({ agentName, toolName, detail, teamId, onCl
           border: '1px solid var(--border)',
           borderRadius: '4px',
           padding: '24px',
-          minWidth: '420px',
+          minWidth: 'min(420px, 90vw)',
           maxWidth: '560px',
           width: '90vw',
           fontFamily: 'var(--font-mono)',

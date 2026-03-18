@@ -10,6 +10,7 @@ import ActionQueue from './ActionQueue';
 import TaskList from './TaskList';
 import AgentHeatmap from './AgentHeatmap';
 import CRTEmptyState from '../shared/CRTEmptyState';
+import { useIsTablet } from '../../hooks/useMediaQuery';
 
 type SortMode = 'default' | 'workload' | 'completion' | 'name';
 
@@ -103,13 +104,14 @@ export default function DashboardView({
   );
 
   const alertedAgentNames = new Set(alerts.filter(a => a.agentName).map(a => a.agentName!));
+  const isTablet = useIsTablet();
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       {/* Top row: Overview strip — full width, horizontal */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'auto 1fr auto',
+        gridTemplateColumns: isTablet ? '1fr' : 'auto 1fr auto',
         gap: '10px',
         alignItems: 'stretch',
       }}>
@@ -171,7 +173,7 @@ export default function DashboardView({
             {/* Compact agent cards — auto-fill grid, full width */}
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+              gridTemplateColumns: `repeat(auto-fill, minmax(${isTablet ? '220px' : '280px'}, 1fr))`,
               gap: '8px',
               alignContent: 'start',
             }}>

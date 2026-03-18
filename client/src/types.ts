@@ -243,3 +243,19 @@ export interface SessionHistoryResponse {
   agentName?: string | null;
   messages: SessionMessage[];
 }
+
+// ── E1: Structured preference rules ──
+
+export interface PreferenceRule {
+  id: string;
+  rule: string;
+  confidence: 'tentative' | 'confirmed';
+  supportCount: number;
+  sourceEntryIds: string[];
+  createdAt: string;
+  promotedAt?: string;
+  source: 'manual' | 'auto';
+}
+
+export type PreferenceEntry = string | PreferenceRule;
+export type PreferencesMap = Record<string, PreferenceEntry[]>;

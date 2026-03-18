@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Trash2, Sparkles, ChevronDown, X } from 'lucide-react';
+import { Plus, Trash2, Sparkles, ChevronDown, X, ArrowUpRight, Search } from 'lucide-react';
+import type { PreferenceRule, PreferenceEntry, PreferencesMap } from '../../types';
+import { fmtDate } from '../../utils/formatters';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -25,10 +27,17 @@ function buildTypeMeta(t: (key: string) => string) {
   };
 }
 
-function fmtDate(iso: string) {
-  const d = new Date(iso);
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) +
-    ' ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+/** Extract rule text from either string or PreferenceRule */
+function getRuleText(entry: PreferenceEntry): string {
+  return typeof entry === 'string' ? entry : entry.rule;
+}
+
+/** Normalize a preference entry to PreferenceRule */
+function toRule(entry: PreferenceEntry): PreferenceRule {
+  if (typeof entry === 'string') {
+    return { id: `pref-legacy-${entry.length}`, rule: entry, confidence: 'confirmed', supportCount: 0, sourceEntryIds: [], createdAt: '1970-01-01T00:00:00Z', source: 'manual' };
+  }
+  return entry;
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
@@ -43,11 +52,17 @@ export default function ReviewView({ teamId, agentNames, isDemoMode }: ReviewVie
   const { t } = useTranslation();
   const TYPE_META = buildTypeMeta(t);
   const [entries, setEntries] = useState<FeedbackEntry[]>([]);
-  const [preferences, setPreferences] = useState<Record<string, string[]>>({});
+  const [preferences, setPreferences] = useState<PreferencesMap>({});
   const [guideRules, setGuideRules] = useState<string[]>([]);
   const [loadingFeedback, setLoadingFeedback] = useState(true);
-  const [generatingPrefs, setGeneratingPrefs] = useState(false);
   const [genError, setGenError] = useState<string | null>(null);
+  const [discovering, setDiscovering] = useState(false);
+  const [discoveries, setDiscoveries] = useState<Array<{
+    rule: string; target: string; confidence: string;
+    supportingFeedbackIds: string[]; reason: string;
+  }>>([]);
+  const [discoverStats, setDiscoverStats] = useState<{ totalFeedback: number; newDiscoveries: number } | null>(null);
+  const [discoverAccepted, setDiscoverAccepted] = useState<Set<number>>(new Set());
   const [filterType, setFilterType] = useState<'all' | 'praise' | 'correction' | 'bookmark'>('all');
   const [filterAgent, setFilterAgent] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'applied'>('all');
@@ -104,27 +119,6 @@ export default function ReviewView({ teamId, agentNames, isDemoMode }: ReviewVie
     } catch { /* optimistic delete already done */ }
   }, [teamId]);
 
-  const generatePreferences = useCallback(async () => {
-    setGeneratingPrefs(true);
-    setGenError(null);
-    try {
-      const res = await fetch(`/api/teams/${teamId}/preferences/generate`, { method: 'POST' });
-      if (!res.ok) {
-        const json = await res.json().catch(() => ({}));
-        setGenError((json as { error?: string }).error ?? 'Failed to generate');
-        return;
-      }
-      const json = await res.json();
-      if (json.preferences) setPreferences(json.preferences);
-      await fetchFeedback();
-      setGenError(null);
-    } catch {
-      setGenError('Network error');
-    } finally {
-      setGeneratingPrefs(false);
-    }
-  }, [teamId, fetchFeedback]);
-
   const deletePreference = useCallback(async (agentName: string, idx: number) => {
     const updated = { ...preferences };
     updated[agentName] = updated[agentName].filter((_, i) => i !== idx);
@@ -138,6 +132,82 @@ export default function ReviewView({ teamId, agentNames, isDemoMode }: ReviewVie
       });
     } catch { /* ignore */ }
   }, [preferences, teamId]);
+
+  const promoteRule = useCallback(async (agentName: string, ruleId: string) => {
+    try {
+      const res = await fetch(`/api/teams/${teamId}/preferences/promote`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ruleId, fromAgent: agentName }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.preferences) setPreferences(json.preferences);
+        await fetchGuideRules();
+      }
+    } catch { /* ignore */ }
+  }, [teamId, fetchGuideRules]);
+
+  const discoverPatterns = useCallback(async () => {
+    setDiscovering(true);
+    setGenError(null);
+    setDiscoveries([]);
+    setDiscoverStats(null);
+    setDiscoverAccepted(new Set());
+    try {
+      const res = await fetch(`/api/teams/${teamId}/preferences/discover`, { method: 'POST' });
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        setGenError((json as { error?: string }).error ?? 'Failed to discover');
+        return;
+      }
+      const json = await res.json();
+      setDiscoveries(json.discoveries ?? []);
+      setDiscoverStats(json.stats ?? null);
+    } catch {
+      setGenError('Network error');
+    } finally {
+      setDiscovering(false);
+    }
+  }, [teamId]);
+
+  const applyDiscoveries = useCallback(async () => {
+    const toApply = discoveries
+      .filter((_, i) => discoverAccepted.has(i))
+      .map(d => ({
+        id: `disc-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
+        target: d.target,
+        action: 'add' as const,
+        rule: d.rule,
+        reason: d.reason,
+        supportingFeedbackIds: d.supportingFeedbackIds,
+      }));
+
+    if (toApply.length === 0) return;
+
+    // Collect all supporting feedback IDs for marking as processed
+    const allFbIds = toApply.flatMap(d => d.supportingFeedbackIds ?? []);
+
+    try {
+      const res = await fetch(`/api/teams/${teamId}/feedback/apply`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accepted: toApply, sourceEntryIds: allFbIds }),
+      });
+      if (res.ok) {
+        const json = await res.json() as { preferences?: PreferencesMap; guideSkipped?: string[] };
+        if (json.preferences) setPreferences(json.preferences);
+        if (json.guideSkipped?.length) {
+          setGenError(`${json.guideSkipped.length} team-level rule(s) skipped: no project directory found`);
+        }
+        setDiscoveries([]);
+        setDiscoverStats(null);
+        setDiscoverAccepted(new Set());
+        await fetchFeedback();
+        await fetchGuideRules();
+      }
+    } catch { /* ignore */ }
+  }, [teamId, discoveries, discoverAccepted, fetchFeedback, fetchGuideRules]);
 
   // ── Filter ─────────────────────────────────────────────────────────────────
 
@@ -274,28 +344,94 @@ export default function ReviewView({ teamId, agentNames, isDemoMode }: ReviewVie
           )}
           {!isDemoMode && (
             <button
-              onClick={generatePreferences}
-              disabled={generatingPrefs}
+              onClick={discoverPatterns}
+              disabled={discovering}
               style={{
                 display: 'flex', alignItems: 'center', gap: '6px',
                 padding: '5px 12px',
                 background: 'var(--surface-1)',
                 border: '1px solid var(--border)',
                 borderRadius: '3px',
-                cursor: generatingPrefs ? 'default' : 'pointer',
-                color: generatingPrefs ? 'var(--text-muted)' : 'var(--ice)',
+                cursor: discovering ? 'default' : 'pointer',
+                color: discovering ? 'var(--text-muted)' : 'var(--ice)',
                 fontFamily: 'var(--font-mono)',
                 fontSize: '9px', letterSpacing: '0.1em',
-                opacity: generatingPrefs ? 0.6 : 1,
+                opacity: discovering ? 0.6 : 1,
               }}
-              onMouseEnter={e => { if (!generatingPrefs) e.currentTarget.style.borderColor = 'var(--ice)'; }}
+              onMouseEnter={e => { if (!discovering) e.currentTarget.style.borderColor = 'var(--ice)'; }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; }}
             >
-              <Sparkles size={10} style={{ animation: generatingPrefs ? 'spin 1s linear infinite' : 'none' }} />
-              <span style={{ textTransform: 'uppercase' }}>{generatingPrefs ? t('review.generating') : t('review.generate_from_feedback')}</span>
+              <Search size={10} style={{ animation: discovering ? 'spin 1s linear infinite' : 'none' }} />
+              <span style={{ textTransform: 'uppercase' }}>{discovering ? 'ANALYZING...' : 'DISCOVER PATTERNS'}</span>
             </button>
           )}
         </div>
+
+        {/* Discover results */}
+        {discoveries.length > 0 && (
+          <div style={{ marginBottom: '16px', padding: '12px', background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: '4px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+              <span style={{ fontSize: '9px', letterSpacing: '0.12em', fontFamily: 'var(--font-mono)', color: 'var(--ice)', textTransform: 'uppercase' }}>
+                {discoveries.length} pattern{discoveries.length !== 1 ? 's' : ''} discovered
+                {discoverStats && ` · ${discoverStats.totalFeedback} feedback analyzed`}
+              </span>
+              <button
+                onClick={applyDiscoveries}
+                disabled={discoverAccepted.size === 0}
+                style={{
+                  padding: '4px 10px', fontSize: '9px', letterSpacing: '0.1em',
+                  fontFamily: 'var(--font-mono)', textTransform: 'uppercase',
+                  background: discoverAccepted.size > 0 ? 'var(--phosphor)' : 'var(--surface-2)',
+                  color: discoverAccepted.size > 0 ? '#000' : 'var(--text-muted)',
+                  border: 'none', borderRadius: '3px', cursor: discoverAccepted.size > 0 ? 'pointer' : 'default',
+                }}
+              >
+                Apply {discoverAccepted.size} selected
+              </button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {discoveries.map((d, i) => (
+                <label key={i} style={{
+                  display: 'flex', gap: '8px', padding: '8px', cursor: 'pointer',
+                  background: discoverAccepted.has(i) ? 'var(--surface-2)' : 'transparent',
+                  borderRadius: '3px', border: '1px solid', borderColor: discoverAccepted.has(i) ? 'var(--ice)33' : 'transparent',
+                }}>
+                  <input
+                    type="checkbox"
+                    checked={discoverAccepted.has(i)}
+                    onChange={() => setDiscoverAccepted(prev => {
+                      const next = new Set(prev);
+                      if (next.has(i)) next.delete(i); else next.add(i);
+                      return next;
+                    })}
+                    style={{ accentColor: 'var(--ice)', flexShrink: 0, marginTop: '2px' }}
+                  />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: '10px', color: 'var(--text-primary)', lineHeight: 1.5 }}>{d.rule}</div>
+                    <div style={{ display: 'flex', gap: '6px', marginTop: '3px', flexWrap: 'wrap' }}>
+                      <span style={{
+                        fontSize: '8px', fontFamily: 'var(--font-mono)', letterSpacing: '0.1em',
+                        color: d.confidence === 'confirmed' ? 'var(--phosphor)' : 'var(--text-muted)',
+                        textTransform: 'uppercase',
+                      }}>
+                        {d.confidence}
+                      </span>
+                      <span style={{ fontSize: '8px', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>
+                        → {d.target === 'TEAM_GUIDE' ? 'TEAM' : d.target}
+                      </span>
+                      <span style={{ fontSize: '8px', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>
+                        · {d.supportingFeedbackIds?.length ?? 0} supporting
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '9px', color: 'var(--text-muted)', marginTop: '3px', lineHeight: 1.4 }}>
+                      {d.reason}
+                    </div>
+                  </div>
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* TEAM_GUIDE rules */}
         {guideRules.length > 0 && (
@@ -352,6 +488,7 @@ export default function ReviewView({ teamId, agentNames, isDemoMode }: ReviewVie
                 rules={rules}
                 readOnly={isDemoMode}
                 onDelete={(idx) => deletePreference(agentName, idx)}
+                onPromote={(ruleId) => promoteRule(agentName, ruleId)}
               />
             ))}
           </div>
@@ -485,34 +622,73 @@ function FeedbackRow({ entry, onDelete }: { entry: FeedbackEntry; onDelete?: (id
   );
 }
 
-function AgentPreferenceBlock({ agentName, rules, readOnly, onDelete }: {
+function AgentPreferenceBlock({ agentName, rules, readOnly, onDelete, onPromote }: {
   agentName: string;
-  rules: string[];
+  rules: PreferenceEntry[];
   readOnly?: boolean;
   onDelete: (idx: number) => void;
+  onPromote?: (ruleId: string) => void;
 }) {
   return (
     <div>
       <div style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.12em', marginBottom: '6px', fontFamily: 'var(--font-mono)' }}>
         {agentName.toUpperCase()}
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', paddingLeft: '8px', borderLeft: '2px solid var(--border)' }}>
-        {rules.map((rule, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-            <span style={{ color: 'var(--ice)', fontSize: '9px', flexShrink: 0, marginTop: '2px' }}>▸</span>
-            <span style={{ fontSize: '10px', color: 'var(--text-primary)', lineHeight: 1.5, flex: 1 }}>{rule}</span>
-            {!readOnly && (
-              <button
-                onClick={() => onDelete(i)}
-                style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '1px', flexShrink: 0, display: 'flex', alignItems: 'center' }}
-                onMouseEnter={e => (e.currentTarget.style.color = 'var(--crimson, #ff4466)')}
-                onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
-              >
-                <X size={10} />
-              </button>
-            )}
-          </div>
-        ))}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', paddingLeft: '8px', borderLeft: '2px solid var(--border)' }}>
+        {rules.map((entry, i) => {
+          const rule = toRule(entry);
+          return (
+            <div key={rule.id || i} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+              <span style={{ color: 'var(--ice)', fontSize: '9px', flexShrink: 0, marginTop: '2px' }}>▸</span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ fontSize: '10px', color: 'var(--text-primary)', lineHeight: 1.5 }}>{rule.rule}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
+                  {/* Confidence badge */}
+                  <span style={{
+                    fontSize: '8px', letterSpacing: '0.1em', fontFamily: 'var(--font-mono)',
+                    textTransform: 'uppercase',
+                    color: rule.confidence === 'confirmed' ? 'var(--phosphor)' : 'var(--text-muted)',
+                    opacity: rule.confidence === 'tentative' ? 0.6 : 1,
+                  }}>
+                    {rule.confidence}
+                  </span>
+                  {/* Support count */}
+                  {rule.supportCount > 0 && (
+                    <span style={{ fontSize: '8px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+                      · {rule.supportCount} feedback
+                    </span>
+                  )}
+                  {/* Source */}
+                  <span style={{ fontSize: '8px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', opacity: 0.5 }}>
+                    · {rule.source === 'auto' ? 'auto-discovered' : 'manual'}
+                  </span>
+                </div>
+              </div>
+              {/* Promote button */}
+              {!readOnly && rule.confidence === 'confirmed' && onPromote && (
+                <button
+                  onClick={() => onPromote(rule.id)}
+                  title="Promote to team-level"
+                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '1px', flexShrink: 0, display: 'flex', alignItems: 'center' }}
+                  onMouseEnter={e => (e.currentTarget.style.color = 'var(--phosphor)')}
+                  onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
+                >
+                  <ArrowUpRight size={10} />
+                </button>
+              )}
+              {!readOnly && (
+                <button
+                  onClick={() => onDelete(i)}
+                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '1px', flexShrink: 0, display: 'flex', alignItems: 'center' }}
+                  onMouseEnter={e => (e.currentTarget.style.color = 'var(--crimson, #ff4466)')}
+                  onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
+                >
+                  <X size={10} />
+                </button>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -650,7 +826,7 @@ function NewEntryModal({ teamId, agentNames, onClose, onSubmitted }: {
       <div onClick={phase === 'form' ? onClose : undefined} style={{ position: 'fixed', inset: 0, background: 'var(--overlay-backdrop)', zIndex: 200 }} />
       <div role="dialog" aria-modal="true" aria-label="Add feedback entry" style={{
         position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
-        zIndex: 201, width: phase === 'suggestions' ? '520px' : '420px',
+        zIndex: 201, width: phase === 'suggestions' ? 'min(520px, 90vw)' : 'min(420px, 90vw)',
         background: 'var(--surface-0)', border: '1px solid var(--border-bright)',
         borderRadius: '4px', padding: '24px',
         boxShadow: '0 8px 40px rgba(0,0,0,0.5)',

@@ -400,10 +400,81 @@ export function getDemoFeedbackEntries(): object[] {
   ];
 }
 
+export function getDemoMemory(): { content: string; path: string; lastModified: string; source: string } {
+  return {
+    content: `# Demo Team — Memory
+
+## Project
+- Path: \`/demo/project\`
+- Stack: React + TypeScript (Vite) client, Express + TypeScript server
+- Server runs on port 3006
+
+## Completed Features
+- **Stage 1**: Project scaffolding and initial setup
+- **Stage 2**: UI component library with CRT aesthetic
+- **Stage 3**: REST API endpoints (in progress)
+
+## Key Decisions
+- Use Result<T,E> pattern for error handling instead of try-catch
+- Validate all request bodies against schema before processing
+- Co-locate API and UI integration tests in same file
+
+## Architecture Notes
+- Dark theme with WCAG AA contrast compliance
+- CSS vars for all colors — no hardcoded hex values
+- Component files under 200 lines, extract sub-components
+`,
+    path: '~/.claude-internal/projects/-demo-project/memory/MEMORY.md',
+    lastModified: new Date().toISOString(),
+    source: 'claude-internal',
+  };
+}
+
+export function getDemoKnowledgeAnalysis() {
+  return {
+    items: [
+      { content: 'Use Result<T,E> pattern for error handling instead of try-catch', category: 'universal', destination: 'guide', reason: 'General best practice applicable to any TypeScript project', source: 'memory' },
+      { content: 'CSS vars for all colors — no hardcoded hex values', category: 'universal', destination: 'guide', reason: 'Design system pattern applicable across projects', source: 'memory' },
+      { content: 'Validate all request bodies against schema before processing', category: 'transferable', destination: 'guide', reason: 'API design pattern transferable to other Express servers', source: 'memory' },
+      { content: 'Dark theme with WCAG AA contrast compliance', category: 'transferable', destination: 'memory', reason: 'Accessibility pattern worth carrying forward', source: 'memory' },
+      { content: 'Server runs on port 3006', category: 'project-specific', destination: 'memory', reason: 'Port number is specific to the demo project', source: 'memory' },
+    ],
+    stats: { total: 5, universal: 2, transferable: 2, projectSpecific: 1, ephemeral: 0, deduplicated: 0 },
+  };
+}
+
 export function getDemoPreferences(): Record<string, string[]> {
   return {
     'backend-dev':  ['Use Result<T,E> for error handling over try-catch', 'Validate all request bodies against a schema before processing', 'Prefer explicit return types on all functions'],
     'frontend-dev': ['Apply CRT aesthetic: onMouseEnter/Leave inline style mutations', 'Use var(--css-vars) for all colors — no hardcoded hex', 'Keep component files under 200 lines, extract sub-components'],
     'tester':       ['Co-locate API and UI integration tests in the same file', 'Write test descriptions in plain English, not camelCase'],
+  };
+}
+
+export function getDemoContextSummary(): { content: string; path: string; lastModified: string } {
+  return {
+    content: `# Context Summary — Demo Team
+
+## Decisions
+- [2026-03-15] Use Express + TypeScript for server, React + Vite for client
+- [2026-03-16] CRT phosphor-green aesthetic with CSS variables for all theming
+- [2026-03-17] REST API over WebSocket for data, WS only for real-time push notifications
+- [2026-03-18] LLM calls via @mariozechner/pi-ai (multi-provider support)
+
+## Progress
+- Stage A complete: full dashboard (matrix, graph, comms, timeline, sessions, cost, export)
+- Stage B complete: alerts, cross-agent session browser, cost dashboard
+- Stage D complete: feedback loop, preferences, memory management
+- Stage E in progress: E1 preference distillation ✅, E3 knowledge transfer ✅
+
+## Context
+- Server port: 3006, client built to server/dist/public/
+- LLM: @mariozechner/pi-ai (OpenAI, Anthropic, Google, or any OpenAI-compatible endpoint)
+- Model: claude-sonnet-4-6 (default)
+- Teams dir: ~/.claude/teams, Tasks dir: ~/.claude/tasks
+- Demo mode: auto (shows mock data when no live teams exist)
+- Current blocker: C1 (human intervention) needs IPC write to Claude Code process`,
+    path: '~/.claude/teams/demo-team/context-summary.md',
+    lastModified: new Date().toISOString(),
   };
 }

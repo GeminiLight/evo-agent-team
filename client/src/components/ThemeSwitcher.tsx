@@ -88,7 +88,7 @@ export default function ThemeSwitcher() {
             border: '1px solid var(--border-bright)',
             borderRadius: '4px',
             overflow: 'hidden',
-            width: '320px',
+            width: 'min(320px, 95vw)',
             animation: 'fade-up 0.15s ease-out',
             boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
           }}>

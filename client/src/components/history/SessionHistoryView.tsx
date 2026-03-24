@@ -4,34 +4,12 @@ import { Search, ChevronDown, ChevronRight } from 'lucide-react';
 import type { SessionMessage, SessionEntry } from '../../types';
 import CRTEmptyState from '../shared/CRTEmptyState';
 import MarkdownContent from '../shared/MarkdownContent';
+import { toolColor } from '../../utils/colorMaps';
 
 // ── Filter types ──────────────────────────────────────────────────────────────
 
 type RoleFilter = 'all' | 'user' | 'assistant';
 type KindFilter = 'text' | 'tool_use' | 'tool_result';
-
-const TOOL_COLORS: Record<string, string> = {
-  Read:            'var(--ice)',
-  Write:           'var(--phosphor)',
-  Edit:            'var(--phosphor)',
-  Bash:            'var(--amber)',
-  Task:            'var(--amber)',
-  TaskCreate:      'var(--amber)',
-  TaskUpdate:      'var(--amber)',
-  TodoWrite:       'var(--amber)',
-  SendMessage:     '#c084fc',
-  Agent:           '#c084fc',
-  TeamCreate:      '#c084fc',
-  AskUserQuestion: 'var(--crimson)',
-  Glob:            'var(--ice)',
-  Grep:            'var(--ice)',
-  WebSearch:       '#38bdf8',
-  WebFetch:        '#38bdf8',
-};
-
-function toolColor(name: string) {
-  return TOOL_COLORS[name] ?? 'var(--text-secondary)';
-}
 
 import { fmtTime, fmtDateOnly } from '../../utils/formatters';
 

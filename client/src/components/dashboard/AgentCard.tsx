@@ -17,21 +17,7 @@ interface AgentCardProps {
   teamId?: string;
 }
 
-const AGENT_COLOR_MAP: Record<string, string> = {
-  blue:   '#5bc8f5',
-  green:  '#39ff6a',
-  yellow: '#facc15',
-  red:    '#ff3b5c',
-  purple: '#c084fc',
-  cyan:   '#22d3ee',
-  orange: '#fb923c',
-  pink:   '#f472b6',
-};
-
-function agentAccentColor(color?: string): string {
-  if (!color) return 'var(--phosphor)';
-  return AGENT_COLOR_MAP[color.toLowerCase()] ?? color;
-}
+import { agentAccentColor } from '../../utils/colorMaps';
 
 function blockingLabel(toolName: string | undefined, t: TFunction): string {
   if (!toolName) return t('agent_card.input');

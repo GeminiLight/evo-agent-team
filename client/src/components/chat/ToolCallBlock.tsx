@@ -1,28 +1,6 @@
 import { useState } from 'react';
 import type { SessionEntry } from '../../types';
-
-const TOOL_COLORS: Record<string, string> = {
-  Read:            '#5bc8f5',
-  Write:           '#39ff85',
-  Edit:            '#39ff85',
-  Bash:            '#f5a623',
-  Task:            '#f5a623',
-  TaskCreate:      '#f5a623',
-  TaskUpdate:      '#f5a623',
-  TodoWrite:       '#f5a623',
-  SendMessage:     '#c084fc',
-  Agent:           '#c084fc',
-  TeamCreate:      '#c084fc',
-  AskUserQuestion: '#ff4466',
-  Glob:            '#5bc8f5',
-  Grep:            '#5bc8f5',
-  WebSearch:       '#38bdf8',
-  WebFetch:        '#38bdf8',
-};
-
-function toolColor(name: string): string {
-  return TOOL_COLORS[name] ?? '#94a3b8';
-}
+import { toolColor } from '../../utils/colorMaps';
 
 function summarizeInput(input?: Record<string, unknown>): string {
   if (!input) return '';

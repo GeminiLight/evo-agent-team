@@ -44,16 +44,18 @@ describe('ToolCallBlock', () => {
     expect(screen.getByText('▲')).toBeInTheDocument();
   });
 
-  it('shows correct color for known tool (Read → #5bc8f5)', () => {
+  it('shows correct color for known tool (Read uses --ice CSS var)', () => {
     render(<ToolCallBlock entry={makeToolUse({ toolName: 'Read' })} />);
     const toolNameSpan = screen.getByText(/Read/);
-    expect(toolNameSpan).toHaveStyle({ color: '#5bc8f5' });
+    // CSS variables are not resolved in test env; just check the attribute contains the variable
+    expect(toolNameSpan.getAttribute('style')).toContain('var(--ice)');
   });
 
   it('shows fallback color for unknown tool', () => {
     render(<ToolCallBlock entry={makeToolUse({ toolName: 'CustomTool' })} />);
     const toolNameSpan = screen.getByText(/CustomTool/);
-    expect(toolNameSpan).toHaveStyle({ color: '#94a3b8' });
+    // CSS variables are not resolved in test env; check raw value
+    expect(toolNameSpan.getAttribute('style')).toContain('var(--text-secondary)');
   });
 
   it('truncates long input values', () => {

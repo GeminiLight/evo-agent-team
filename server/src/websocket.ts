@@ -2,7 +2,7 @@ import { WebSocketServer, WebSocket } from 'ws';
 import type { Server } from 'http';
 import fs from 'fs';
 import { config } from './config.js';
-import type { WsMessage } from './types.js';
+import type { PermissionDecisionResult, PermissionRequest, WsMessage } from './types.js';
 
 const clients = new Set<WebSocket>();
 
@@ -24,6 +24,14 @@ export function broadcastTeamsUpdate(): void {
 
 export function broadcastTeamDetailUpdate(teamId: string): void {
   broadcast({ type: 'team_detail_update', teamId });
+}
+
+export function broadcastPermissionRequestPending(request: PermissionRequest): void {
+  broadcast({ type: 'permission_request_pending', payload: request });
+}
+
+export function broadcastPermissionRequestResolved(result: PermissionDecisionResult): void {
+  broadcast({ type: 'permission_request_resolved', payload: result });
 }
 
 export function initWebSocket(httpServer: Server): void {

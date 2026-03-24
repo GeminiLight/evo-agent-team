@@ -5,9 +5,10 @@ import type { TeamDetail } from '../../types';
 interface StatusBarProps {
   teamDetail: TeamDetail | null;
   wsConnected?: boolean;
+  pendingApprovalCount?: number;
 }
 
-export default function StatusBar({ teamDetail, wsConnected }: StatusBarProps) {
+export default function StatusBar({ teamDetail, wsConnected, pendingApprovalCount = 0 }: StatusBarProps) {
   const { t, i18n } = useTranslation();
   const [time, setTime] = useState(() => new Date());
 
@@ -130,6 +131,17 @@ export default function StatusBar({ teamDetail, wsConnected }: StatusBarProps) {
             {wsConnected ? t('status.live') : t('status.poll')}
           </span>
         </div>
+
+        {pendingApprovalCount > 0 && (
+          <span style={{
+            color: 'var(--crimson)',
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            fontVariantNumeric: 'tabular-nums',
+          }}>
+            {pendingApprovalCount} APPROVAL
+          </span>
+        )}
 
         {/* Clock */}
         <span style={{

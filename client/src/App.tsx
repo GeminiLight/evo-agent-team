@@ -7,6 +7,7 @@ import { useSessionStats } from './hooks/useSessionStats';
 import { useAlerts } from './hooks/useAlerts';
 import { useCostData } from './hooks/useCostData';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { usePermissionRequests } from './hooks/usePermissionRequests';
 import Layout, { type ViewType } from './components/Layout';
 import EmptyState from './components/EmptyState';
 import DashboardView from './components/dashboard/DashboardView';
@@ -27,6 +28,7 @@ const CostView = lazy(() => import('./components/cost/CostView'));
 const ReviewView = lazy(() => import('./components/review/ReviewView'));
 const KnowledgeView = lazy(() => import('./components/knowledge/KnowledgeView'));
 const SettingsView = lazy(() => import('./components/settings/SettingsView'));
+const ApprovalModal = lazy(() => import('./components/shared/ApprovalModal'));
 
 export default function App() {
   const [view, setView] = useState<ViewType>('dashboard');
@@ -44,6 +46,7 @@ export default function App() {
   const { alerts, loading: alertsLoading } = useAlerts(selectedTeamId);
   const { data: costData, loading: costLoading } = useCostData(selectedTeamId);
   const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(new Set());
+  const { requests: permissionRequests, resolveRequest, resolvingId } = usePermissionRequests();
 
   const leadName = teamDetail?.config?.leadAgentId?.split('@')[0] ?? null;
 
@@ -143,6 +146,7 @@ export default function App() {
         onExportCsv={handleExportCsv}
         canExportPng={view === 'graph'}
         wsConnected={wsConnected}
+        pendingApprovalCount={permissionRequests.length}
         pendingHumanCount={pendingHuman.count}
         pendingHumanAgents={pendingHuman.agentNames}
         alertCount={visibleAlerts.length}
@@ -274,6 +278,15 @@ export default function App() {
           sessionStats={sessionStats[selectedAgent.name]}
           onClose={() => setSelectedAgentId(null)}
         />
+      )}
+      {permissionRequests[0] && (
+        <Suspense fallback={null}>
+          <ApprovalModal
+            request={permissionRequests[0]}
+            resolving={resolvingId === permissionRequests[0].id}
+            onDecision={decision => { void resolveRequest(permissionRequests[0].id, decision); }}
+          />
+        </Suspense>
       )}
     </>
   );

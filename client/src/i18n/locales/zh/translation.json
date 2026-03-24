@@ -381,6 +381,17 @@
     "no_dependencies": "— 无依赖 —",
     "close": "关闭"
   },
+  "approval": {
+    "title": "权限请求",
+    "team": "团队",
+    "agent": "代理",
+    "tool": "工具",
+    "cwd": "目录",
+    "reason": "原因",
+    "command": "命令",
+    "approve": "批准",
+    "deny": "拒绝"
+  },
   "respond": {
     "title": "回复代理",
     "agent": "代理",

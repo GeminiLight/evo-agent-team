@@ -27,6 +27,7 @@ interface LayoutProps {
   criticalAlertCount?: number;
   onAgentSelect?: (agentId: string) => void;
   alertedAgentNames?: Set<string>;
+  pendingApprovalCount?: number;
 }
 
 export default function Layout({
@@ -49,6 +50,7 @@ export default function Layout({
   criticalAlertCount = 0,
   onAgentSelect,
   alertedAgentNames = new Set(),
+  pendingApprovalCount = 0,
 }: LayoutProps) {
   const { t } = useTranslation();
 
@@ -235,6 +237,7 @@ export default function Layout({
       <StatusBar
         teamDetail={teamDetail}
         wsConnected={wsConnected}
+        pendingApprovalCount={pendingApprovalCount}
       />
     </div>
   );

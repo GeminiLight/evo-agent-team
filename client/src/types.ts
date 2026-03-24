@@ -155,8 +155,29 @@ export interface ExecSummaryResponse {
   isStale: boolean;
 }
 
+export type PermissionDecision = 'approve' | 'deny';
+
+export interface PermissionRequest {
+  id: string;
+  createdAt: string;
+  expiresAt: string;
+  teamId?: string;
+  agentName?: string;
+  toolName?: string;
+  command?: string;
+  reason?: string;
+  cwd?: string;
+  requestPayload?: Record<string, unknown>;
+}
+
+export interface PermissionDecisionResult {
+  id: string;
+  decision: PermissionDecision;
+  resolvedAt: string;
+}
+
 // F1: WebSocket
-export type WsMessageType = 'teams_update' | 'team_detail_update' | 'ping';
+export type WsMessageType = 'teams_update' | 'team_detail_update' | 'permission_request_pending' | 'permission_request_resolved' | 'ping';
 export interface WsMessage {
   type: WsMessageType;
   teamId?: string;

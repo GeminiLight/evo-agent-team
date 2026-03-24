@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { X, CheckCircle2, Loader2, Clock, Lock, ChevronDown, ChevronRight, Pencil, Check, RotateCcw } from 'lucide-react';
 import type { TeamMember, Task, AgentSessionStats } from '../types';
 import { getTaskStatus, STATUS_COLORS, type StatusKey } from '../utils/statusColors';
+import { agentAccentColor } from '../utils/colorMaps';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 
 interface AgentProfilePanelProps {
@@ -35,8 +36,6 @@ const STATUS_LABELS: Record<StatusKey, string> = {
   pending: 'QUEUE',
   blocked: 'BLOCKED',
 };
-
-import { agentAccentColor } from '../utils/colorMaps';
 
 function StatusIcon({ status }: { status: StatusKey }) {
   const size = 11;

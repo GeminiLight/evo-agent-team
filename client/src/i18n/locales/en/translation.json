@@ -381,6 +381,17 @@
     "no_dependencies": "— No Dependencies —",
     "close": "Close"
   },
+  "approval": {
+    "title": "Permission Request",
+    "team": "Team",
+    "agent": "Agent",
+    "tool": "Tool",
+    "cwd": "Cwd",
+    "reason": "Reason",
+    "command": "Command",
+    "approve": "Approve",
+    "deny": "Deny"
+  },
   "respond": {
     "title": "Respond to Agent",
     "agent": "Agent",

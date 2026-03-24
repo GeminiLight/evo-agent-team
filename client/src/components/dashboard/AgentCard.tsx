@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import type { TeamMember, Task } from '../../types';
+import { agentAccentColor } from '../../utils/colorMaps';
 import RespondModal from '../shared/RespondModal';
 
 interface AgentCardProps {
@@ -16,8 +17,6 @@ interface AgentCardProps {
   unreadCount?: number;
   teamId?: string;
 }
-
-import { agentAccentColor } from '../../utils/colorMaps';
 
 function blockingLabel(toolName: string | undefined, t: TFunction): string {
   if (!toolName) return t('agent_card.input');

@@ -25,9 +25,7 @@ const SessionHistoryContainer = lazy(() => import('./components/history/SessionH
 const ChatView = lazy(() => import('./components/chat/ChatView'));
 const CostView = lazy(() => import('./components/cost/CostView'));
 const ReviewView = lazy(() => import('./components/review/ReviewView'));
-const MemoryView = lazy(() => import('./components/memory/MemoryView'));
-const ContextSummaryView = lazy(() => import('./components/context/ContextSummaryView'));
-const ExpertProfilePanel = lazy(() => import('./components/ExpertProfilePanel'));
+const KnowledgeView = lazy(() => import('./components/knowledge/KnowledgeView'));
 const SettingsView = lazy(() => import('./components/settings/SettingsView'));
 
 export default function App() {
@@ -238,26 +236,15 @@ export default function App() {
             isDemoMode={isDemoMode}
           />
         )}
-        {view === 'memory' && selectedTeamId && (
-          <MemoryView
+        {view === 'knowledge' && selectedTeamId && (
+          <KnowledgeView
             teamId={selectedTeamId}
-            isDemoMode={isDemoMode}
-          />
-        )}
-        {view === 'context' && selectedTeamId && (
-          <ContextSummaryView
-            teamId={selectedTeamId}
+            teamName={teams.find(t => t.id === selectedTeamId)?.name}
             isDemoMode={isDemoMode}
           />
         )}
         {view === 'settings' && (
           <SettingsView teamId={selectedTeamId} wsConnected={wsConnected} />
-        )}
-        {view === 'expert' && selectedTeamId && (
-          <ExpertProfilePanel
-            teamId={selectedTeamId}
-            teamName={teams.find(t => t.id === selectedTeamId)?.name}
-          />
         )}
         </Suspense>
         {!teamDetail && (

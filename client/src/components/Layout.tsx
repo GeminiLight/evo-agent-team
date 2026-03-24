@@ -5,7 +5,7 @@ import type { TeamSummary, TeamDetail } from '../types';
 import Sidebar from './layout/Sidebar';
 import StatusBar from './layout/StatusBar';
 
-export type ViewType = 'dashboard' | 'graph' | 'activity' | 'commlog' | 'timeline' | 'history' | 'chat' | 'cost' | 'review' | 'memory' | 'context' | 'settings' | 'expert';
+export type ViewType = 'dashboard' | 'graph' | 'activity' | 'commlog' | 'timeline' | 'history' | 'chat' | 'cost' | 'review' | 'knowledge' | 'settings';
 
 interface LayoutProps {
   teams: TeamSummary[];

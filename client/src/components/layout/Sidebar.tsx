@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { LayoutDashboard, Network, Activity, ScrollText, MessageSquare, DollarSign, Star, Brain, FileText, ChevronLeft, ChevronRight, Settings, User } from 'lucide-react';
+import { LayoutDashboard, Network, Activity, ScrollText, MessageSquare, DollarSign, Star, Brain, ChevronLeft, ChevronRight, Settings } from 'lucide-react';
 import type { ViewType } from '../Layout';
 import type { TeamDetail } from '../../types';
 import { agentColor, agentInitials } from '../../utils/agentColors';
@@ -29,9 +29,7 @@ const NAV_ITEMS: { key: ViewType; icon: typeof LayoutDashboard; labelKey: string
   { key: 'chat',      icon: MessageSquare,   labelKey: 'sidebar.chat' },
   { key: 'cost',      icon: DollarSign,      labelKey: 'sidebar.stats' },
   { key: 'review',    icon: Star,            labelKey: 'sidebar.review' },
-  { key: 'memory',    icon: Brain,           labelKey: 'sidebar.memory' },
-  { key: 'context',   icon: FileText,        labelKey: 'sidebar.context' },
-  { key: 'expert',    icon: User,            labelKey: 'sidebar.expert_profile' },
+  { key: 'knowledge', icon: Brain,           labelKey: 'sidebar.knowledge' },
 ];
 
 export default function Sidebar({

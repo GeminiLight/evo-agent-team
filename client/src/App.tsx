@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useMemo, lazy, Suspense } from 'react';
+import { useState, useRef, useCallback, useMemo, lazy, Suspense, useEffect } from 'react';
 import { useTeamData } from './hooks/useTeamData';
 import { usePendingHumanRequests } from './hooks/usePendingHumanRequests';
 import { useProjectTodos } from './hooks/useProjectTodos';
@@ -8,6 +8,7 @@ import { useAlerts } from './hooks/useAlerts';
 import { useCostData } from './hooks/useCostData';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { usePermissionRequests } from './hooks/usePermissionRequests';
+import { useTranslation } from 'react-i18next';
 import Layout, { type ViewType } from './components/Layout';
 import EmptyState from './components/EmptyState';
 import DashboardView from './components/dashboard/DashboardView';
@@ -15,7 +16,7 @@ import TaskDetailPanel from './components/TaskDetailPanel';
 import AgentProfilePanel from './components/AgentProfilePanel';
 import AlertBanner from './components/alerts/AlertBanner';
 import { exportGraphAsPng, exportTeamAsJson, exportTasksCsv, exportCommLogCsv, exportTimelineCsv } from './utils/exportUtils';
-import type { AgentMessage, TaskChangeEvent, Task } from './types';
+import type { AgentMessage, TaskChangeEvent, Task, PermissionRequest } from './types';
 
 // ── Lazy-loaded views (non-dashboard) ────────────────────────────────────────
 const TopologyView = lazy(() => import('./components/graph/TopologyView').then(m => ({ default: m.TopologyView })));
@@ -33,6 +34,7 @@ const ApprovalModal = lazy(() => import('./components/shared/ApprovalModal'));
 export default function App() {
   const [view, setView] = useState<ViewType>('dashboard');
   const [pollInterval] = useState(2000);
+  const { t } = useTranslation();
   const { teams, selectedTeamId, setSelectedTeamId, teamDetail, setTeamDetail, loading, isDemoMode, enableDemo, wsConnected } = useTeamData(pollInterval);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const selectedTask = teamDetail?.tasks.find(t => t.id === selectedTaskId) ?? null;
@@ -47,6 +49,9 @@ export default function App() {
   const { data: costData, loading: costLoading } = useCostData(selectedTeamId);
   const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(new Set());
   const { requests: permissionRequests, resolveRequest, resolvingId } = usePermissionRequests();
+  const seenPermissionIdsRef = useRef<Set<string>>(new Set());
+  const permissionNotificationsReadyRef = useRef(false);
+  const notificationPermissionRequestedRef = useRef(false);
 
   const leadName = teamDetail?.config?.leadAgentId?.split('@')[0] ?? null;
 
@@ -99,6 +104,41 @@ export default function App() {
 
   const visibleAlerts = alerts.filter(a => !dismissedAlerts.has(a.id));
   const alertedAgentNames = new Set(visibleAlerts.map(a => a.agentName).filter(Boolean) as string[]);
+
+  const notifyPermissionRequest = useCallback((req: PermissionRequest) => {
+    if (!("Notification" in window)) return;
+
+    if (Notification.permission === 'granted') {
+      const agent = req.agentName || t('approval.agent');
+      const tool = req.toolName || t('approval.tool');
+      new Notification(t('approval.notification_title'), {
+        body: t('approval.notification_body', { agent, tool }),
+        tag: `permission-${req.id}`,
+      });
+      return;
+    }
+
+    if (Notification.permission !== 'denied' && !notificationPermissionRequestedRef.current) {
+      notificationPermissionRequestedRef.current = true;
+      void Notification.requestPermission();
+    }
+  }, [t]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !("Notification" in window)) return;
+
+    if (!permissionNotificationsReadyRef.current) {
+      seenPermissionIdsRef.current = new Set(permissionRequests.map(req => req.id));
+      permissionNotificationsReadyRef.current = true;
+      return;
+    }
+
+    for (const req of permissionRequests) {
+      if (seenPermissionIdsRef.current.has(req.id)) continue;
+      seenPermissionIdsRef.current.add(req.id);
+      notifyPermissionRequest(req);
+    }
+  }, [permissionRequests, notifyPermissionRequest]);
 
   if (loading) {
     return (
@@ -180,6 +220,9 @@ export default function App() {
             alerts={visibleAlerts}
             onDismissAlert={id => setDismissedAlerts(prev => new Set([...prev, id]))}
             onViewChange={setView}
+            permissionRequests={permissionRequests}
+            resolvingPermissionId={resolvingId}
+            onResolvePermission={resolveRequest}
           />
         )}
         <Suspense fallback={

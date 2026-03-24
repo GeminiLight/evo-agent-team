@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CheckCircle2, Loader2, Clock } from 'lucide-react';
-import type { TeamDetail, TeamMember, Task, InboxSummaryItem, AgentSessionStats, SessionTodo, TodoItem, Alert, TaskChangeEvent } from '../../types';
+import type { TeamDetail, TeamMember, Task, InboxSummaryItem, AgentSessionStats, SessionTodo, TodoItem, Alert, TaskChangeEvent, PermissionRequest } from '../../types';
 import type { BlockingDetail } from '../../hooks/usePendingHumanRequests';
 import type { ViewType } from '../Layout';
 import { ExecSummaryBlock, ProgressSection, StatsRow } from './TeamOverview';
@@ -11,7 +11,6 @@ import ApprovalPanel from './ApprovalPanel';
 import TaskList from './TaskList';
 import AgentHeatmap from './AgentHeatmap';
 import CRTEmptyState from '../shared/CRTEmptyState';
-import { usePermissionRequests } from '../../hooks/usePermissionRequests';
 import { useIsTablet } from '../../hooks/useMediaQuery';
 
 type SortMode = 'default' | 'workload' | 'completion' | 'name';
@@ -62,6 +61,9 @@ interface DashboardViewProps {
   alerts?: Alert[];
   onDismissAlert?: (id: string) => void;
   onViewChange?: (view: ViewType) => void;
+  permissionRequests?: PermissionRequest[];
+  resolvingPermissionId?: string | null;
+  onResolvePermission?: (id: string, decision: 'approve' | 'deny') => Promise<boolean>;
 }
 
 export default function DashboardView({
@@ -70,11 +72,11 @@ export default function DashboardView({
   inboxSummary = {}, sessionStats = {}, leadName = null,
   projectTodos = [], teamId,
   alerts = [], onDismissAlert, onViewChange,
+  permissionRequests = [], resolvingPermissionId = null, onResolvePermission,
 }: DashboardViewProps) {
   const { t } = useTranslation();
   const members = team.config?.members ?? [];
   const [sortMode, setSortMode] = useState<SortMode>('default');
-  const { requests, resolveRequest, resolvingId } = usePermissionRequests();
 
   // Fetch recent timeline events for ActionQueue
   const [recentEvents, setRecentEvents] = useState<TaskChangeEvent[]>([]);
@@ -135,9 +137,9 @@ export default function DashboardView({
 
       {/* Approval Panel — show pending permission requests */}
       <ApprovalPanel
-        requests={requests}
-        resolvingId={resolvingId}
-        onResolve={resolveRequest}
+        requests={permissionRequests}
+        resolvingId={resolvingPermissionId}
+        onResolve={onResolvePermission ?? (async () => false)}
       />
 
       {/* Agent Roster — full width, more room for cards */}

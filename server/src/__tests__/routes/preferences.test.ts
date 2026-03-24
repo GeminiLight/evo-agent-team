@@ -47,9 +47,11 @@ beforeEach(async () => {
   vi.doMock('../../summaryEngine.js', () => ({ getSummary: async () => ({}), invalidateSummary: noop }));
 
   const { default: teamsRouter } = await import('../../routes/teams.js');
+  const { default: feedbackRouter } = await import('../../routes/feedback.js');
   app = express();
   app.use(express.json());
   app.use('/api', teamsRouter);
+  app.use('/api', feedbackRouter);
 });
 
 afterEach(async () => {

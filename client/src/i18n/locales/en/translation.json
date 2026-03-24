@@ -390,7 +390,18 @@
     "reason": "Reason",
     "command": "Command",
     "approve": "Approve",
-    "deny": "Deny"
+    "deny": "Deny",
+    "ok": "OK",
+    "details": "Details",
+    "no_reason": "No reason",
+    "pending_requests": "Pending Requests ({{count}})",
+    "expires_in": "Expires in {{minutes}}m {{seconds}}s",
+    "expired": "Expired",
+    "additional_data": "Additional Data",
+    "wants_permission": "{{agent}} wants permission to run {{tool}}.",
+    "aria_dialog_label": "Permission request approval",
+    "notification_title": "Permission Request",
+    "notification_body": "{{agent}} is requesting permission for {{tool}}"
   },
   "respond": {
     "title": "Respond to Agent",

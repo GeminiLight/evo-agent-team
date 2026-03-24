@@ -390,7 +390,18 @@
     "reason": "原因",
     "command": "命令",
     "approve": "批准",
-    "deny": "拒绝"
+    "deny": "拒绝",
+    "ok": "确定",
+    "details": "详情",
+    "no_reason": "无原因",
+    "pending_requests": "待处理请求 ({{count}})",
+    "expires_in": "{{minutes}}分{{seconds}}秒后过期",
+    "expired": "已过期",
+    "additional_data": "附加数据",
+    "wants_permission": "{{agent}} 请求运行 {{tool}} 的权限。",
+    "aria_dialog_label": "权限请求审批",
+    "notification_title": "权限请求",
+    "notification_body": "{{agent}} 正在请求 {{tool}} 的权限"
   },
   "respond": {
     "title": "回复代理",

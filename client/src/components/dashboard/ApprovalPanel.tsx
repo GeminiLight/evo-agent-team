@@ -4,6 +4,8 @@ import { Clock } from 'lucide-react';
 import type { PermissionRequest } from '../../types';
 import ApprovalModal from '../shared/ApprovalModal';
 
+const STORAGE_KEY = 'approval-panel-collapsed';
+
 interface ApprovalPanelProps {
   requests: PermissionRequest[];
   resolvingId: string | null;
@@ -12,9 +14,15 @@ interface ApprovalPanelProps {
 
 export default function ApprovalPanel({ requests, resolvingId, onResolve }: ApprovalPanelProps) {
   const { t } = useTranslation();
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => {
+    try { return localStorage.getItem(STORAGE_KEY) === '1'; } catch { return false; }
+  });
   const [selectedRequest, setSelectedRequest] = useState<PermissionRequest | null>(null);
   const [expiryTimes, setExpiryTimes] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    try { localStorage.setItem(STORAGE_KEY, collapsed ? '1' : '0'); } catch { /* noop */ }
+  }, [collapsed]);
 
   // Update expiry countdowns every second
   useEffect(() => {
@@ -68,7 +76,7 @@ export default function ApprovalPanel({ requests, resolvingId, onResolve }: Appr
           }}
         >
           <span style={{ fontSize: '9px', letterSpacing: '0.15em', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-            {t('dashboard.pending_requests', { count: requests.length })}
+            {t('approval.pending_requests', { count: requests.length })}
           </span>
           <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: collapsed ? 700 : 400 }}>
             {collapsed ? '▶' : '▼'}
@@ -97,7 +105,7 @@ export default function ApprovalPanel({ requests, resolvingId, onResolve }: Appr
                     {req.agentName || 'Agent'} → {req.toolName || 'Tool'}
                   </div>
                   <div style={{ color: 'var(--text-muted)', fontSize: '9px' }}>
-                    {req.reason ? `${req.reason.substring(0, 50)}…` : 'No reason'}
+                    {req.reason ? `${req.reason.substring(0, 50)}…` : t('approval.no_reason')}
                   </div>
                 </div>
 
@@ -137,7 +145,7 @@ export default function ApprovalPanel({ requests, resolvingId, onResolve }: Appr
                       textTransform: 'uppercase',
                     }}
                   >
-                    {resolvingId === req.id ? '...' : 'OK'}
+                    {resolvingId === req.id ? '...' : t('approval.ok')}
                   </button>
                   <button
                     onClick={async () => {
@@ -157,7 +165,7 @@ export default function ApprovalPanel({ requests, resolvingId, onResolve }: Appr
                       textTransform: 'uppercase',
                     }}
                   >
-                    Deny
+                    {t('approval.deny')}
                   </button>
                   <button
                     onClick={() => setSelectedRequest(req)}
@@ -172,7 +180,7 @@ export default function ApprovalPanel({ requests, resolvingId, onResolve }: Appr
                       textTransform: 'uppercase',
                     }}
                   >
-                    Details
+                    {t('approval.details')}
                   </button>
                 </div>
               </div>

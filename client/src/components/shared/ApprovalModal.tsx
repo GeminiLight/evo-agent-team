@@ -20,19 +20,19 @@ export default function ApprovalModal({ request, resolving, onDecision }: Approv
       const remaining = Math.max(0, expiresAt - now);
 
       if (remaining <= 0) {
-        setExpiryTime('Expired');
+        setExpiryTime(t('approval.expired'));
         return;
       }
 
       const minutes = Math.floor(remaining / 60000);
       const seconds = Math.floor((remaining % 60000) / 1000);
-      setExpiryTime(`Expires in ${minutes}m ${seconds}s`);
+      setExpiryTime(t('approval.expires_in', { minutes, seconds }));
     }
 
     updateExpiry();
     const interval = setInterval(updateExpiry, 1000);
     return () => clearInterval(interval);
-  }, [request.expiresAt]);
+  }, [request.expiresAt, t]);
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -59,7 +59,7 @@ export default function ApprovalModal({ request, resolving, onDecision }: Approv
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Permission request approval"
+        aria-label={t('approval.aria_dialog_label')}
         style={{
           background: 'var(--surface-1)',
           border: '1px solid var(--crimson)',
@@ -77,7 +77,10 @@ export default function ApprovalModal({ request, resolving, onDecision }: Approv
             {t('approval.title')}
           </div>
           <div style={{ fontSize: '12px', color: 'var(--text-primary)', lineHeight: 1.5 }}>
-            {request.agentName || 'Agent'} wants permission to run {request.toolName || 'a tool'}.
+            {t('approval.wants_permission', {
+              agent: request.agentName || t('approval.agent'),
+              tool: request.toolName || t('approval.tool'),
+            })}
           </div>
         </div>
 
@@ -122,7 +125,7 @@ export default function ApprovalModal({ request, resolving, onDecision }: Approv
                 textTransform: 'uppercase',
               }}
             >
-              {payloadExpanded ? '▼' : '▶'} Additional Data
+              {payloadExpanded ? '▼' : '▶'} {t('approval.additional_data')}
             </button>
             {payloadExpanded && (
               <div style={{ padding: '12px', background: 'var(--surface-0)', border: '1px solid var(--border)', borderRadius: '3px', display: 'grid', gap: '6px' }}>

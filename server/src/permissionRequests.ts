@@ -42,6 +42,10 @@ function sanitizePayload(payload: unknown): Record<string, unknown> | undefined 
       copy[key] = value;
       continue;
     }
+    // Skip Buffer, functions, and other non-serializable types
+    if (Buffer.isBuffer(value) || typeof value === 'function' || typeof value === 'symbol') {
+      continue;
+    }
     if (isRecord(value)) {
       copy[key] = Object.fromEntries(
         Object.entries(value).filter(([, nested]) => (
@@ -89,9 +93,17 @@ export function createPermissionRequest(
         decision: 'deny',
         resolvedAt: new Date().toISOString(),
       };
+      console.log(
+        `[PERM] timeout id=${request.id} agent=${request.agentName || 'unknown'} tool=${request.toolName || 'unknown'}`
+      );
       onResolved?.(result);
       resolve(result);
     }, timeoutMs);
+
+    const logAgent = request.agentName || 'unknown';
+    const logTool = request.toolName || 'unknown';
+    const timeoutSec = Math.round(timeoutMs / 1000);
+    console.log(`[PERM] create id=${request.id} agent=${logAgent} tool=${logTool} timeout=${timeoutSec}s`);
 
     pendingRequests.set(request.id, { request, resolve, onResolved, timer });
   });
@@ -117,6 +129,12 @@ export function resolvePermissionRequest(id: string, decision: PermissionDecisio
     decision,
     resolvedAt: new Date().toISOString(),
   };
+
+  const logAgent = entry.request.agentName || 'unknown';
+  const logTool = entry.request.toolName || 'unknown';
+  console.log(
+    `[PERM] ${decision} id=${id} agent=${logAgent} tool=${logTool}`
+  );
 
   entry.onResolved?.(result);
   entry.resolve(result);

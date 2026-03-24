@@ -21,8 +21,15 @@ router.post('/hooks/permission-requests/:id/decision', (req, res) => {
   const { id } = req.params;
   const decision = req.body?.decision;
 
-  if (decision !== 'approve' && decision !== 'deny') {
-    res.status(400).json({ error: 'decision must be approve or deny' });
+  // Validate id is provided
+  if (!id || typeof id !== 'string' || id.trim() === '') {
+    res.status(400).json({ error: 'id is required and must be a non-empty string' });
+    return;
+  }
+
+  // Validate decision value
+  if (!decision || (decision !== 'approve' && decision !== 'deny')) {
+    res.status(400).json({ error: 'decision must be "approve" or "deny"' });
     return;
   }
 

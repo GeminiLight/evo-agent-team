@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { PermissionRequest } from '../../types';
 
@@ -10,6 +10,29 @@ interface ApprovalModalProps {
 
 export default function ApprovalModal({ request, resolving, onDecision }: ApprovalModalProps) {
   const { t } = useTranslation();
+  const [expiryTime, setExpiryTime] = useState<string>('');
+  const [payloadExpanded, setPayloadExpanded] = useState(false);
+
+  useEffect(() => {
+    function updateExpiry() {
+      const now = Date.now();
+      const expiresAt = new Date(request.expiresAt).getTime();
+      const remaining = Math.max(0, expiresAt - now);
+
+      if (remaining <= 0) {
+        setExpiryTime('Expired');
+        return;
+      }
+
+      const minutes = Math.floor(remaining / 60000);
+      const seconds = Math.floor((remaining % 60000) / 1000);
+      setExpiryTime(`Expires in ${minutes}m ${seconds}s`);
+    }
+
+    updateExpiry();
+    const interval = setInterval(updateExpiry, 1000);
+    return () => clearInterval(interval);
+  }, [request.expiresAt]);
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -19,6 +42,10 @@ export default function ApprovalModal({ request, resolving, onDecision }: Approv
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [onDecision, resolving]);
+
+  const payloadEntries = request.requestPayload ? Object.entries(request.requestPayload).filter(([key]) => {
+    return !['teamId', 'agentName', 'toolName', 'cwd', 'reason', 'command'].includes(key);
+  }) : [];
 
   return (
     <div
@@ -54,6 +81,10 @@ export default function ApprovalModal({ request, resolving, onDecision }: Approv
           </div>
         </div>
 
+        <div style={{ fontSize: '9px', color: 'var(--amber)', marginBottom: '12px', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+          {expiryTime}
+        </div>
+
         <div style={{ display: 'grid', gap: '8px', marginBottom: '16px', padding: '12px', background: 'var(--surface-0)', border: '1px solid var(--border)', borderRadius: '3px' }}>
           {request.teamId && <InfoRow label={t('approval.team')} value={request.teamId} />}
           {request.agentName && <InfoRow label={t('approval.agent')} value={request.agentName} />}
@@ -70,6 +101,36 @@ export default function ApprovalModal({ request, resolving, onDecision }: Approv
             <pre style={{ margin: 0, padding: '12px', background: 'var(--surface-0)', border: '1px solid var(--border)', borderRadius: '3px', color: 'var(--amber)', fontSize: '11px', overflowX: 'auto', whiteSpace: 'pre-wrap' }}>
               {request.command}
             </pre>
+          </div>
+        )}
+
+        {payloadEntries.length > 0 && (
+          <div style={{ marginBottom: '16px' }}>
+            <button
+              onClick={() => setPayloadExpanded(!payloadExpanded)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '0 0 8px 0',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontSize: '9px',
+                letterSpacing: '0.12em',
+                color: 'var(--text-secondary)',
+                textTransform: 'uppercase',
+              }}
+            >
+              {payloadExpanded ? '▼' : '▶'} Additional Data
+            </button>
+            {payloadExpanded && (
+              <div style={{ padding: '12px', background: 'var(--surface-0)', border: '1px solid var(--border)', borderRadius: '3px', display: 'grid', gap: '6px' }}>
+                {payloadEntries.map(([key, value]) => (
+                  <InfoRow key={key} label={key} value={String(value)} />
+                ))}
+              </div>
+            )}
           </div>
         )}
 

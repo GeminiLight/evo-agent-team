@@ -7,9 +7,11 @@ import type { ViewType } from '../Layout';
 import { ExecSummaryBlock, ProgressSection, StatsRow } from './TeamOverview';
 import CompactAgentCard from './CompactAgentCard';
 import ActionQueue from './ActionQueue';
+import ApprovalPanel from './ApprovalPanel';
 import TaskList from './TaskList';
 import AgentHeatmap from './AgentHeatmap';
 import CRTEmptyState from '../shared/CRTEmptyState';
+import { usePermissionRequests } from '../../hooks/usePermissionRequests';
 import { useIsTablet } from '../../hooks/useMediaQuery';
 
 type SortMode = 'default' | 'workload' | 'completion' | 'name';
@@ -72,6 +74,7 @@ export default function DashboardView({
   const { t } = useTranslation();
   const members = team.config?.members ?? [];
   const [sortMode, setSortMode] = useState<SortMode>('default');
+  const { requests, resolveRequest, resolvingId } = usePermissionRequests();
 
   // Fetch recent timeline events for ActionQueue
   const [recentEvents, setRecentEvents] = useState<TaskChangeEvent[]>([]);
@@ -128,6 +131,13 @@ export default function DashboardView({
         teamId={teamId}
         onDismissAlert={onDismissAlert ?? (() => {})}
         onViewChange={onViewChange ?? (() => {})}
+      />
+
+      {/* Approval Panel — show pending permission requests */}
+      <ApprovalPanel
+        requests={requests}
+        resolvingId={resolvingId}
+        onResolve={resolveRequest}
       />
 
       {/* Agent Roster — full width, more room for cards */}

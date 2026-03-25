@@ -89,7 +89,15 @@ vi.mock('../hooks/useAlerts', () => ({ useAlerts: () => ({ alerts: [], loading: 
 vi.mock('../hooks/useCostData', () => ({ useCostData: () => ({ data: null, loading: false }) }));
 vi.mock('../hooks/useKeyboardShortcuts', () => ({ useKeyboardShortcuts: () => undefined }));
 vi.mock('../hooks/usePermissionRequests', () => ({ usePermissionRequests: () => permissionState }));
-vi.mock('../components/Layout', () => ({ default: ({ children }: { children: React.ReactNode }) => <div>{children}</div> }));
+vi.mock('../components/Layout', () => ({
+  default: ({ children, view, onViewChange }: { children: React.ReactNode; view: string; onViewChange: (view: 'dashboard' | 'graph') => void }) => (
+    <div>
+      <div data-testid="layout-view">{view}</div>
+      <button onClick={() => onViewChange('graph')}>go-graph</button>
+      {children}
+    </div>
+  ),
+}));
 vi.mock('../components/EmptyState', () => ({ default: () => <div>empty</div> }));
 vi.mock('../components/TaskDetailPanel', () => ({ default: () => null }));
 vi.mock('../components/AgentProfilePanel', () => ({ default: () => null }));
@@ -147,5 +155,27 @@ describe('App + ApprovalPanel integration', () => {
     fireEvent.click(detailsButtons[1]);
 
     expect(screen.getByText('modal-req-2')).toBeInTheDocument();
+  });
+
+  it('clicking a toast returns to dashboard and opens the matching request', async () => {
+    const { default: App } = await import('../App');
+    const view = render(<App />);
+
+    await act(async () => {
+      fireEvent.click(screen.getByText('go-graph'));
+    });
+    expect(screen.getByTestId('layout-view')).toHaveTextContent('graph');
+
+    permissionState.requests = [makeRequest('req-3', 'toast-worker')];
+    await act(async () => {
+      view.rerender(<App />);
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('permission-toast-req-3'));
+    });
+
+    expect(screen.getByTestId('layout-view')).toHaveTextContent('dashboard');
+    expect(screen.getByText('modal-req-3')).toBeInTheDocument();
   });
 });

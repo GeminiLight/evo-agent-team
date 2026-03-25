@@ -314,7 +314,10 @@ export default function App() {
       <PermissionToastStack
         toasts={permissionToasts}
         onDismiss={dismissPermissionToast}
-        onSelect={id => setSelectedPermissionRequestId(id)}
+        onSelect={id => {
+          setView('dashboard');
+          setSelectedPermissionRequestId(id);
+        }}
       />
       {selectedTask && (
         <TaskDetailPanel

@@ -22,6 +22,8 @@ export default function PermissionToastStack({
 }: PermissionToastStackProps) {
   const { t } = useTranslation();
   const [exitingIds, setExitingIds] = useState<Set<string>>(new Set());
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [focusedId, setFocusedId] = useState<string | null>(null);
 
   const startDismiss = useCallback((id: string) => {
     setExitingIds(prev => {
@@ -60,6 +62,8 @@ export default function PermissionToastStack({
     >
       {toasts.slice(0, 3).map(toast => {
         const isExiting = exitingIds.has(toast.id);
+        const isHovered = hoveredId === toast.id;
+        const isFocused = focusedId === toast.id;
         return (
         <div
           key={toast.id}
@@ -71,12 +75,18 @@ export default function PermissionToastStack({
               onSelect?.(toast.id);
             }
           }}
+          onMouseEnter={() => setHoveredId(toast.id)}
+          onMouseLeave={() => setHoveredId(current => current === toast.id ? null : current)}
+          onMouseOver={() => setHoveredId(toast.id)}
+          onMouseOut={() => setHoveredId(current => current === toast.id ? null : current)}
+          onFocus={() => setFocusedId(toast.id)}
+          onBlur={() => setFocusedId(current => current === toast.id ? null : current)}
           role={onSelect ? 'button' : undefined}
           tabIndex={onSelect ? 0 : undefined}
           style={{
-            background: 'var(--surface-1)',
-            border: '1px solid var(--active-border)',
-            boxShadow: 'var(--shadow-lg)',
+            background: isHovered ? 'var(--surface-2)' : 'var(--surface-1)',
+            border: `1px solid ${isFocused ? 'var(--active-border-hi)' : 'var(--active-border)'}`,
+            boxShadow: isFocused ? '0 0 0 1px var(--active-border-hi), var(--shadow-lg)' : 'var(--shadow-lg)',
             borderRadius: '4px',
             padding: '10px 12px',
             display: 'flex',

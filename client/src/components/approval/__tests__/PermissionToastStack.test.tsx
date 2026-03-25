@@ -47,6 +47,31 @@ describe('PermissionToastStack', () => {
     expect(onSelect).toHaveBeenCalledWith('req-1');
   });
 
+  it('shows interactive hover and focus styling for keyboard-accessible toasts', () => {
+    const onSelect = vi.fn();
+
+    render(
+      <PermissionToastStack
+        toasts={[{ id: 'req-1', title: 'Permission Request', body: 'worker needs Bash' }]}
+        onDismiss={vi.fn()}
+        onSelect={onSelect}
+      />,
+    );
+
+    const toast = screen.getByTestId('permission-toast-req-1');
+    expect(toast).toHaveAttribute('role', 'button');
+    expect(toast).toHaveAttribute('tabindex', '0');
+
+    fireEvent.mouseOver(toast);
+    expect(toast.getAttribute('style')).toContain('var(--surface-2)');
+
+    fireEvent.focus(toast);
+    expect(toast.getAttribute('style')).toContain('var(--active-border-hi)');
+
+    fireEvent.keyDown(toast, { key: 'Enter' });
+    expect(onSelect).toHaveBeenCalledWith('req-1');
+  });
+
   it('waits for exit animation before dismissing', () => {
     const onDismiss = vi.fn();
 

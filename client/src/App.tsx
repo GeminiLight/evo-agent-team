@@ -311,7 +311,11 @@ export default function App() {
           </div>
         )}
       </Layout>
-      <PermissionToastStack toasts={permissionToasts} onDismiss={dismissPermissionToast} />
+      <PermissionToastStack
+        toasts={permissionToasts}
+        onDismiss={dismissPermissionToast}
+        onSelect={id => setSelectedPermissionRequestId(id)}
+      />
       {selectedTask && (
         <TaskDetailPanel
           task={selectedTask}

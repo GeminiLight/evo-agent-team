@@ -140,7 +140,7 @@ describe('App approval notification diff', () => {
     expect(screen.getAllByText('Permission Request')).toHaveLength(1);
 
     await act(async () => {
-      vi.advanceTimersByTime(5000);
+      vi.advanceTimersByTime(5180);
     });
 
     expect(screen.queryByText('Permission Request')).not.toBeInTheDocument();

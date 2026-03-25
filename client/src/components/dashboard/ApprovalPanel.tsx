@@ -88,6 +88,7 @@ export default function ApprovalPanel({ requests, resolvingId, onResolve, onOpen
             {requests.map(req => (
               <div
                 key={req.id}
+                id={`approval-req-${req.id}`}
                 style={{
                   display: 'flex',
                   alignItems: 'center',

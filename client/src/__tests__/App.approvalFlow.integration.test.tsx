@@ -157,7 +157,7 @@ describe('App + ApprovalPanel integration', () => {
     expect(screen.getByText('modal-req-2')).toBeInTheDocument();
   });
 
-  it('clicking a toast returns to dashboard and opens the matching request', async () => {
+  it('clicking a toast returns to dashboard, opens matching request, and scrolls to it', async () => {
     const { default: App } = await import('../App');
     const view = render(<App />);
 
@@ -171,11 +171,18 @@ describe('App + ApprovalPanel integration', () => {
       view.rerender(<App />);
     });
 
+    const scrollIntoViewMock = vi.fn();
+    window.HTMLElement.prototype.scrollIntoView = scrollIntoViewMock;
+
     await act(async () => {
       fireEvent.click(screen.getByTestId('permission-toast-req-3'));
     });
 
     expect(screen.getByTestId('layout-view')).toHaveTextContent('dashboard');
     expect(screen.getByText('modal-req-3')).toBeInTheDocument();
+    
+    // Using setTimeout to handle the DOM stabilization frame
+    await new Promise(resolve => setTimeout(resolve, 150));
+    expect(scrollIntoViewMock).toHaveBeenCalledWith({ behavior: 'smooth', block: 'center' });
   });
 });

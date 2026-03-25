@@ -317,6 +317,14 @@ export default function App() {
         onSelect={id => {
           setView('dashboard');
           setSelectedPermissionRequestId(id);
+          
+          // Allow React to switch view to dashboard first, then scroll the panel item
+          setTimeout(() => {
+            const el = document.getElementById(`approval-req-${id}`);
+            if (el) {
+              el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }, 100);
         }}
       />
       {selectedTask && (

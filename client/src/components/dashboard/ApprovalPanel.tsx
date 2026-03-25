@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Clock } from 'lucide-react';
 import type { PermissionRequest } from '../../types';
-import ApprovalModal from '../shared/ApprovalModal';
 
 const STORAGE_KEY = 'approval-panel-collapsed';
 
@@ -10,14 +9,14 @@ interface ApprovalPanelProps {
   requests: PermissionRequest[];
   resolvingId: string | null;
   onResolve: (id: string, decision: 'approve' | 'deny') => Promise<boolean>;
+  onOpenDetails?: (request: PermissionRequest) => void;
 }
 
-export default function ApprovalPanel({ requests, resolvingId, onResolve }: ApprovalPanelProps) {
+export default function ApprovalPanel({ requests, resolvingId, onResolve, onOpenDetails }: ApprovalPanelProps) {
   const { t } = useTranslation();
   const [collapsed, setCollapsed] = useState(() => {
     try { return localStorage.getItem(STORAGE_KEY) === '1'; } catch { return false; }
   });
-  const [selectedRequest, setSelectedRequest] = useState<PermissionRequest | null>(null);
   const [expiryTimes, setExpiryTimes] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -128,8 +127,7 @@ export default function ApprovalPanel({ requests, resolvingId, onResolve }: Appr
                 <div style={{ display: 'flex', gap: '4px' }}>
                   <button
                     onClick={async () => {
-                      const success = await onResolve(req.id, 'approve');
-                      if (success) setSelectedRequest(null);
+                      await onResolve(req.id, 'approve');
                     }}
                     disabled={resolvingId === req.id}
                     style={{
@@ -149,8 +147,7 @@ export default function ApprovalPanel({ requests, resolvingId, onResolve }: Appr
                   </button>
                   <button
                     onClick={async () => {
-                      const success = await onResolve(req.id, 'deny');
-                      if (success) setSelectedRequest(null);
+                      await onResolve(req.id, 'deny');
                     }}
                     disabled={resolvingId === req.id}
                     style={{
@@ -168,7 +165,7 @@ export default function ApprovalPanel({ requests, resolvingId, onResolve }: Appr
                     {t('approval.deny')}
                   </button>
                   <button
-                    onClick={() => setSelectedRequest(req)}
+                    onClick={() => onOpenDetails?.(req)}
                     style={{
                       padding: '4px 8px',
                       fontSize: '9px',
@@ -188,20 +185,6 @@ export default function ApprovalPanel({ requests, resolvingId, onResolve }: Appr
           </div>
         )}
       </div>
-
-      {/* Modal for detailed view */}
-      {selectedRequest && (
-        <ApprovalModal
-          request={selectedRequest}
-          resolving={resolvingId === selectedRequest.id}
-          onDecision={async (decision) => {
-            const success = await onResolve(selectedRequest.id, decision);
-            if (success) {
-              setSelectedRequest(null);
-            }
-          }}
-        />
-      )}
     </>
   );
 }

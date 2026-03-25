@@ -17,7 +17,6 @@ vi.mock('react-i18next', () => ({
 }));
 
 vi.mock('lucide-react', () => ({ Clock: () => null }));
-vi.mock('../../shared/ApprovalModal', () => ({ default: () => <div>modal</div> }));
 
 const request = (overrides: Partial<PermissionRequest> = {}): PermissionRequest => ({
   id: 'req-1',
@@ -100,5 +99,21 @@ describe('ApprovalPanel', () => {
 
     getItemSpy.mockRestore();
     setItemSpy.mockRestore();
+  });
+
+  it('delegates details opening to the app layer', () => {
+    const onOpenDetails = vi.fn();
+
+    render(
+      <ApprovalPanel
+        requests={[request()]}
+        resolvingId={null}
+        onResolve={vi.fn(async () => true)}
+        onOpenDetails={onOpenDetails}
+      />,
+    );
+
+    fireEvent.click(screen.getByText('Details'));
+    expect(onOpenDetails).toHaveBeenCalledWith(expect.objectContaining({ id: 'req-1' }));
   });
 });

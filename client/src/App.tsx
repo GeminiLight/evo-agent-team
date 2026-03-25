@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import Layout, { type ViewType } from './components/Layout';
 import EmptyState from './components/EmptyState';
 import DashboardView from './components/dashboard/DashboardView';
+import PermissionToastStack, { type PermissionToast } from './components/approval/PermissionToastStack';
 import TaskDetailPanel from './components/TaskDetailPanel';
 import AgentProfilePanel from './components/AgentProfilePanel';
 import AlertBanner from './components/alerts/AlertBanner';
@@ -49,9 +50,10 @@ export default function App() {
   const { data: costData, loading: costLoading } = useCostData(selectedTeamId);
   const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(new Set());
   const { requests: permissionRequests, resolveRequest, resolvingId } = usePermissionRequests();
+  const [selectedPermissionRequestId, setSelectedPermissionRequestId] = useState<string | null>(null);
+  const [permissionToasts, setPermissionToasts] = useState<PermissionToast[]>([]);
   const seenPermissionIdsRef = useRef<Set<string>>(new Set());
   const permissionNotificationsReadyRef = useRef(false);
-  const notificationPermissionRequestedRef = useRef(false);
 
   const leadName = teamDetail?.config?.leadAgentId?.split('@')[0] ?? null;
 
@@ -105,28 +107,28 @@ export default function App() {
   const visibleAlerts = alerts.filter(a => !dismissedAlerts.has(a.id));
   const alertedAgentNames = new Set(visibleAlerts.map(a => a.agentName).filter(Boolean) as string[]);
 
+  const dismissPermissionToast = useCallback((id: string) => {
+    setPermissionToasts(prev => prev.filter(toast => toast.id !== id));
+  }, []);
+
   const notifyPermissionRequest = useCallback((req: PermissionRequest) => {
-    if (!("Notification" in window)) return;
+    const agent = req.agentName || t('approval.agent');
+    const tool = req.toolName || t('approval.tool');
 
-    if (Notification.permission === 'granted') {
-      const agent = req.agentName || t('approval.agent');
-      const tool = req.toolName || t('approval.tool');
-      new Notification(t('approval.notification_title'), {
-        body: t('approval.notification_body', { agent, tool }),
-        tag: `permission-${req.id}`,
-      });
-      return;
-    }
-
-    if (Notification.permission !== 'denied' && !notificationPermissionRequestedRef.current) {
-      notificationPermissionRequestedRef.current = true;
-      void Notification.requestPermission();
-    }
+    setPermissionToasts(prev => {
+      if (prev.some(toast => toast.id === req.id)) return prev;
+      return [
+        {
+          id: req.id,
+          title: t('approval.notification_title'),
+          body: t('approval.notification_body', { agent, tool }),
+        },
+        ...prev,
+      ].slice(0, 3);
+    });
   }, [t]);
 
   useEffect(() => {
-    if (typeof window === 'undefined' || !("Notification" in window)) return;
-
     if (!permissionNotificationsReadyRef.current) {
       seenPermissionIdsRef.current = new Set(permissionRequests.map(req => req.id));
       permissionNotificationsReadyRef.current = true;
@@ -139,6 +141,10 @@ export default function App() {
       notifyPermissionRequest(req);
     }
   }, [permissionRequests, notifyPermissionRequest]);
+
+  const activePermissionRequest = permissionRequests.find(req => req.id === selectedPermissionRequestId)
+    ?? permissionRequests[0]
+    ?? null;
 
   if (loading) {
     return (
@@ -223,6 +229,7 @@ export default function App() {
             permissionRequests={permissionRequests}
             resolvingPermissionId={resolvingId}
             onResolvePermission={resolveRequest}
+            onOpenPermissionDetails={request => setSelectedPermissionRequestId(request.id)}
           />
         )}
         <Suspense fallback={
@@ -304,6 +311,7 @@ export default function App() {
           </div>
         )}
       </Layout>
+      <PermissionToastStack toasts={permissionToasts} onDismiss={dismissPermissionToast} />
       {selectedTask && (
         <TaskDetailPanel
           task={selectedTask}
@@ -322,12 +330,18 @@ export default function App() {
           onClose={() => setSelectedAgentId(null)}
         />
       )}
-      {permissionRequests[0] && (
+      {activePermissionRequest && (
         <Suspense fallback={null}>
           <ApprovalModal
-            request={permissionRequests[0]}
-            resolving={resolvingId === permissionRequests[0].id}
-            onDecision={decision => { void resolveRequest(permissionRequests[0].id, decision); }}
+            request={activePermissionRequest}
+            resolving={resolvingId === activePermissionRequest.id}
+            onDecision={decision => {
+              const requestId = activePermissionRequest.id;
+              if (selectedPermissionRequestId === requestId) {
+                setSelectedPermissionRequestId(null);
+              }
+              void resolveRequest(requestId, decision);
+            }}
           />
         </Suspense>
       )}

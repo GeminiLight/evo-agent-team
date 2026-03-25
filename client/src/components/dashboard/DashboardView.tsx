@@ -64,6 +64,7 @@ interface DashboardViewProps {
   permissionRequests?: PermissionRequest[];
   resolvingPermissionId?: string | null;
   onResolvePermission?: (id: string, decision: 'approve' | 'deny') => Promise<boolean>;
+  onOpenPermissionDetails?: (request: PermissionRequest) => void;
 }
 
 export default function DashboardView({
@@ -72,7 +73,7 @@ export default function DashboardView({
   inboxSummary = {}, sessionStats = {}, leadName = null,
   projectTodos = [], teamId,
   alerts = [], onDismissAlert, onViewChange,
-  permissionRequests = [], resolvingPermissionId = null, onResolvePermission,
+  permissionRequests = [], resolvingPermissionId = null, onResolvePermission, onOpenPermissionDetails,
 }: DashboardViewProps) {
   const { t } = useTranslation();
   const members = team.config?.members ?? [];
@@ -140,6 +141,7 @@ export default function DashboardView({
         requests={permissionRequests}
         resolvingId={resolvingPermissionId}
         onResolve={onResolvePermission ?? (async () => false)}
+        onOpenDetails={onOpenPermissionDetails}
       />
 
       {/* Agent Roster — full width, more room for cards */}

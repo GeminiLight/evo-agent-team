@@ -401,7 +401,8 @@
     "wants_permission": "{{agent}} 请求运行 {{tool}} 的权限。",
     "aria_dialog_label": "权限请求审批",
     "notification_title": "权限请求",
-    "notification_body": "{{agent}} 正在请求 {{tool}} 的权限"
+    "notification_body": "{{agent}} 正在请求 {{tool}} 的权限",
+    "dismiss_notification": "关闭通知"
   },
   "respond": {
     "title": "回复代理",

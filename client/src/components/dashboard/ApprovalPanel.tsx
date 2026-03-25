@@ -98,7 +98,11 @@ export default function ApprovalPanel({ requests, resolvingId, onResolve, onOpen
                   borderRadius: '3px',
                   fontSize: '10px',
                   borderLeft: '2px solid var(--crimson)',
+                  scrollMarginTop: '80px',
+                  transition: 'background 0.2s ease',
                 }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface-2)'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface-0)'; }}
               >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flex: 1 }}>
                   <div style={{ color: 'var(--text-secondary)' }}>
@@ -161,6 +165,19 @@ export default function ApprovalPanel({ requests, resolvingId, onResolve, onOpen
                       cursor: resolvingId === req.id ? 'default' : 'pointer',
                       opacity: resolvingId === req.id ? 0.6 : 1,
                       textTransform: 'uppercase',
+                      transition: 'color 0.2s, border-color 0.2s',
+                    }}
+                    onMouseEnter={e => {
+                      if (resolvingId !== req.id) {
+                        e.currentTarget.style.color = 'var(--crimson)';
+                        e.currentTarget.style.borderColor = 'var(--crimson)';
+                      }
+                    }}
+                    onMouseLeave={e => {
+                      if (resolvingId !== req.id) {
+                        e.currentTarget.style.color = 'var(--text-muted)';
+                        e.currentTarget.style.borderColor = 'var(--border)';
+                      }
                     }}
                   >
                     {t('approval.deny')}
@@ -176,7 +193,10 @@ export default function ApprovalPanel({ requests, resolvingId, onResolve, onOpen
                       borderRadius: '2px',
                       cursor: 'pointer',
                       textTransform: 'uppercase',
+                      transition: 'color 0.2s',
                     }}
+                    onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-secondary)'; }}
                   >
                     {t('approval.details')}
                   </button>

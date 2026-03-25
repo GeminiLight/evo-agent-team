@@ -82,6 +82,45 @@ describe('ApprovalPanel', () => {
     expect(screen.queryByText('OK')).not.toBeInTheDocument();
   });
 
+  it('adds scroll-margin-top for scrollIntoView alignment', () => {
+    render(
+      <ApprovalPanel requests={[request()]} resolvingId={null} onResolve={vi.fn(async () => true)} />,
+    );
+    const item = screen.getByText(/worker/).closest('div[id^="approval-req-"]');
+    expect(item).toHaveStyle({ scrollMarginTop: '80px' });
+  });
+
+  it('adds hover styles to approval list items and action buttons', () => {
+    render(
+      <ApprovalPanel requests={[request()]} resolvingId={null} onResolve={vi.fn(async () => true)} />,
+    );
+
+    const item = screen.getByText(/worker/).closest('div[id^="approval-req-"]') as HTMLElement;
+    
+    // Test panel item hover
+    fireEvent.mouseEnter(item);
+    expect(item.getAttribute('style')).toContain('var(--surface-2)');
+    
+    fireEvent.mouseLeave(item);
+    expect(item.getAttribute('style')).toContain('var(--surface-0)');
+
+    // Test Deny button hover
+    const denyBtn = screen.getByText('Deny');
+    fireEvent.mouseEnter(denyBtn);
+    expect(denyBtn.getAttribute('style')).toContain('var(--crimson)');
+    
+    fireEvent.mouseLeave(denyBtn);
+    expect(denyBtn.getAttribute('style')).toContain('var(--text-muted)');
+
+    // Test Details button hover
+    const detailsBtn = screen.getByText('Details');
+    fireEvent.mouseEnter(detailsBtn);
+    expect(detailsBtn.getAttribute('style')).toContain('var(--text-primary)');
+    
+    fireEvent.mouseLeave(detailsBtn);
+    expect(detailsBtn.getAttribute('style')).toContain('var(--text-secondary)');
+  });
+
   it('does not crash when localStorage access fails', () => {
     const getItemSpy = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
       throw new Error('blocked');

@@ -88,4 +88,28 @@ describe('PermissionToastStack', () => {
     vi.advanceTimersByTime(180);
     expect(onDismiss).toHaveBeenCalledWith('req-1');
   });
+
+  it('starts exit animation and dismisses when toast is clicked (auto-dismiss)', () => {
+    const onDismiss = vi.fn();
+    const onSelect = vi.fn();
+
+    render(
+      <PermissionToastStack
+        toasts={[{ id: 'req-1', title: 'Permission Request', body: 'worker needs Bash' }]}
+        onDismiss={onDismiss}
+        onSelect={onSelect}
+      />,
+    );
+
+    const toast = screen.getByTestId('permission-toast-req-1');
+    fireEvent.click(toast);
+    
+    expect(onSelect).toHaveBeenCalledWith('req-1');
+    expect(onDismiss).not.toHaveBeenCalled(); // Wait for animation
+    
+    expect(toast.getAttribute('style')).toContain('opacity: 0');
+
+    vi.advanceTimersByTime(180);
+    expect(onDismiss).toHaveBeenCalledWith('req-1');
+  });
 });

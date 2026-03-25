@@ -68,11 +68,15 @@ export default function PermissionToastStack({
         <div
           key={toast.id}
           data-testid={`permission-toast-${toast.id}`}
-          onClick={() => onSelect?.(toast.id)}
+          onClick={() => {
+            onSelect?.(toast.id);
+            if (onSelect) startDismiss(toast.id);
+          }}
           onKeyDown={(event) => {
             if (event.key === 'Enter' || event.key === ' ') {
               event.preventDefault();
               onSelect?.(toast.id);
+              if (onSelect) startDismiss(toast.id);
             }
           }}
           onMouseEnter={() => setHoveredId(toast.id)}

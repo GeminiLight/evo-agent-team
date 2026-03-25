@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { PermissionRequest, TeamDetail, TeamSummary } from '../types';
 
 const permissionState: {
@@ -102,6 +102,7 @@ vi.mock('../components/EmptyState', () => ({ default: () => <div>empty</div> }))
 vi.mock('../components/TaskDetailPanel', () => ({ default: () => null }));
 vi.mock('../components/AgentProfilePanel', () => ({ default: () => null }));
 vi.mock('../components/alerts/AlertBanner', () => ({ default: () => null }));
+vi.mock('../components/graph/TopologyView', () => ({ TopologyView: () => <div data-testid="topology-view" /> }));
 vi.mock('../components/dashboard/TeamOverview', () => ({
   ExecSummaryBlock: () => <div>summary</div>,
   ProgressSection: () => <div>progress</div>,
@@ -181,8 +182,8 @@ describe('App + ApprovalPanel integration', () => {
     expect(screen.getByTestId('layout-view')).toHaveTextContent('dashboard');
     expect(screen.getByText('modal-req-3')).toBeInTheDocument();
     
-    // Using setTimeout to handle the DOM stabilization frame
-    await new Promise(resolve => setTimeout(resolve, 150));
-    expect(scrollIntoViewMock).toHaveBeenCalledWith({ behavior: 'smooth', block: 'center' });
+    await waitFor(() => {
+      expect(scrollIntoViewMock).toHaveBeenCalledWith({ behavior: 'smooth', block: 'center' });
+    });
   });
 });

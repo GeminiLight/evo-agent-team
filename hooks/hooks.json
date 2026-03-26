@@ -1,0 +1,17 @@
+{
+  "description": "evo-agent-team plugin hooks — auto-detect dashboard server on session start",
+  "hooks": {
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CODEBUDDY_PLUGIN_ROOT}/scripts/check-server.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

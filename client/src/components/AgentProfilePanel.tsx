@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { X, CheckCircle2, Loader2, Clock, Lock, ChevronDown, ChevronRight, Pencil, Check, RotateCcw } from 'lucide-react';
 import type { TeamMember, Task, AgentSessionStats } from '../types';
 import { getTaskStatus, STATUS_COLORS, type StatusKey } from '../utils/statusColors';
-import { agentAccentColor } from '../utils/colorMaps';
+import { agentColor } from '../utils/agentColors';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 
 interface AgentProfilePanelProps {
@@ -122,7 +122,7 @@ export default function AgentProfilePanel({ member, tasks, teamId, isLead = fals
     setSaveError(null);
   }
 
-  const accent = agentAccentColor(member.color);
+  const accent = member.color ? member.color : agentColor(member.name);
   const allTasksSimple = tasks.map(t => ({ id: t.id, status: t.status }));
   const assignedTasks = tasks.filter(t => t.owner === member.name);
   const activeTasks   = assignedTasks.filter(t => t.status === 'in_progress');

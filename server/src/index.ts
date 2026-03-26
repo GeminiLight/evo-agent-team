@@ -25,6 +25,7 @@ app.get('*', (_req, res) => {
 
 const httpServer = app.listen(config.port, () => {
   console.log(`Server running on http://localhost:${config.port}`);
+  console.log(`  Project directory: ${process.env.CWD || '(default)'}`);
   console.log(`  Teams dir: ${config.teamsDir}`);
   console.log(`  Tasks dir: ${config.tasksDir}`);
   console.log(`  Demo mode: ${config.demoMode}`);

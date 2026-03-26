@@ -23,6 +23,9 @@
   "keywords": ["claude", "agent", "visualizer", "dashboard", "monitoring"],
   "license": "MIT",
   "workspaces": ["server", "client"],
+  "dependencies": {
+    "minimist": "^1.2.8"
+  },
   "devDependencies": {
     "concurrently": "^9.0.0"
   }

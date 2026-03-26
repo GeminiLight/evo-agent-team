@@ -19,9 +19,35 @@ function parseDemoMode(val: string | undefined): AppConfig['demoMode'] {
   return 'auto';
 }
 
+/**
+ * Resolve teams and tasks directories with precedence:
+ * 1. CWD (from CLI --cwd, highest priority)
+ * 2. TEAMS_DIR / TASKS_DIR env vars
+ * 3. Default ~/.claude-internal/teams and ~/.claude-internal/tasks
+ */
+function resolveTeamsDir(): string {
+  if (process.env.CWD) {
+    return path.join(expandHome(process.env.CWD), '.claude-internal', 'teams');
+  }
+  if (process.env.TEAMS_DIR) {
+    return expandHome(process.env.TEAMS_DIR);
+  }
+  return expandHome('~/.claude-internal/teams');
+}
+
+function resolveTasksDir(): string {
+  if (process.env.CWD) {
+    return path.join(expandHome(process.env.CWD), '.claude-internal', 'tasks');
+  }
+  if (process.env.TASKS_DIR) {
+    return expandHome(process.env.TASKS_DIR);
+  }
+  return expandHome('~/.claude-internal/tasks');
+}
+
 export const config: AppConfig = {
-  teamsDir: expandHome(process.env.TEAMS_DIR || '~/.claude-internal/teams'),
-  tasksDir: expandHome(process.env.TASKS_DIR || '~/.claude-internal/tasks'),
+  teamsDir: resolveTeamsDir(),
+  tasksDir: resolveTasksDir(),
   port: parseInt(process.env.PORT || '3006', 10),
   pollIntervalMs: parseInt(process.env.POLL_INTERVAL_MS || '2000', 10),
   demoMode: parseDemoMode(process.env.DEMO_MODE),

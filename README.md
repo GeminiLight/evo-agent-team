@@ -1,6 +1,20 @@
 # 🖥️ evo-agent-team
 
-A real-time dashboard for monitoring and visualizing [Claude Code](https://claude.ai/claude-code) agent teams — rendered in a retro CRT/phosphor terminal aesthetic.
+[![npm version](https://img.shields.io/npm/v/evo-agent-team.svg)](https://www.npmjs.com/package/evo-agent-team)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Node.js](https://img.shields.io/badge/Node.js-18%2B-green.svg)](https://nodejs.org/)
+
+> A real-time dashboard for monitoring and visualizing [Claude Code](https://claude.ai/claude-code) agent teams — rendered in a retro CRT/phosphor terminal aesthetic.
+
+[Features](#-features) • [Demo](#-demo) • [Installation](#-installation) • [Documentation](#-documentation) • [Contributing](#-contributing)
+
+---
+
+## 📸 Demo
+
+![Dashboard Preview](./docs/assets/demo.gif)
+
+*Real-time agent team visualization with CRT terminal aesthetic*
 
 ---
 
@@ -13,126 +27,202 @@ A real-time dashboard for monitoring and visualizing [Claude Code](https://claud
 | 💬 **Comms View** | Agent communication log with per-agent filtering and message type badges |
 | 📅 **Timeline View** | Chronological feed of all task status changes with transition history |
 | 🔍 **Task Detail Panel** | Click any task to open a sliding panel with full description, owner, and dependency info |
+| 📝 **Review Panel** | Feedback log, agent preferences management, and statistics with LLM-powered insights |
+| 🧠 **Memory Management** | View and edit team MEMORY.md with AI-powered memory extraction |
+| 🔄 **Knowledge Transfer** | Cross-team knowledge migration with LLM analysis and classification |
+| 📋 **Context Summary** | Three-section context (Decisions/Progress/Context) with token budget |
+| 🎯 **Exec Summary** | AI-generated team progress with caching |
 | 📤 **Export** | Download the topology graph as PNG or the full team state as JSON |
-| ⚡ **Real-time Sync** | WebSocket push updates with automatic polling fallback (LIVE / POLL indicator) |
-| 🎭 **Demo Mode** | Built-in mock team auto-activates when no live agent teams are detected |
+| ⚡ **Real-time Sync** | WebSocket push updates with automatic polling fallback |
+| 🎨 **12 Themes** | 7 dark + 5 light terminal-inspired themes |
+| 🌍 **i18n** | Full English/Chinese bilingual support |
+| 🎭 **Demo Mode** | Built-in mock team auto-activates when no live teams detected |
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Quick Start
 
 ### Prerequisites
 
 - Node.js 18+
-- A running [Claude Code](https://claude.ai/claude-code) agent team (optional — demo mode works without one)
+- [Claude Code](https://claude.ai/claude-code) (optional — demo mode works standalone)
 
-### Install & Run
-
-```bash
-# Install all dependencies
-npm install
-
-# Start both server and client in development mode
-npm run dev
-```
-
-The dashboard will be available at **http://localhost:5173**.
-
-The API server runs at **http://localhost:3006**.
-
-### Build for Production
+### Installation
 
 ```bash
-npm run build
-npm run start -w server
+# Install globally
+npm install -g evo-agent-team
+
+# Run the dashboard
+evo-agent-team
 ```
+
+Or use without installing:
+
+```bash
+npx evo-agent-team
+```
+
+Then open http://localhost:5173
 
 ---
 
-## ⚙️ Configuration
+## 📖 Documentation
 
-Edit `.env` in the project root:
+### Usage
+
+```bash
+# Start with default settings
+evo-agent-team
+
+# With custom port (server)
+PORT=4000 evo-agent-team
+
+# Disable demo mode
+DEMO_MODE=off evo-agent-team
+```
+
+### Configuration
+
+Create `.env` file in your project root:
 
 ```env
-TEAMS_DIR=~/.claude/teams       # Where Claude Code stores team configs
-TASKS_DIR=~/.claude/tasks       # Where Claude Code stores task files
-PORT=3006                        # API server port
-POLL_INTERVAL_MS=2000            # Polling interval (fallback when WebSocket unavailable)
-DEMO_MODE=auto                   # auto | on | off
+# Data directories
+TEAMS_DIR=~/.claude/teams
+TASKS_DIR=~/.claude/tasks
+
+# Server settings
+PORT=3006
+POLL_INTERVAL_MS=2000
+DEMO_MODE=auto
+
+# LLM configuration (for AI features)
+OPENAI_API_KEY=sk-...
+LLM_MODEL=gpt-4o-mini
 ```
 
-`DEMO_MODE=auto` shows mock data only when no real teams are detected. Set to `on` to always show demo data.
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `TEAMS_DIR` | `~/.claude/teams` | Claude Code team configs |
+| `TASKS_DIR` | `~/.claude/tasks` | Claude Code task files |
+| `PORT` | `3006` | API server port |
+| `DEMO_MODE` | `auto` | `auto`/`on`/`off` |
+| `OPENAI_API_KEY` | - | Required for AI features |
+
+### Data Sources
+
+The dashboard reads from:
+
+| Source | Path |
+|--------|------|
+| Team configs | `~/.claude/teams/{team}/config.json` |
+| Task files | `~/.claude/tasks/{team}/{task-id}.json` |
+| Agent inboxes | `~/.claude/teams/{team}/inboxes/{agent}.json` |
+| Memory | `~/.claude-internal/projects/{cwd}/memory/MEMORY.md` |
+| Feedback | `{team}/feedback.jsonl` |
 
 ---
 
-## 🗂️ Project Structure
+## 🏗️ Architecture
+
+### Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| Frontend | React 18, TypeScript, Vite, Tailwind CSS v4 |
+| State | React Hooks, WebSocket |
+| Graph | @xyflow/react (ReactFlow) |
+| i18n | react-i18next |
+| Backend | Node.js, Express 4, TypeScript ESM |
+| Real-time | WebSocket (`ws`), `fs.watch` |
+| AI | OpenAI SDK |
+
+### Project Structure
 
 ```
 agent-team/
-├── server/                  # Express API backend (TypeScript ESM)
+├── server/               # Express API (TypeScript ESM)
 │   └── src/
-│       ├── index.ts         # Server entry point
-│       ├── config.ts        # .env config loader
-│       ├── types.ts         # Shared TypeScript interfaces
-│       ├── websocket.ts     # WebSocket server + fs.watch broadcaster
-│       ├── changeTracker.ts # In-memory task status change diffing
-│       ├── mockData.ts      # Demo team/task/message/timeline data
-│       └── routes/
-│           ├── teams.ts     # GET /api/teams, /api/teams/:id, /api/teams/:id/timeline
-│           └── messages.ts  # GET /api/teams/:id/messages
-└── client/                  # React 18 + Vite frontend (TypeScript)
-    └── src/
-        ├── App.tsx          # Root component + view routing
-        ├── types.ts         # Shared TypeScript interfaces
-        ├── hooks/
-        │   └── useTeamData.ts        # WebSocket + polling data hook
-        ├── utils/
-        │   ├── statusColors.ts       # Status color palette + derived status logic
-        │   └── exportUtils.ts        # PNG and JSON export helpers
-        └── components/
-            ├── Layout.tsx            # App shell: header, nav, team selector
-            ├── TaskDetailPanel.tsx   # Sliding task detail panel
-            ├── dashboard/            # Matrix view components
-            ├── graph/                # ReactFlow topology view components
-            ├── commlog/              # Agent communication log components
-            └── timeline/             # Task timeline components
+│       ├── routes/       # API endpoints
+│       ├── index.ts      # Server entry
+│       └── config.ts     # Environment config
+├── client/               # React 18 + Vite
+│   └── src/
+│       ├── components/   # UI components
+│       ├── hooks/        # Custom hooks
+│       ├── utils/        # Utilities
+│       └── i18n.ts       # Translations
+└── wiki/                 # Documentation
+    ├── 01-project-roadmap.md
+    ├── 02-system-architecture.md
+    └── 90-changelog.md
 ```
+
+---
+
+## 🛠️ Development
+
+```bash
+# Clone repository
+git clone <repo-url>
+cd agent-team
+
+# Install dependencies
+npm install
+
+# Start development
+npm run dev
+
+# Build for production
+npm run build
+
+# Start production server
+npm run start -w server
+```
+
+### Scripts
+
+| Script | Description |
+|--------|-------------|
+| `npm run dev` | Start client + server in dev mode |
+| `npm run build` | Build client for production |
+| `npm run start -w server` | Start production server |
 
 ---
 
 ## 🎨 Design System
 
-The UI uses a **CRT phosphor terminal** aesthetic throughout:
+CRT phosphor terminal aesthetic:
 
-- 🟢 **Phosphor** (`#39ff6a`) — primary accent, completed status
-- 🟠 **Amber** (`#f5a623`) — in-progress status, warnings
-- 🔴 **Crimson** (`#ff3b5c`) — blocked status, errors
-- 🔵 **Ice** (`#7eb8f7`) — informational, task assignments
-- ⬛ **Void** (`#040608`) — base background
-- Fonts: **JetBrains Mono** (monospace) + **Syne** (display)
-- CRT scanlines and vignette applied globally via CSS
-
----
-
-## 🤝 How It Works
-
-The visualizer reads live data written by the Claude Code agent runtime:
-
-- **Team configs** — `~/.claude/teams/{team-name}/config.json`
-- **Task files** — `~/.claude/tasks/{team-name}/{task-id}.json`
-- **Agent inboxes** — `~/.claude/teams/{team-name}/inboxes/{agent-name}.json`
-
-The server watches these directories via `fs.watch` and pushes updates to the client over WebSocket. When WebSocket is unavailable, the client falls back to polling every 2 seconds.
+- **Phosphor** (`#39ff6a`) — primary accent
+- **Amber** (`#f5a623`) — warnings/in-progress
+- **Crimson** (`#ff3b5c`) — errors/blocked
+- **Ice** (`#7eb8f7`) — informational
+- **Void** (`#040608`) — background
+- Fonts: JetBrains Mono + Syne
 
 ---
 
-## 📦 Tech Stack
+## 🤝 Contributing
 
-| Layer | Technology |
-|---|---|
-| Frontend | React 18, TypeScript, Vite, Tailwind CSS v4 |
-| Graph | @xyflow/react (ReactFlow) v12 |
-| Backend | Node.js, Express 4, TypeScript ESM |
-| Real-time | WebSocket (`ws`), `fs.watch` |
-| Icons | lucide-react |
-| Export | html-to-image |
+Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) for details.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+---
+
+## 📝 License
+
+[MIT](LICENSE) © 2026
+
+---
+
+## 🔗 Links
+
+- [npm](https://www.npmjs.com/package/evo-agent-team)
+- [Issues](https://github.com/username/agent-team/issues)
+- [Documentation](/wiki)

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import type { TeamMember, Task } from '../../types';
-import { agentAccentColor } from '../../utils/colorMaps';
+import { agentColor } from '../../utils/agentColors';
 import RespondModal from '../shared/RespondModal';
 
 interface AgentCardProps {
@@ -41,7 +41,7 @@ export default function AgentCard({ member, tasks, onAgentSelect, sortRank, awai
     ? Math.round((completedTasks.length / assignedTasks.length) * 100)
     : 0;
 
-  const accent = agentAccentColor(member.color);
+  const accent = member.color ? member.color : agentColor(member.name);
   const accentBg = `${accent}12`;
   const accentBorder = `${accent}40`;
   const accentBorderHi = `${accent}70`;

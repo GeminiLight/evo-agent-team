@@ -297,3 +297,25 @@ export type PreferenceEntry = string | PreferenceRule;
 
 /** preferences.json shape: agent name → array of entries */
 export type PreferencesMap = Record<string, PreferenceEntry[]>;
+
+// ── E2: Supervision rules ──
+
+export interface SupervisionRule {
+  id: string;                          // "sr-{timestamp}-{random}"
+  text: string;                        // Human-readable rule text
+  source: 'manual' | 'auto';
+  createdAt: string;                   // ISO timestamp
+  supportCount?: number;               // For auto-extracted rules: number of corrections
+}
+
+export interface SupervisionConfig {
+  rules: SupervisionRule[];
+  threshold: number;                   // 0=conservative (pause often) → 100=autonomous
+}
+
+export interface SupervisionSuggestion {
+  text: string;
+  reason: string;
+  supportCount: number;
+  sourceEntryIds: string[];
+}

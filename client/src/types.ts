@@ -280,3 +280,25 @@ export interface PreferenceRule {
 
 export type PreferenceEntry = string | PreferenceRule;
 export type PreferencesMap = Record<string, PreferenceEntry[]>;
+
+// ── E2: Supervision rules ──
+
+export interface SupervisionRule {
+  id: string;
+  text: string;
+  source: 'manual' | 'auto';
+  createdAt: string;
+  supportCount?: number;
+}
+
+export interface SupervisionConfig {
+  rules: SupervisionRule[];
+  threshold: number;
+}
+
+export interface SupervisionSuggestion {
+  text: string;
+  reason: string;
+  supportCount: number;
+  sourceEntryIds: string[];
+}

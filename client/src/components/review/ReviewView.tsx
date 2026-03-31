@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Plus, Trash2, Sparkles, ChevronDown, X, ArrowUpRight, Search } from 'lucide-react';
 import type { PreferenceRule, PreferenceEntry, PreferencesMap } from '../../types';
 import { fmtDate } from '../../utils/formatters';
+import SupervisionPanel from './SupervisionPanel';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -525,6 +526,11 @@ export default function ReviewView({ teamId, agentNames, isDemoMode }: ReviewVie
           </div>
         </Section>
       )}
+
+      {/* SUPERVISION RULES (E2) */}
+      <Section label={t('supervision.title', 'Supervision Rules')} subtitle={t('supervision.subtitle', 'Control when agents should pause and ask for approval')}>
+        <SupervisionPanel teamId={teamId} isDemoMode={isDemoMode} />
+      </Section>
     </div>
   );
 }

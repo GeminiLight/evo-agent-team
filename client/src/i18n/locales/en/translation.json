@@ -17,7 +17,14 @@
     "cost_tooltip": "Stats — token usage and tool call analysis",
     "review_tooltip": "Review — feedback log and agent preferences",
     "settings": "Config",
-    "settings_tooltip": "Settings — appearance, server config, and connection info"
+    "settings_tooltip": "Settings — appearance, server config, and connection info",
+    "group": {
+      "monitoring": "Monitoring",
+      "collaboration": "Collaboration",
+      "knowledge": "Knowledge",
+      "review": "Review & Analysis",
+      "settings": "Settings"
+    }
   },
   "sidebar": {
     "overview": "Overview",
@@ -31,6 +38,8 @@
     "memory": "Memory",
     "context": "Context",
     "expert_profile": "Expert",
+    "messages": "Messages",
+    "approvals": "Approvals",
     "collapse": "Collapse",
     "expand": "Expand"
   },
@@ -620,5 +629,29 @@
     "token_count": "{{used}} / {{limit}}",
     "token_warning": "Exceeds recommended 4K token budget",
     "demo_readonly": "Context summary is read-only in demo mode"
+  },
+  "onboarding": {
+    "tour_cta": "Take Guided Tour (2 min)",
+    "setup_cta": "Setup My Team",
+    "what_you_can_do": "What You Can Do",
+    "watch_team": "Watch your team in real-time",
+    "respond_inline": "Respond without leaving app",
+    "save_lessons": "Save lessons for next time",
+    "track_costs": "Track costs per agent",
+    "step1_title": "Meet Your Dashboard",
+    "step1_desc": "See all agents, tasks, and alerts in one place",
+    "step2_title": "Approvals Are Critical",
+    "step2_desc": "Agents ask you to confirm important actions here",
+    "step3_title": "Communication Hub",
+    "step3_desc": "All messages in one searchable timeline",
+    "step4_title": "Give Feedback",
+    "step4_desc": "Rate agent outputs to help them improve",
+    "step5_title": "Persistent Knowledge",
+    "step5_desc": "Your lessons transfer to new teams automatically",
+    "next": "Next",
+    "back": "Back",
+    "skip": "Skip tour",
+    "complete": "I'm ready!",
+    "progress": "Step {{current}}/{{total}}"
   }
 }

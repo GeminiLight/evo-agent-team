@@ -17,7 +17,14 @@
     "cost_tooltip": "统计 — Token 用量和工具调用分析",
     "review_tooltip": "评审 — 反馈日志和代理偏好",
     "settings": "配置",
-    "settings_tooltip": "设置 — 外观、服务器配置和连接信息"
+    "settings_tooltip": "设置 — 外观、服务器配置和连接信息",
+    "group": {
+      "monitoring": "监测",
+      "collaboration": "协作",
+      "knowledge": "知识库",
+      "review": "审查与分析",
+      "settings": "设置"
+    }
   },
   "sidebar": {
     "overview": "概览",
@@ -31,6 +38,8 @@
     "memory": "记忆",
     "context": "上下文",
     "expert_profile": "专家",
+    "messages": "消息",
+    "approvals": "批准",
     "collapse": "收起侧栏",
     "expand": "展开侧栏"
   },
@@ -620,5 +629,29 @@
     "token_count": "{{used}} / {{limit}} tokens",
     "token_warning": "超出推荐的 {{limit}} token 预算",
     "demo_readonly": "演示模式下上下文摘要为只读"
+  },
+  "onboarding": {
+    "tour_cta": "参加 2 分钟导览",
+    "setup_cta": "设置我的团队",
+    "what_you_can_do": "你可以做什么",
+    "watch_team": "实时监测你的团队",
+    "respond_inline": "无需离开应用即可回复",
+    "save_lessons": "保存经验教训供下次使用",
+    "track_costs": "追踪每个代理的成本",
+    "step1_title": "认识你的仪表盘",
+    "step1_desc": "在一个地方查看所有代理、任务和警报",
+    "step2_title": "批准非常重要",
+    "step2_desc": "代理会在这里请求你确认重要操作",
+    "step3_title": "通信中枢",
+    "step3_desc": "所有消息都在一条可搜索的时间线里",
+    "step4_title": "给出反馈",
+    "step4_desc": "为代理的输出评分以帮助他们改进",
+    "step5_title": "持久化知识",
+    "step5_desc": "你的经验自动转移到新团队",
+    "next": "下一步",
+    "back": "返回",
+    "skip": "跳过导览",
+    "complete": "我准备好了！",
+    "progress": "第 {{current}}/{{total}} 步"
   }
 }

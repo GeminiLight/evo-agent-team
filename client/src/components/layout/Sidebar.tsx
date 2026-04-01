@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { LayoutDashboard, Network, Activity, ScrollText, MessageSquare, DollarSign, Star, Brain, ChevronLeft, ChevronRight, Settings } from 'lucide-react';
+import { 
+  LayoutDashboard, Network, Activity, ScrollText, MessageSquare, 
+  DollarSign, Star, Brain, ChevronLeft, ChevronRight, Settings,
+  BarChart3, Zap, Check, BookOpen, MonitorCog
+} from 'lucide-react';
 import type { ViewType } from '../Layout';
 import type { TeamDetail } from '../../types';
 import { agentColor, agentInitials } from '../../utils/agentColors';
@@ -10,6 +14,22 @@ const STORAGE_KEY = 'sidebar-collapsed';
 
 // Activity-family views: commlog and timeline should highlight the Activity nav item
 const ACTIVITY_FAMILY: ViewType[] = ['activity', 'commlog', 'timeline'];
+
+interface NavItem {
+  key: ViewType;
+  icon: typeof LayoutDashboard;
+  labelKey: string;
+  badgeCount?: number;
+  id?: string; // Optional unique ID for rendering
+}
+
+interface NavGroup {
+  id: string;
+  labelKey: string;
+  icon: typeof LayoutDashboard;
+  items: NavItem[];
+  badgeCount?: number;
+}
 
 interface SidebarProps {
   view: ViewType;
@@ -21,15 +41,47 @@ interface SidebarProps {
   onAgentSelect?: (agentId: string) => void;
 }
 
-const NAV_ITEMS: { key: ViewType; icon: typeof LayoutDashboard; labelKey: string; family?: ViewType[] }[] = [
-  { key: 'dashboard', icon: LayoutDashboard, labelKey: 'sidebar.overview' },
-  { key: 'graph',     icon: Network,         labelKey: 'sidebar.topology' },
-  { key: 'activity',  icon: Activity,        labelKey: 'sidebar.activity', family: ACTIVITY_FAMILY },
-  { key: 'history',   icon: ScrollText,      labelKey: 'sidebar.sessions' },
-  { key: 'chat',      icon: MessageSquare,   labelKey: 'sidebar.chat' },
-  { key: 'cost',      icon: DollarSign,      labelKey: 'sidebar.stats' },
-  { key: 'review',    icon: Star,            labelKey: 'sidebar.review' },
-  { key: 'knowledge', icon: Brain,           labelKey: 'sidebar.knowledge' },
+const buildNavStructure = (pendingApprovalCount: number = 0): NavGroup[] => [
+  {
+    id: 'monitoring',
+    labelKey: 'nav.group.monitoring',
+    icon: MonitorCog,
+    items: [
+      { key: 'dashboard', icon: LayoutDashboard, labelKey: 'sidebar.overview' },
+      { key: 'graph',     icon: Network,         labelKey: 'sidebar.topology' },
+      { key: 'activity',  icon: Activity,        labelKey: 'sidebar.activity' },
+    ],
+  },
+  {
+    id: 'collaboration',
+    labelKey: 'nav.group.collaboration',
+    icon: MessageSquare,
+    items: [
+      { key: 'commlog',   icon: MessageSquare,   labelKey: 'sidebar.messages' },
+      { key: 'approvals', icon: Check,           labelKey: 'sidebar.approvals', badgeCount: pendingApprovalCount },
+      { key: 'history',   icon: ScrollText,      labelKey: 'sidebar.sessions' },
+    ],
+    badgeCount: pendingApprovalCount,
+  },
+  {
+    id: 'knowledge',
+    labelKey: 'nav.group.knowledge',
+    icon: Brain,
+    items: [
+      { key: 'knowledge', icon: Brain,           labelKey: 'sidebar.knowledge' },
+      { key: 'chat',      icon: MessageSquare,   labelKey: 'sidebar.chat' },
+      { key: 'timeline',  icon: BookOpen,        labelKey: 'sidebar.memory' },
+    ],
+  },
+  {
+    id: 'review',
+    labelKey: 'nav.group.review',
+    icon: Star,
+    items: [
+      { key: 'review',    icon: Star,            labelKey: 'sidebar.review' },
+      { key: 'cost',      icon: DollarSign,      labelKey: 'sidebar.stats' },
+    ],
+  },
 ];
 
 export default function Sidebar({
@@ -57,6 +109,7 @@ export default function Sidebar({
   const width = collapsed ? 48 : 200;
   const members = teamDetail?.config?.members ?? [];
   const tasks = teamDetail?.tasks ?? [];
+  const navGroups = buildNavStructure(pendingHumanCount);
 
   function getAgentStatus(name: string): 'active' | 'pending' | 'alerted' | 'idle' {
     if (alertedAgentNames.has(name)) return 'alerted';
@@ -76,6 +129,37 @@ export default function Sidebar({
     active: true, pending: true, alerted: true, idle: false,
   };
 
+  function isItemActive(item: NavItem, currentView: ViewType): boolean {
+    if (item.key === 'activity' && ACTIVITY_FAMILY.includes(currentView)) return true;
+    return currentView === item.key;
+  }
+
+  function renderBadge(count?: number) {
+    if (!count || count === 0) return null;
+    return (
+      <span style={{
+        position: 'absolute',
+        top: collapsed ? '4px' : '5px',
+        right: collapsed ? '8px' : '8px',
+        minWidth: '12px',
+        height: '12px',
+        borderRadius: '50%',
+        background: 'var(--amber)',
+        boxShadow: '0 0 4px var(--amber)',
+        animation: 'status-pulse 2s ease-in-out infinite',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '8px',
+        fontWeight: 700,
+        color: 'var(--surface-0)',
+        padding: '0 3px',
+      }}>
+        {count > 9 ? '9+' : count}
+      </span>
+    );
+  }
+
   return (
     <aside style={{
       width,
@@ -89,56 +173,97 @@ export default function Sidebar({
       overflow: 'hidden',
       flexShrink: 0,
     }}>
-      {/* ─── Navigation ─── */}
-      <nav aria-label="Main navigation" style={{ padding: collapsed ? '10px 6px 6px' : '10px 8px 6px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
-        {NAV_ITEMS.map(({ key, icon: Icon, labelKey, family }) => {
-          const active = family ? family.includes(view) : view === key;
-          const hasBadge = key === 'activity' && pendingHumanCount > 0;
+      {/* ─── Navigation Groups ─── */}
+      <nav aria-label="Main navigation" style={{ 
+        padding: collapsed ? '10px 6px 6px' : '10px 8px 6px', 
+        display: 'flex', 
+        flexDirection: 'column', 
+        gap: '8px',
+        overflowY: 'auto',
+        flex: 1,
+      }}>
+        {navGroups.map(group => {
+          const GroupIcon = group.icon;
+          
           return (
-            <button
-              key={key}
-              onClick={() => onViewChange(key)}
-              aria-current={active ? 'page' : undefined}
-              title={collapsed ? t(labelKey) : undefined}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                padding: collapsed ? '8px 0' : '7px 10px',
-                justifyContent: collapsed ? 'center' : 'flex-start',
-                background: active ? 'var(--active-bg-med)' : 'transparent',
-                color: active ? 'var(--active-text)' : 'var(--text-secondary)',
-                border: 'none',
-                borderLeft: active ? '2px solid var(--phosphor)' : '2px solid transparent',
-                borderRadius: '0 3px 3px 0',
-                cursor: 'pointer',
-                fontFamily: 'var(--font-mono)',
-                fontSize: '10px',
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
-                transition: 'all 0.15s',
-                textShadow: active ? '0 0 8px var(--phosphor-glow-strong)' : 'none',
-                position: 'relative',
-                whiteSpace: 'nowrap',
-                width: '100%',
-              }}
-              onMouseEnter={e => { if (!active) { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.background = 'var(--surface-1)'; } }}
-              onMouseLeave={e => { if (!active) { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.background = 'transparent'; } }}
-            >
-              <Icon size={14} style={{ flexShrink: 0 }} />
-              {!collapsed && <span>{t(labelKey)}</span>}
-              {hasBadge && (
-                <span style={{
-                  position: 'absolute',
-                  top: collapsed ? '4px' : '5px',
-                  right: collapsed ? '8px' : '8px',
-                  width: '6px', height: '6px', borderRadius: '50%',
-                  background: 'var(--amber)',
-                  boxShadow: '0 0 4px var(--amber)',
-                  animation: 'status-pulse 2s ease-in-out infinite',
-                }} />
+            <div key={group.id} style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
+              {/* Group header (only show label when expanded) */}
+              {!collapsed && (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '6px 8px',
+                  fontSize: '9px',
+                  letterSpacing: '0.12em',
+                  color: 'var(--text-muted)',
+                  textTransform: 'uppercase',
+                  opacity: 0.6,
+                  fontWeight: 700,
+                }}>
+                  <GroupIcon size={12} style={{ flexShrink: 0 }} />
+                  <span>{t(group.labelKey)}</span>
+                </div>
               )}
-            </button>
+
+              {/* Group items */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
+                {group.items.map(item => {
+                  const Icon = item.icon;
+                  const active = isItemActive(item, view);
+                  const itemBadgeCount = item.badgeCount;
+                  const itemKey = item.id || `${group.id}-${item.key}`;
+
+                  return (
+                    <button
+                      key={itemKey}
+                      onClick={() => onViewChange(item.key)}
+                      aria-current={active ? 'page' : undefined}
+                      title={collapsed ? t(item.labelKey) : undefined}
+                      data-tour={item.id || item.key}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        padding: collapsed ? '8px 0' : '7px 10px',
+                        justifyContent: collapsed ? 'center' : 'flex-start',
+                        background: active ? 'var(--active-bg-med)' : 'transparent',
+                        color: active ? 'var(--active-text)' : 'var(--text-secondary)',
+                        border: 'none',
+                        borderLeft: active ? '2px solid var(--phosphor)' : '2px solid transparent',
+                        borderRadius: '0 3px 3px 0',
+                        cursor: 'pointer',
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: '10px',
+                        letterSpacing: '0.08em',
+                        textTransform: 'uppercase',
+                        transition: 'all 0.15s',
+                        textShadow: active ? '0 0 8px var(--phosphor-glow-strong)' : 'none',
+                        position: 'relative',
+                        whiteSpace: 'nowrap',
+                        width: '100%',
+                      }}
+                      onMouseEnter={e => { 
+                        if (!active) { 
+                          e.currentTarget.style.color = 'var(--text-primary)'; 
+                          e.currentTarget.style.background = 'var(--surface-1)'; 
+                        } 
+                      }}
+                      onMouseLeave={e => { 
+                        if (!active) { 
+                          e.currentTarget.style.color = 'var(--text-secondary)'; 
+                          e.currentTarget.style.background = 'transparent'; 
+                        } 
+                      }}
+                    >
+                      <Icon size={14} style={{ flexShrink: 0 }} />
+                      {!collapsed && <span>{t(item.labelKey)}</span>}
+                      {itemBadgeCount !== undefined && renderBadge(itemBadgeCount)}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           );
         })}
       </nav>
@@ -279,8 +404,18 @@ export default function Sidebar({
             textTransform: 'uppercase',
             transition: 'all 0.15s',
           }}
-          onMouseEnter={e => { if (view !== 'settings') { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.background = 'var(--surface-1)'; } }}
-          onMouseLeave={e => { if (view !== 'settings') { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.background = 'transparent'; } }}
+          onMouseEnter={e => { 
+            if (view !== 'settings') { 
+              e.currentTarget.style.color = 'var(--text-primary)'; 
+              e.currentTarget.style.background = 'var(--surface-1)'; 
+            } 
+          }}
+          onMouseLeave={e => { 
+            if (view !== 'settings') { 
+              e.currentTarget.style.color = 'var(--text-secondary)'; 
+              e.currentTarget.style.background = 'transparent'; 
+            } 
+          }}
         >
           <Settings size={13} style={{ flexShrink: 0 }} />
           {!collapsed && <span>{t('nav.settings')}</span>}

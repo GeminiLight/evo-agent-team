@@ -60,6 +60,7 @@ export default function ApprovalPanel({ requests, resolvingId, onResolve, onOpen
           borderRadius: '4px',
           marginBottom: '12px',
         }}
+        data-tour="approvals"
       >
         {/* Header */}
         <button

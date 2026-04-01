@@ -210,7 +210,7 @@ export default function App() {
           />
         )}
 
-        {view === 'dashboard' && teamDetail && (
+        {(view === 'dashboard' || view === 'approvals') && teamDetail && (
           <DashboardView
             team={teamDetail}
             onTaskSelect={setSelectedTaskId}

@@ -235,7 +235,7 @@ export default function ReviewView({ teamId, agentNames, isDemoMode }: ReviewVie
   });
 
   return (
-    <div style={{ maxWidth: '920px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <div style={{ maxWidth: '920px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px' }} data-tour="feedback">
 
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type React from 'react';
+import { fetchWithCache } from '../utils/fetchCache';
 import type { TeamSummary, TeamDetail, WsMessage } from '../types';
 
 interface UseTeamDataReturn {
@@ -21,6 +22,8 @@ export function useTeamData(pollInterval = 2000): UseTeamDataReturn {
   const [loading, setLoading] = useState(true);
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [wsConnected, setWsConnected] = useState(false);
+  const [isTabVisible, setIsTabVisible] = useState(true);
+  const [isUserIdle, setIsUserIdle] = useState(false);
 
   const selectedIdRef = useRef(selectedTeamId);
   selectedIdRef.current = selectedTeamId;
@@ -30,10 +33,19 @@ export function useTeamData(pollInterval = 2000): UseTeamDataReturn {
   const detailIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastActivityRef = useRef<number>(Date.now());
+
+  // Calculate current polling interval based on visibility and idle state
+  const calculateInterval = useCallback((): number => {
+    if (!isTabVisible) return Math.max(pollInterval * 5, 10000); // 5x slower when hidden
+    if (isUserIdle) return Math.max(pollInterval * 5, 10000); // 5x slower when idle
+    return pollInterval;
+  }, [pollInterval, isTabVisible, isUserIdle]);
 
   const fetchTeams = useCallback(async () => {
     try {
-      const res = await fetch('/api/teams');
+      const res = await fetchWithCache('/api/teams');
       if (!res.ok) return;
       const data = await res.json();
       setTeams(data.teams ?? []);
@@ -56,7 +68,7 @@ export function useTeamData(pollInterval = 2000): UseTeamDataReturn {
 
   const fetchDetail = useCallback(async (id: string) => {
     try {
-      const res = await fetch(`/api/teams/${id}`);
+      const res = await fetchWithCache(`/api/teams/${id}`);
       if (!res.ok) return;
       const data = await res.json();
       setTeamDetail(data);
@@ -65,16 +77,59 @@ export function useTeamData(pollInterval = 2000): UseTeamDataReturn {
     }
   }, []);
 
+  // Track user activity for idle detection
+  useEffect(() => {
+    const resetIdleTimer = () => {
+      lastActivityRef.current = Date.now();
+      if (isUserIdle) {
+        setIsUserIdle(false);
+      }
+      if (idleTimerRef.current) {
+        clearTimeout(idleTimerRef.current);
+      }
+      idleTimerRef.current = setTimeout(() => {
+        setIsUserIdle(true);
+      }, 60000); // 60s idle threshold
+    };
+
+    const events = ['mousedown', 'keydown', 'scroll', 'touchstart'];
+    events.forEach(evt => window.addEventListener(evt, resetIdleTimer, { passive: true }));
+
+    // Initial timer
+    resetIdleTimer();
+
+    return () => {
+      events.forEach(evt => window.removeEventListener(evt, resetIdleTimer));
+      if (idleTimerRef.current) {
+        clearTimeout(idleTimerRef.current);
+      }
+    };
+  }, [isUserIdle]);
+
+  // Track tab visibility
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      setIsTabVisible(!document.hidden);
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+
   const startPolling = useCallback(() => {
+    const interval = calculateInterval();
+
     if (!teamsIntervalRef.current) {
-      teamsIntervalRef.current = setInterval(fetchTeams, pollInterval);
+      teamsIntervalRef.current = setInterval(fetchTeams, interval);
     }
     if (!detailIntervalRef.current && selectedIdRef.current) {
       detailIntervalRef.current = setInterval(() => {
         if (selectedIdRef.current) fetchDetail(selectedIdRef.current);
-      }, pollInterval);
+      }, interval);
     }
-  }, [fetchTeams, fetchDetail, pollInterval]);
+  }, [fetchTeams, fetchDetail, calculateInterval]);
 
   const stopPolling = useCallback(() => {
     if (teamsIntervalRef.current) {
@@ -181,19 +236,31 @@ export function useTeamData(pollInterval = 2000): UseTeamDataReturn {
   // Restart detail polling interval if polling is active and selectedTeamId changes
   useEffect(() => {
     if (!selectedTeamId || wsConnected) return;
+    const interval = calculateInterval();
     if (detailIntervalRef.current) {
       clearInterval(detailIntervalRef.current);
     }
     detailIntervalRef.current = setInterval(() => {
       if (selectedIdRef.current) fetchDetail(selectedIdRef.current);
-    }, pollInterval);
+    }, interval);
     return () => {
       if (detailIntervalRef.current) {
         clearInterval(detailIntervalRef.current);
         detailIntervalRef.current = null;
       }
     };
-  }, [selectedTeamId, wsConnected, fetchDetail, pollInterval]);
+  }, [selectedTeamId, wsConnected, fetchDetail, calculateInterval]);
+
+  // Adjust polling intervals when visibility or idle state changes
+  useEffect(() => {
+    if (wsConnected) return; // Skip when using WebSocket
+
+    // Stop current polling
+    stopPolling();
+    
+    // Restart polling with recalculated interval
+    startPolling();
+  }, [isTabVisible, isUserIdle, wsConnected, startPolling, stopPolling]);
 
   const enableDemo = useCallback(async () => {
     try {
@@ -211,3 +278,4 @@ export function useTeamData(pollInterval = 2000): UseTeamDataReturn {
 
   return { teams, selectedTeamId, setSelectedTeamId, teamDetail, setTeamDetail, loading, isDemoMode, enableDemo, wsConnected };
 }
+

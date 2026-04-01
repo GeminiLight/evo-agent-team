@@ -78,6 +78,7 @@ export default function DashboardView({
   const { t } = useTranslation();
   const members = team.config?.members ?? [];
   const [sortMode, setSortMode] = useState<SortMode>('default');
+  const [advancedExpanded, setAdvancedExpanded] = useState(false);
 
   // Fetch recent timeline events for ActionQueue
   const [recentEvents, setRecentEvents] = useState<TaskChangeEvent[]>([]);
@@ -113,8 +114,8 @@ export default function DashboardView({
   const isTablet = useIsTablet();
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      {/* Top row: Overview strip — full width, horizontal */}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }} data-tour="dashboard">
+      {/* #1 — Overview KPIs: top row, horizontal layout */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: isTablet ? '1fr' : 'auto 1fr auto',
@@ -126,7 +127,7 @@ export default function DashboardView({
         <StatsRow sessionStats={sessionStats} />
       </div>
 
-      {/* Action Queue — full-width horizontal bar, only when there's content */}
+      {/* #1b — Action Queue: alerts & blockers */}
       <ActionQueue
         alerts={alerts}
         pendingHumanDetails={pendingHumanDetails}
@@ -136,7 +137,7 @@ export default function DashboardView({
         onViewChange={onViewChange ?? (() => {})}
       />
 
-      {/* Approval Panel — show pending permission requests */}
+      {/* #2 — Approval Panel: CRITICAL PRIORITY, above fold */}
       <ApprovalPanel
         requests={permissionRequests}
         resolvingId={resolvingPermissionId}
@@ -144,7 +145,7 @@ export default function DashboardView({
         onOpenDetails={onOpenPermissionDetails}
       />
 
-      {/* Agent Roster — full width, more room for cards */}
+      {/* #3 — Agent Roster: full width, 3-col grid (desktop), 2-col (tablet), 1-col (mobile) */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', minWidth: 0 }}>
         {members.length > 0 ? (
           <>
@@ -184,7 +185,7 @@ export default function DashboardView({
               </div>
             </div>
 
-            {/* Compact agent cards — auto-fill grid, full width */}
+            {/* Compact agent cards — 3-col desktop (280px), 2-col tablet (220px), 1-col mobile (<640px) */}
             <div style={{
               display: 'grid',
               gridTemplateColumns: `repeat(auto-fill, minmax(${isTablet ? '220px' : '280px'}, 1fr))`,
@@ -217,18 +218,93 @@ export default function DashboardView({
         )}
       </div>
 
-      {/* Session todos — inline, only when there are sessions with items */}
-      {projectTodos.length > 0 && (
-        <SessionTodoList sessions={projectTodos} />
-      )}
-
-      {/* Task list — full width */}
+      {/* #4 — Task list (always visible, not collapsible) */}
       <TaskList tasks={team.tasks} members={members} onTaskSelect={onTaskSelect} teamId={team.id} onTaskUpdated={onTeamUpdate} />
 
-      {/* Heatmap — only when there are ≥2 agents */}
-      {members.length >= 2 && (
-        <AgentHeatmap teamId={team.id} agentNames={members.map(m => m.name)} />
-      )}
+      {/* #5 — Collapsible Advanced Section (Heatmap + Session Todos) */}
+      <AdvancedSection
+        expanded={advancedExpanded}
+        onToggle={() => setAdvancedExpanded(!advancedExpanded)}
+        heatmapContent={
+          members.length >= 2 ? (
+            <AgentHeatmap teamId={team.id} agentNames={members.map(m => m.name)} />
+          ) : null
+        }
+        sessionTodosContent={
+          projectTodos.length > 0 ? (
+            <SessionTodoList sessions={projectTodos} />
+          ) : null
+        }
+      />
+    </div>
+  );
+}
+
+// ─── Advanced Section (Collapsible Heatmap + SessionTodos) ──────────────────
+
+interface AdvancedSectionProps {
+  expanded: boolean;
+  onToggle: () => void;
+  heatmapContent: React.ReactNode;
+  sessionTodosContent: React.ReactNode;
+}
+
+function AdvancedSection({ expanded, onToggle, heatmapContent, sessionTodosContent }: AdvancedSectionProps) {
+  const { t } = useTranslation();
+  const hasContent = heatmapContent || sessionTodosContent;
+
+  if (!hasContent) return null;
+
+  return (
+    <div className="dashboard-section--advanced">
+      {/* Toggle button */}
+      <button
+        onClick={onToggle}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          fontSize: '9px',
+          letterSpacing: '0.15em',
+          color: 'var(--text-muted)',
+          textTransform: 'uppercase',
+          background: 'transparent',
+          border: 'none',
+          cursor: 'pointer',
+          padding: '0',
+          transition: 'color 0.1s',
+        }}
+        onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-secondary)'; }}
+        onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; }}
+      >
+        <span style={{ fontSize: '12px', lineHeight: 1 }}>
+          {expanded ? '▼' : '▶'}
+        </span>
+        <span>+ {t('dashboard.expand_advanced', { defaultValue: 'Expand advanced' })}</span>
+      </button>
+
+      {/* Collapsible content */}
+      <div
+        className={`dashboard-section--advanced__content ${expanded ? 'expanded' : ''}`}
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '16px',
+          maxHeight: expanded ? '2000px' : '0',
+          overflow: 'hidden',
+          transition: 'max-height 0.3s ease-out',
+        }}
+      >
+        {/* Heatmap */}
+        {heatmapContent && (
+          <div>{heatmapContent}</div>
+        )}
+
+        {/* Session Todos */}
+        {sessionTodosContent && (
+          <div>{sessionTodosContent}</div>
+        )}
+      </div>
     </div>
   );
 }

@@ -316,7 +316,7 @@ export default function CommLogView({ teamId, teamDetail, onMessagesChange, pend
       flexDirection: 'column',
       height: 'calc(100vh - 100px)',
       minHeight: '280px',
-    }}>
+    }} data-tour="messages">
       {/* ── Single panel ── */}
       <div style={{
         background: 'var(--surface-0)',

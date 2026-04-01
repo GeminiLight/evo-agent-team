@@ -11,12 +11,13 @@ import { getSessionHistory, listAvailableAgentSessions } from '../sessionHistory
 import { computeAlerts, DEFAULT_THRESHOLDS } from '../alertEngine.js';
 import { getSummary, invalidateSummary } from '../summaryEngine.js';
 import { readJsonFile, dirExists, getSubdirs, hasNonHiddenFiles, isHiddenFile } from './helpers.js';
+import { generateETag, eTagMatches } from '../utils/etagUtils.js';
 import type { Task, TeamConfig, TeamSummary, TeamDetail } from '../types.js';
 
 const router = Router();
 
 // GET /api/teams
-router.get('/teams', async (_req, res) => {
+router.get('/teams', async (req, res) => {
   try {
     const teamIds = new Set<string>();
 
@@ -74,7 +75,18 @@ router.get('/teams', async (_req, res) => {
       teams.push(getDemoTeamSummary());
     }
 
-    res.json({ teams, isDemoMode });
+    const responseData = { teams, isDemoMode };
+    const etag = generateETag(responseData);
+
+    // Check If-None-Match header
+    const clientETag = (req.headers['if-none-match'] as string | undefined) ?? null;
+    if (eTagMatches(clientETag, etag)) {
+      res.status(304).end();
+      return;
+    }
+
+    res.set('ETag', etag);
+    res.json(responseData);
   } catch (err) {
     console.error('Error listing teams:', err);
     res.status(500).json({ error: 'Failed to list teams' });
@@ -87,7 +99,10 @@ router.get('/teams/:id', async (req, res) => {
     const { id } = req.params;
 
     if (id === 'demo-team') {
-      res.json(getDemoTeamDetail());
+      const detail = getDemoTeamDetail();
+      const etag = generateETag(detail);
+      res.set('ETag', etag);
+      res.json(detail);
       return;
     }
 
@@ -135,6 +150,17 @@ router.get('/teams/:id', async (req, res) => {
     };
 
     recordSnapshot(id, tasks);
+
+    const etag = generateETag(detail);
+
+    // Check If-None-Match header
+    const clientETag = (req.headers['if-none-match'] as string | undefined) ?? null;
+    if (eTagMatches(clientETag, etag)) {
+      res.status(304).end();
+      return;
+    }
+
+    res.set('ETag', etag);
     res.json(detail);
   } catch (err) {
     console.error(`Error getting team ${req.params.id}:`, err);

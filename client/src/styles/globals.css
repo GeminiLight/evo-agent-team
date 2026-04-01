@@ -1278,3 +1278,23 @@ html[data-theme-switching] *::after {
 @utility animate-fade-up       { animation: fade-up 0.4s ease-out forwards; }
 @utility font-mono-display     { font-family: var(--font-mono); }
 @utility font-display          { font-family: var(--font-display); }
+
+/* ════════════════════════════════════════════
+   DASHBOARD ADVANCED SECTION
+   ════════════════════════════════════════════ */
+
+.dashboard-section--advanced {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dashboard-section--advanced button {
+  transition: color 0.1s ease;
+}
+
+.dashboard-section--advanced__content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-out;
+}

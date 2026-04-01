@@ -38,7 +38,7 @@ export default function KnowledgeView({ teamId, teamName, isDemoMode, initialTab
   }, [tab]);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '0', height: '100%' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0', height: '100%' }} data-tour="knowledge">
       {/* ── Tab bar ── */}
       <div style={{
         display: 'flex',

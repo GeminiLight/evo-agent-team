@@ -12,8 +12,8 @@ import { useIsTablet } from '../../hooks/useMediaQuery';
 
 const STORAGE_KEY = 'sidebar-collapsed';
 
-// Activity-family views: commlog and timeline should highlight the Activity nav item
-const ACTIVITY_FAMILY: ViewType[] = ['activity', 'commlog', 'timeline'];
+// Activity-family views: only timeline (accessed from within Activity) highlights Activity nav
+const ACTIVITY_FAMILY: ViewType[] = ['activity', 'timeline'];
 
 interface NavItem {
   key: ViewType;

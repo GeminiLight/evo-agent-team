@@ -32,10 +32,10 @@ export default function TaskDetailPanel({ task, allTasks, members, onClose }: Ta
   const colors = STATUS_COLORS[status];
 
   const STATUS_LABELS: Record<string, string> = {
-    completed: 'DONE',
-    in_progress: 'ACTIVE',
-    pending: 'QUEUE',
-    blocked: 'BLOCKED',
+    completed: t('task.status.done', 'DONE'),
+    in_progress: t('task.status.active', 'ACTIVE'),
+    pending: t('task.status.queue', 'QUEUE'),
+    blocked: t('task.status.blocked', 'BLOCKED'),
   };
 
   const ownerMember = task.owner ? members.find(m => m.name === task.owner || m.agentId === task.owner) : null;
@@ -92,7 +92,7 @@ export default function TaskDetailPanel({ task, allTasks, members, onClose }: Ta
           flexShrink: 0,
         }}>
           <span style={{
-            fontSize: '9px',
+            fontSize: 'var(--text-xs)',
             color: 'var(--text-muted)',
             letterSpacing: '0.15em',
             fontFamily: 'var(--font-mono)',
@@ -135,7 +135,7 @@ export default function TaskDetailPanel({ task, allTasks, members, onClose }: Ta
           {/* Status badge */}
           <div>
             <span style={{
-              fontSize: '9px',
+              fontSize: 'var(--text-xs)',
               color: colors.text,
               background: colors.bg,
               border: `1px solid ${colors.border}40`,
@@ -154,7 +154,7 @@ export default function TaskDetailPanel({ task, allTasks, members, onClose }: Ta
           {/* Description */}
           <div>
             <div style={{
-              fontSize: '9px',
+              fontSize: 'var(--text-xs)',
               color: 'var(--text-muted)',
               letterSpacing: '0.15em',
               marginBottom: '8px',
@@ -183,7 +183,7 @@ export default function TaskDetailPanel({ task, allTasks, members, onClose }: Ta
           {/* Owner */}
           <div>
             <div style={{
-              fontSize: '9px',
+              fontSize: 'var(--text-xs)',
               color: 'var(--text-muted)',
               letterSpacing: '0.15em',
               marginBottom: '8px',
@@ -215,7 +215,7 @@ export default function TaskDetailPanel({ task, allTasks, members, onClose }: Ta
                     {task.owner}
                   </div>
                   {ownerMember && (
-                    <div style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.08em', marginTop: '1px' }}>
+                    <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.08em', marginTop: '1px' }}>
                       {ownerMember.agentType}
                     </div>
                   )}
@@ -236,13 +236,13 @@ export default function TaskDetailPanel({ task, allTasks, members, onClose }: Ta
           {/* Timing */}
           {(task.createdAt || task.updatedAt) && (
             <div>
-              <div style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.15em', marginBottom: '8px', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>
+              <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.15em', marginBottom: '8px', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>
                 {t('panel.timing')}
               </div>
               <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: '3px', padding: '4px 12px' }}>
                 {task.createdAt && (
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 0', borderBottom: task.updatedAt ? '1px solid var(--border)' : 'none', gap: '12px' }}>
-                    <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em', flexShrink: 0 }}>CREATED</span>
+                    <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.1em', flexShrink: 0 }}>{t('task.created', 'CREATED')}</span>
                     <span style={{ fontSize: '10px', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', textAlign: 'right' }}>
                       {timeAgo(task.createdAt)} · {fmtDatetime(task.createdAt)}
                     </span>
@@ -250,8 +250,8 @@ export default function TaskDetailPanel({ task, allTasks, members, onClose }: Ta
                 )}
                 {task.updatedAt && (
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 0', gap: '12px' }}>
-                    <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em', flexShrink: 0 }}>
-                      {task.status === 'in_progress' ? 'ACTIVE FOR' : 'UPDATED'}
+                    <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.1em', flexShrink: 0 }}>
+                      {task.status === 'in_progress' ? t('task.active_for', 'ACTIVE FOR') : t('task.updated', 'UPDATED')}
                     </span>
                     <span style={{ fontSize: '10px', fontFamily: 'var(--font-mono)', textAlign: 'right', color: task.status === 'in_progress' ? 'var(--amber)' : 'var(--text-secondary)' }}>
                       {timeAgo(task.updatedAt)} · {fmtDatetime(task.updatedAt)}
@@ -265,7 +265,7 @@ export default function TaskDetailPanel({ task, allTasks, members, onClose }: Ta
           {/* Dependencies */}
           <div>
             <div style={{
-              fontSize: '9px',
+              fontSize: 'var(--text-xs)',
               color: 'var(--text-muted)',
               letterSpacing: '0.15em',
               marginBottom: '8px',
@@ -288,13 +288,13 @@ export default function TaskDetailPanel({ task, allTasks, members, onClose }: Ta
                 {hasBlockedBy && (
                   <div>
                     <div style={{
-                      fontSize: '9px',
+                      fontSize: 'var(--text-xs)',
                       color: 'var(--crimson)',
                       letterSpacing: '0.1em',
                       marginBottom: '6px',
                       fontFamily: 'var(--font-mono)',
                     }}>
-                      BLOCKED BY:
+                      {t('task.blocked_by', 'BLOCKED BY')}:
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                       {task.blockedBy.map(depId => {
@@ -331,12 +331,13 @@ export default function TaskDetailPanel({ task, allTasks, members, onClose }: Ta
                 {hasBlocks && (
                   <div>
                     <div style={{
-                      fontSize: '9px',
+                      fontSize: 'var(--text-xs)',
                       color: 'var(--text-muted)',
                       letterSpacing: '0.1em',
                       marginBottom: '6px',
                       fontFamily: 'var(--font-mono)',
                     }}>
+                      {/* TODO: i18n — 'BLOCKS:' should use t() */}
                       BLOCKS:
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -376,7 +377,7 @@ export default function TaskDetailPanel({ task, allTasks, members, onClose }: Ta
           {metadataEntries.length > 0 && (
             <div>
               <div style={{
-                fontSize: '9px',
+                fontSize: 'var(--text-xs)',
                 color: 'var(--text-muted)',
                 letterSpacing: '0.15em',
                 marginBottom: '8px',

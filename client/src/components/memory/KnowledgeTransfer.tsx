@@ -318,7 +318,7 @@ export default function KnowledgeTransfer({ targetTeamId, onComplete, onCancel, 
             <div>
               <button
                 onClick={() => setShowExcluded(s => !s)}
-                style={{ ...btnStyle('ghost'), fontSize: '9px', padding: '3px 8px' }}
+                style={{ ...btnStyle('ghost'), fontSize: 'var(--text-xs)', padding: '3px 8px' }}
               >
                 {showExcluded ? <EyeOff size={10} /> : <Eye size={10} />}
                 {showExcluded ? t('knowledge.hide_excluded') : t('knowledge.show_excluded')} ({hiddenCount})
@@ -407,7 +407,7 @@ function ItemRow({ item, index, isSelected, onToggle, catStyle, t }: {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        fontSize: '9px',
+        fontSize: 'var(--text-xs)',
         color: catStyle.color,
         marginTop: '1px',
       }}>
@@ -420,7 +420,7 @@ function ItemRow({ item, index, isSelected, onToggle, catStyle, t }: {
         </div>
         <div style={{ display: 'flex', gap: '8px', marginTop: '3px', alignItems: 'center' }}>
           <span style={{
-            fontSize: '9px',
+            fontSize: 'var(--text-xs)',
             color: item.destination === 'memory' ? 'var(--phosphor)' : 'var(--amber)',
             background: item.destination === 'memory' ? 'var(--phosphor-glow)' : 'var(--amber-glow)',
             padding: '1px 5px',
@@ -429,7 +429,7 @@ function ItemRow({ item, index, isSelected, onToggle, catStyle, t }: {
           }}>
             → {destLabel}
           </span>
-          <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.04em' }}>
+          <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.04em' }}>
             {item.reason}
           </span>
         </div>

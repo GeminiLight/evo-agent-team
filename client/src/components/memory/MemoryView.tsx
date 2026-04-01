@@ -377,7 +377,7 @@ export default function MemoryView({ teamId, isDemoMode }: MemoryViewProps) {
                   background: 'var(--phosphor-glow)',
                   padding: '1px 6px',
                   borderRadius: '2px',
-                  fontSize: '9px',
+                  fontSize: 'var(--text-xs)',
                   letterSpacing: '0.06em',
                 }}>{data.source}</span>
               </div>

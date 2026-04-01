@@ -240,7 +240,7 @@ export default function ReviewView({ teamId, agentNames, isDemoMode }: ReviewVie
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <div style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.2em', marginBottom: '4px', textTransform: 'uppercase' }}>
+          <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.2em', marginBottom: '4px', textTransform: 'uppercase' }}>
             {t('review.title', { id: teamId.toUpperCase() })}
           </div>
           <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
@@ -252,7 +252,7 @@ export default function ReviewView({ teamId, agentNames, isDemoMode }: ReviewVie
             onClick={() => setShowNewEntry(true)}
             style={{
               display: 'flex', alignItems: 'center', gap: '6px',
-              padding: '7px 14px',
+              padding: '8px 14px',
               background: 'var(--surface-1)',
               border: '1px solid var(--border)',
               borderRadius: '3px',
@@ -318,7 +318,7 @@ export default function ReviewView({ teamId, agentNames, isDemoMode }: ReviewVie
           <div style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.08em', padding: '24px 0', textAlign: 'center', lineHeight: 1.8 }}>
             <div style={{ fontSize: '24px', opacity: 0.3, marginBottom: '8px' }}>📭</div>
             <span style={{ textTransform: 'uppercase' }}>{t('review.no_feedback')}</span>
-            <div style={{ marginTop: '6px', fontSize: '9px', opacity: 0.6 }}>
+            <div style={{ marginTop: '6px', fontSize: 'var(--text-xs)', opacity: 0.6 }}>
               {isDemoMode ? t('review.no_feedback_demo_sub') : t('review.no_feedback_real_sub')}
             </div>
           </div>
@@ -339,7 +339,7 @@ export default function ReviewView({ teamId, agentNames, isDemoMode }: ReviewVie
       <Section label={t('review.preferences')} subtitle={t('review.preferences_subtitle')}>
         <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
           {genError && (
-            <span style={{ fontSize: '9px', color: 'var(--amber)', letterSpacing: '0.06em', fontFamily: 'var(--font-mono)' }}>
+            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--amber)', letterSpacing: '0.06em', fontFamily: 'var(--font-mono)' }}>
               {genError}
             </span>
           )}
@@ -349,14 +349,14 @@ export default function ReviewView({ teamId, agentNames, isDemoMode }: ReviewVie
               disabled={discovering}
               style={{
                 display: 'flex', alignItems: 'center', gap: '6px',
-                padding: '5px 12px',
+                padding: '6px 12px',
                 background: 'var(--surface-1)',
                 border: '1px solid var(--border)',
                 borderRadius: '3px',
                 cursor: discovering ? 'default' : 'pointer',
                 color: discovering ? 'var(--text-muted)' : 'var(--ice)',
                 fontFamily: 'var(--font-mono)',
-                fontSize: '9px', letterSpacing: '0.1em',
+                fontSize: 'var(--text-xs)', letterSpacing: '0.1em',
                 opacity: discovering ? 0.6 : 1,
               }}
               onMouseEnter={e => { if (!discovering) e.currentTarget.style.borderColor = 'var(--ice)'; }}
@@ -372,7 +372,7 @@ export default function ReviewView({ teamId, agentNames, isDemoMode }: ReviewVie
         {discoveries.length > 0 && (
           <div style={{ marginBottom: '16px', padding: '12px', background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: '4px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-              <span style={{ fontSize: '9px', letterSpacing: '0.12em', fontFamily: 'var(--font-mono)', color: 'var(--ice)', textTransform: 'uppercase' }}>
+              <span style={{ fontSize: 'var(--text-xs)', letterSpacing: '0.12em', fontFamily: 'var(--font-mono)', color: 'var(--ice)', textTransform: 'uppercase' }}>
                 {discoveries.length} pattern{discoveries.length !== 1 ? 's' : ''} discovered
                 {discoverStats && ` · ${discoverStats.totalFeedback} feedback analyzed`}
               </span>
@@ -380,7 +380,7 @@ export default function ReviewView({ teamId, agentNames, isDemoMode }: ReviewVie
                 onClick={applyDiscoveries}
                 disabled={discoverAccepted.size === 0}
                 style={{
-                  padding: '4px 10px', fontSize: '9px', letterSpacing: '0.1em',
+                  padding: '6px 12px', fontSize: 'var(--text-xs)', letterSpacing: '0.1em',
                   fontFamily: 'var(--font-mono)', textTransform: 'uppercase',
                   background: discoverAccepted.size > 0 ? 'var(--phosphor)' : 'var(--surface-2)',
                   color: discoverAccepted.size > 0 ? '#000' : 'var(--text-muted)',
@@ -411,20 +411,20 @@ export default function ReviewView({ teamId, agentNames, isDemoMode }: ReviewVie
                     <div style={{ fontSize: '10px', color: 'var(--text-primary)', lineHeight: 1.5 }}>{d.rule}</div>
                     <div style={{ display: 'flex', gap: '6px', marginTop: '3px', flexWrap: 'wrap' }}>
                       <span style={{
-                        fontSize: '8px', fontFamily: 'var(--font-mono)', letterSpacing: '0.1em',
+                        fontSize: 'var(--text-xs)', fontFamily: 'var(--font-mono)', letterSpacing: '0.1em',
                         color: d.confidence === 'confirmed' ? 'var(--phosphor)' : 'var(--text-muted)',
                         textTransform: 'uppercase',
                       }}>
                         {d.confidence}
                       </span>
-                      <span style={{ fontSize: '8px', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>
+                      <span style={{ fontSize: 'var(--text-xs)', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>
                         → {d.target === 'TEAM_GUIDE' ? 'TEAM' : d.target}
                       </span>
-                      <span style={{ fontSize: '8px', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>
+                      <span style={{ fontSize: 'var(--text-xs)', fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>
                         · {d.supportingFeedbackIds?.length ?? 0} supporting
                       </span>
                     </div>
-                    <div style={{ fontSize: '9px', color: 'var(--text-muted)', marginTop: '3px', lineHeight: 1.4 }}>
+                    <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', marginTop: '3px', lineHeight: 1.4 }}>
                       {d.reason}
                     </div>
                   </div>
@@ -436,21 +436,21 @@ export default function ReviewView({ teamId, agentNames, isDemoMode }: ReviewVie
 
         {/* TEAM_GUIDE rules */}
         {guideRules.length > 0 && (
-          <div style={{ marginBottom: Object.keys(preferences).length > 0 ? '0' : '0' }}>
+          <div style={{ marginBottom: '0' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
               <span style={{
-                fontSize: '9px', letterSpacing: '0.12em', fontFamily: 'var(--font-mono)',
+                fontSize: 'var(--text-xs)', letterSpacing: '0.12em', fontFamily: 'var(--font-mono)',
                 color: 'var(--ice)',
               }}>
                 TEAM GUIDE
               </span>
               <span style={{
-                fontSize: '9px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)',
+                fontSize: 'var(--text-xs)', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)',
               }}>
                 {t('review.guide_source_file')}
               </span>
               <span style={{
-                fontSize: '9px', color: 'var(--text-muted)', opacity: 0.5, letterSpacing: '0.08em',
+                fontSize: 'var(--text-xs)', color: 'var(--text-muted)', opacity: 0.5, letterSpacing: '0.08em',
                 fontFamily: 'var(--font-mono)',
               }}>
                 {t('review.guide_readonly')}
@@ -459,8 +459,8 @@ export default function ReviewView({ teamId, agentNames, isDemoMode }: ReviewVie
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', paddingLeft: '8px', borderLeft: '2px solid var(--ice-dim, var(--ice)33)' }}>
               {guideRules.map((rule, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                  <span style={{ color: 'var(--ice)', fontSize: '9px', flexShrink: 0, marginTop: '2px' }}>▸</span>
-                  <span style={{ fontSize: '10px', color: 'var(--text-primary)', lineHeight: 1.5, flex: 1 }}>{rule}</span>
+                  <span style={{ color: 'var(--ice)', fontSize: 'var(--text-xs)', flexShrink: 0, marginTop: '2px' }}>▸</span>
+                  <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-primary)', lineHeight: 1.5, flex: 1 }}>{rule}</span>
                 </div>
               ))}
             </div>
@@ -476,7 +476,7 @@ export default function ReviewView({ teamId, agentNames, isDemoMode }: ReviewVie
           <div style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.08em', padding: '20px 0', textAlign: 'center', lineHeight: 1.8 }}>
             <div style={{ fontSize: '24px', opacity: 0.3, marginBottom: '8px' }}>🧠</div>
             <span style={{ textTransform: 'uppercase' }}>{t('review.no_preferences')}</span>
-            <div style={{ marginTop: '6px', fontSize: '9px', opacity: 0.6 }}>
+            <div style={{ marginTop: '6px', fontSize: 'var(--text-xs)', opacity: 0.6 }}>
               {t('review.no_preferences_sub_action')}
             </div>
           </div>
@@ -504,7 +504,7 @@ export default function ReviewView({ teamId, agentNames, isDemoMode }: ReviewVie
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--border)' }}>
                   {[t('review.th_agent'), t('review.th_total'), t('review.th_praise'), t('review.th_correction'), t('review.th_bookmark')].map(h => (
-                    <th key={h} style={{ padding: '6px 12px', textAlign: 'left', fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.12em', fontWeight: 400 }}>{h}</th>
+                    <th key={h} style={{ padding: '6px 12px', textAlign: 'left', fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.12em', fontWeight: 400 }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -542,9 +542,9 @@ function Section({ label, subtitle, count, children }: { label: string; subtitle
   return (
     <div style={{ background: 'var(--surface-0)', border: '1px solid var(--border)', borderRadius: '4px', padding: '20px' }}>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '16px' }}>
-        <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.2em', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>{label}</span>
-        {subtitle && <span style={{ fontSize: '9px', color: 'var(--text-muted)', opacity: 0.6 }}>{subtitle}</span>}
-        {count !== undefined && <span style={{ fontSize: '9px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', marginLeft: 'auto' }}>{t('review.entries_count', { count })}</span>}
+        <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.2em', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>{label}</span>
+        {subtitle && <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', opacity: 0.6 }}>{subtitle}</span>}
+        {count !== undefined && <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', marginLeft: 'auto' }}>{t('review.entries_count', { count })}</span>}
         <div style={{ flex: 1, height: '1px', background: 'var(--border)', marginLeft: '8px' }} />
       </div>
       {children}
@@ -578,7 +578,7 @@ function FeedbackRow({ entry, onDelete }: { entry: FeedbackEntry; onDelete?: (id
         marginTop: '1px',
       }}>
         <span>{meta.emoji}</span>
-        <span style={{ fontSize: '9px', color: meta.color, letterSpacing: '0.1em', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>{meta.label}</span>
+        <span style={{ fontSize: 'var(--text-xs)', color: meta.color, letterSpacing: '0.1em', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>{meta.label}</span>
       </div>
 
       {/* Agent */}
@@ -595,7 +595,7 @@ function FeedbackRow({ entry, onDelete }: { entry: FeedbackEntry; onDelete?: (id
       <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: '6px', marginTop: '1px', whiteSpace: 'nowrap' }}>
         {isProcessed && (
           <span style={{
-            fontSize: '9px', letterSpacing: '0.1em',
+            fontSize: 'var(--text-xs)', letterSpacing: '0.1em',
             color: 'var(--phosphor)', fontFamily: 'var(--font-mono)',
             padding: '1px 4px', border: '1px solid var(--phosphor)40',
             borderRadius: '2px',
@@ -603,7 +603,7 @@ function FeedbackRow({ entry, onDelete }: { entry: FeedbackEntry; onDelete?: (id
             {t('review.processed')}
           </span>
         )}
-        <span style={{ fontSize: '9px', color: 'var(--text-muted)' }}>
+        <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>
           {fmtDate(entry.createdAt)}
         </span>
       </div>
@@ -637,7 +637,7 @@ function AgentPreferenceBlock({ agentName, rules, readOnly, onDelete, onPromote 
 }) {
   return (
     <div>
-      <div style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.12em', marginBottom: '6px', fontFamily: 'var(--font-mono)' }}>
+      <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.12em', marginBottom: '6px', fontFamily: 'var(--font-mono)' }}>
         {agentName.toUpperCase()}
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', paddingLeft: '8px', borderLeft: '2px solid var(--border)' }}>
@@ -645,13 +645,13 @@ function AgentPreferenceBlock({ agentName, rules, readOnly, onDelete, onPromote 
           const rule = toRule(entry);
           return (
             <div key={rule.id || i} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-              <span style={{ color: 'var(--ice)', fontSize: '9px', flexShrink: 0, marginTop: '2px' }}>▸</span>
+              <span style={{ color: 'var(--ice)', fontSize: 'var(--text-xs)', flexShrink: 0, marginTop: '2px' }}>▸</span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <span style={{ fontSize: '10px', color: 'var(--text-primary)', lineHeight: 1.5 }}>{rule.rule}</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
                   {/* Confidence badge */}
                   <span style={{
-                    fontSize: '8px', letterSpacing: '0.1em', fontFamily: 'var(--font-mono)',
+                    fontSize: 'var(--text-xs)', letterSpacing: '0.1em', fontFamily: 'var(--font-mono)',
                     textTransform: 'uppercase',
                     color: rule.confidence === 'confirmed' ? 'var(--phosphor)' : 'var(--text-muted)',
                     opacity: rule.confidence === 'tentative' ? 0.6 : 1,
@@ -660,12 +660,12 @@ function AgentPreferenceBlock({ agentName, rules, readOnly, onDelete, onPromote 
                   </span>
                   {/* Support count */}
                   {rule.supportCount > 0 && (
-                    <span style={{ fontSize: '8px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+                    <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
                       · {rule.supportCount} feedback
                     </span>
                   )}
                   {/* Source */}
-                  <span style={{ fontSize: '8px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', opacity: 0.5 }}>
+                  <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', opacity: 0.5 }}>
                     · {rule.source === 'auto' ? 'auto-discovered' : 'manual'}
                   </span>
                 </div>
@@ -709,7 +709,7 @@ function FilterSelect({ value, onChange, options }: { value: string; onChange: (
         appearance: 'none',
         background: 'var(--surface-1)',
         color: 'var(--text-secondary)',
-        fontSize: '9px', fontFamily: 'var(--font-mono)',
+        fontSize: 'var(--text-xs)', fontFamily: 'var(--font-mono)',
         letterSpacing: '0.08em',
         border: '1px solid var(--border)',
         borderRadius: '3px',
@@ -841,7 +841,7 @@ function NewEntryModal({ teamId, agentNames, onClose, onSubmitted }: {
       }}>
         {/* ── Header ── */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-          <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.18em', textTransform: 'uppercase' }}>
+          <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.18em', textTransform: 'uppercase' }}>
             {phase === 'suggestions' ? t('review.suggestions_title') : phase === 'analyzing' ? t('review.analyzing') : phase === 'done' ? t('review.done_title') : t('review.modal_title')}
           </span>
           <button onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex' }}
@@ -895,7 +895,7 @@ function NewEntryModal({ teamId, agentNames, onClose, onSubmitted }: {
               />
             </ModalField>
 
-            {error && <div style={{ fontSize: '9px', color: 'var(--amber)', marginBottom: '12px' }}>{error}</div>}
+            {error && <div style={{ fontSize: 'var(--text-xs)', color: 'var(--amber)', marginBottom: '12px' }}>{error}</div>}
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '4px' }}>
               <button onClick={onClose} style={{ ...btnStyle, color: 'var(--text-muted)' }}><span style={{ textTransform: 'uppercase' }}>{t('review.cancel')}</span></button>
@@ -923,7 +923,7 @@ function NewEntryModal({ teamId, agentNames, onClose, onSubmitted }: {
         {/* ── Suggestions Phase ── */}
         {phase === 'suggestions' && (
           <>
-            <div style={{ fontSize: '9px', color: 'var(--text-muted)', marginBottom: '16px', letterSpacing: '0.06em' }}>
+            <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', marginBottom: '16px', letterSpacing: '0.06em' }}>
               {t('review.suggestions_desc')}
             </div>
 
@@ -948,7 +948,7 @@ function NewEntryModal({ teamId, agentNames, onClose, onSubmitted }: {
                     border: `1px solid ${accepted.has(sug.id) ? 'var(--phosphor)' : 'var(--border)'}`,
                     background: accepted.has(sug.id) ? 'var(--phosphor)' : 'transparent',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '9px', color: 'var(--surface-0)',
+                    fontSize: 'var(--text-xs)', color: 'var(--surface-0)',
                   }}>
                     {accepted.has(sug.id) && '\u2713'}
                   </div>
@@ -958,7 +958,7 @@ function NewEntryModal({ teamId, agentNames, onClose, onSubmitted }: {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
                       {/* Target badge */}
                       <span style={{
-                        fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase',
+                        fontSize: 'var(--text-xs)', letterSpacing: '0.1em', textTransform: 'uppercase',
                         padding: '2px 6px', borderRadius: '2px',
                         background: sug.target === 'TEAM_GUIDE' ? 'var(--ice)18' : 'var(--phosphor)18',
                         color: sug.target === 'TEAM_GUIDE' ? 'var(--ice)' : 'var(--phosphor)',
@@ -968,7 +968,7 @@ function NewEntryModal({ teamId, agentNames, onClose, onSubmitted }: {
                       </span>
                       {/* Action badge */}
                       <span style={{
-                        fontSize: '9px', letterSpacing: '0.08em', textTransform: 'uppercase',
+                        fontSize: 'var(--text-xs)', letterSpacing: '0.08em', textTransform: 'uppercase',
                         color: ACTION_COLORS[sug.action] ?? 'var(--text-muted)',
                       }}>
                         {t(`review.suggestion_action_${sug.action}`)}
@@ -977,7 +977,7 @@ function NewEntryModal({ teamId, agentNames, onClose, onSubmitted }: {
                     <div style={{ fontSize: '10px', color: 'var(--text-primary)', lineHeight: 1.4, marginBottom: '2px' }}>
                       {sug.rule}
                     </div>
-                    <div style={{ fontSize: '9px', color: 'var(--text-muted)', lineHeight: 1.3 }}>
+                    <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', lineHeight: 1.3 }}>
                       {sug.reason}
                     </div>
                   </div>
@@ -1024,7 +1024,7 @@ function NewEntryModal({ teamId, agentNames, onClose, onSubmitted }: {
 function ModalField({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div style={{ marginBottom: '16px' }}>
-      <div style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.15em', marginBottom: '6px' }}>{label}</div>
+      <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.15em', marginBottom: '6px' }}>{label}</div>
       {children}
     </div>
   );
@@ -1041,6 +1041,6 @@ const selectStyle: React.CSSProperties = {
 const btnStyle: React.CSSProperties = {
   padding: '6px 16px', background: 'transparent',
   border: '1px solid var(--border)', borderRadius: '3px',
-  cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: '9px',
+  cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)',
   letterSpacing: '0.1em',
 };

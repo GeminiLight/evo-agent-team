@@ -67,7 +67,7 @@ function HumanResponseInline({ agentName, messageId, teamId, pendingAgentNames }
     >
       {/* Title row */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-        <span style={{ fontSize: '9px', letterSpacing: '0.12em', color: 'var(--amber)', fontWeight: 700, textTransform: 'uppercase' }}>
+        <span style={{ fontSize: 'var(--text-xs)', letterSpacing: '0.12em', color: 'var(--amber)', fontWeight: 700, textTransform: 'uppercase' }}>
           {t('message.human_input')}
         </span>
         <button
@@ -81,7 +81,7 @@ function HumanResponseInline({ agentName, messageId, teamId, pendingAgentNames }
 
       {/* Demo warning */}
       {isDemo && (
-        <div style={{ marginBottom: '8px', fontSize: '9px', color: 'var(--amber)', letterSpacing: '0.06em', opacity: 0.8 }}>
+        <div style={{ marginBottom: '8px', fontSize: 'var(--text-xs)', color: 'var(--amber)', letterSpacing: '0.06em', opacity: 0.8 }}>
           {t('agent_card.demo_unavailable')}
         </div>
       )}
@@ -117,14 +117,14 @@ function HumanResponseInline({ agentName, messageId, teamId, pendingAgentNames }
 
       {/* Error */}
       {error && (
-        <div style={{ marginTop: '4px', fontSize: '9px', color: 'var(--crimson)', letterSpacing: '0.06em' }}>
+        <div style={{ marginTop: '4px', fontSize: 'var(--text-xs)', color: 'var(--crimson)', letterSpacing: '0.06em' }}>
           {error}
         </div>
       )}
 
       {/* Actions */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '8px' }}>
-        <span style={{ fontSize: '9px', letterSpacing: '0.08em', color: sent ? 'var(--phosphor)' : 'var(--text-muted)' }}>
+        <span style={{ fontSize: 'var(--text-xs)', letterSpacing: '0.08em', color: sent ? 'var(--phosphor)' : 'var(--text-muted)' }}>
           {sent ? t('message.sent_status') : t('message.awaiting_status', { name: agentName })}
         </span>
         <div style={{ display: 'flex', gap: '6px' }}>
@@ -132,7 +132,7 @@ function HumanResponseInline({ agentName, messageId, teamId, pendingAgentNames }
             <button
               onClick={() => { clearError(); handleSend(); }}
               style={{
-                padding: '3px 10px', fontSize: '9px', letterSpacing: '0.1em',
+                padding: '3px 10px', fontSize: 'var(--text-xs)', letterSpacing: '0.1em',
                 fontFamily: 'var(--font-mono)',
                 background: 'var(--crimson-bg-subtle)', color: 'var(--crimson)',
                 border: '1px solid var(--crimson-border-subtle)', borderRadius: '2px', cursor: 'pointer',
@@ -146,7 +146,7 @@ function HumanResponseInline({ agentName, messageId, teamId, pendingAgentNames }
               onClick={handleSend}
               disabled={!text.trim() || sending || isDemo}
               style={{
-                padding: '3px 12px', fontSize: '9px', letterSpacing: '0.12em', fontWeight: 700,
+                padding: '3px 12px', fontSize: 'var(--text-xs)', letterSpacing: '0.12em', fontWeight: 700,
                 fontFamily: 'var(--font-mono)',
                 background: 'var(--phosphor-bg-subtle)', color: 'var(--phosphor)',
                 border: '1px solid var(--phosphor)', borderRadius: '2px',
@@ -230,7 +230,7 @@ export default function MessageBubble({ message, compact = false, teamId, pendin
             width: '22px', height: '22px',
             borderRadius: '3px',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '9px', fontWeight: 700, letterSpacing: '0.04em',
+            fontSize: 'var(--text-xs)', fontWeight: 700, letterSpacing: '0.04em',
             fontFamily: 'var(--font-mono)',
             ...avatarStyle,
           }}>
@@ -251,19 +251,19 @@ export default function MessageBubble({ message, compact = false, teamId, pendin
             <span style={{ fontSize: '10px', fontWeight: 600, color: senderColor, letterSpacing: '0.04em', fontFamily: 'var(--font-mono)' }}>
               {message.sender}
             </span>
-            <span style={{ fontSize: '9px', color: 'var(--text-muted)' }}>→</span>
+            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>→</span>
             {/* Recipient */}
             <span style={{ fontSize: '10px', color: recipientColor, letterSpacing: '0.04em', fontFamily: 'var(--font-mono)' }}>
               {message.recipient}
             </span>
             {/* Timestamp */}
-            <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.06em', marginLeft: '2px' }}>
+            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.06em', marginLeft: '2px' }}>
               {formatTs(message.timestamp)}
             </span>
             {/* Type badge */}
             {badge && (
               <span style={{
-                fontSize: '9px',
+                fontSize: 'var(--text-xs)',
                 letterSpacing: '0.12em',
                 color: badge.color,
                 border: `1px solid ${badge.color}`,
@@ -294,12 +294,12 @@ export default function MessageBubble({ message, compact = false, teamId, pendin
         {/* Compact: just timestamp + badge inline */}
         {compact && (badge || !message.read) && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
-            <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.06em' }}>
+            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.06em' }}>
               {formatTs(message.timestamp)}
             </span>
             {badge && (
               <span style={{
-                fontSize: '9px', letterSpacing: '0.12em',
+                fontSize: 'var(--text-xs)', letterSpacing: '0.12em',
                 color: badge.color, border: `1px solid ${badge.color}`,
                 padding: '1px 5px', borderRadius: '2px', opacity: 0.85,
                 textTransform: 'uppercase',
@@ -326,7 +326,7 @@ export default function MessageBubble({ message, compact = false, teamId, pendin
         </div>
 
         {isLong && (
-          <div style={{ fontSize: '9px', color: 'var(--text-muted)', marginTop: '3px', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+          <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', marginTop: '3px', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
             {expanded ? t('commlog.collapse') : t('commlog.expand')}
           </div>
         )}

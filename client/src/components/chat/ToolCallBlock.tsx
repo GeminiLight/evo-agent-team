@@ -63,13 +63,13 @@ export default function ToolCallBlock({ entry, resultEntry }: ToolCallBlockProps
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
             flex: 1,
-            fontSize: '9px',
+            fontSize: 'var(--text-xs)',
           }}>
             {summary}
           </span>
         )}
         <span style={{
-          fontSize: '9px',
+          fontSize: 'var(--text-xs)',
           color: 'var(--text-muted)',
           flexShrink: 0,
           opacity: 0.6,
@@ -83,7 +83,7 @@ export default function ToolCallBlock({ entry, resultEntry }: ToolCallBlockProps
         <div style={{
           borderTop: `1px solid ${color}22`,
           padding: '8px 10px',
-          fontSize: '9px',
+          fontSize: 'var(--text-xs)',
           fontFamily: 'var(--font-mono)',
           lineHeight: 1.5,
         }}>

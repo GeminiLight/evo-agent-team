@@ -151,11 +151,11 @@ export default function DashboardView({
           <>
             {/* Roster header with sort controls */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: '9px', letterSpacing: '0.15em', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+              <span style={{ fontSize: 'var(--text-xs)', letterSpacing: '0.15em', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
                 {t('dashboard.roster', { count: members.length })}
               </span>
               <div style={{ display: 'flex', gap: '2px', alignItems: 'center' }}>
-                <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em', marginRight: '4px', textTransform: 'uppercase' }}>{t('dashboard.sort')}</span>
+                <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.1em', marginRight: '4px', textTransform: 'uppercase' }}>{t('dashboard.sort')}</span>
                 {SORT_OPTS.map(opt => {
                   const isActive = sortMode === opt.id;
                   return (
@@ -164,8 +164,9 @@ export default function DashboardView({
                       onClick={() => setSortMode(opt.id)}
                       title={opt.tooltip}
                       style={{
-                        padding: '2px 8px',
-                        fontSize: '9px', letterSpacing: '0.08em',
+                        padding: '4px 8px',
+                        minHeight: '26px',
+                        fontSize: 'var(--text-xs)', letterSpacing: '0.08em',
                         fontFamily: 'var(--font-mono)',
                         background: isActive ? 'var(--active-bg-med)' : 'transparent',
                         color: isActive ? 'var(--active-text)' : 'var(--text-muted)',
@@ -264,7 +265,7 @@ function AdvancedSection({ expanded, onToggle, heatmapContent, sessionTodosConte
           display: 'flex',
           alignItems: 'center',
           gap: '8px',
-          fontSize: '9px',
+          fontSize: 'var(--text-xs)',
           letterSpacing: '0.15em',
           color: 'var(--text-muted)',
           textTransform: 'uppercase',
@@ -280,7 +281,7 @@ function AdvancedSection({ expanded, onToggle, heatmapContent, sessionTodosConte
         <span style={{ fontSize: '12px', lineHeight: 1 }}>
           {expanded ? '▼' : '▶'}
         </span>
-        <span>+ {t('dashboard.expand_advanced', { defaultValue: 'Expand advanced' })}</span>
+        <span>{expanded ? t('dashboard.collapse_advanced') : t('dashboard.expand_advanced')}</span>
       </button>
 
       {/* Collapsible content */}
@@ -331,12 +332,12 @@ function SessionTodoList({ sessions }: { sessions: SessionTodo[] }) {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         background: 'var(--surface-1)',
       }}>
-        <span style={{ fontSize: '9px', letterSpacing: '0.15em', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+        <span style={{ fontSize: 'var(--text-xs)', letterSpacing: '0.15em', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
           {t('dashboard.session_todos')}
         </span>
         {totalActive > 0 && (
           <span style={{
-            fontSize: '9px', color: 'var(--amber)',
+            fontSize: 'var(--text-xs)', color: 'var(--amber)',
             background: 'var(--amber-glow)',
             border: '1px solid var(--amber-dim)',
             borderRadius: '2px', padding: '1px 6px',
@@ -355,7 +356,7 @@ function SessionTodoList({ sessions }: { sessions: SessionTodo[] }) {
           <div style={{
             padding: '6px 20px',
             background: 'var(--surface-1)',
-            fontSize: '9px', color: 'var(--text-muted)',
+            fontSize: 'var(--text-xs)', color: 'var(--text-muted)',
             fontFamily: 'var(--font-mono)', letterSpacing: '0.1em',
             display: 'flex', alignItems: 'center', gap: '8px',
           }}>
@@ -363,13 +364,13 @@ function SessionTodoList({ sessions }: { sessions: SessionTodo[] }) {
             <span>{session.shortId}</span>
             {session.isLead && (
               <span style={{
-                fontSize: '9px', padding: '1px 5px',
+                fontSize: 'var(--text-xs)', padding: '1px 5px',
                 color: 'var(--amber)', background: 'var(--amber-glow)',
                 border: '1px solid var(--amber-dim)', borderRadius: '2px',
                 letterSpacing: '0.1em', textTransform: 'uppercase',
               }}>{t('status.lead')}</span>
             )}
-            <span style={{ color: 'var(--text-muted)', opacity: 0.5, fontSize: '9px' }}>
+            <span style={{ color: 'var(--text-muted)', opacity: 0.5, fontSize: 'var(--text-xs)' }}>
               {session.cwd}
             </span>
             <span style={{ marginLeft: 'auto', opacity: 0.6 }}>
@@ -411,7 +412,7 @@ function TodoRow({ item }: { item: TodoItem }) {
         </span>
         {isActive && item.activeForm && item.activeForm !== item.content && (
           <div style={{
-            fontSize: '9px', color: 'var(--amber)',
+            fontSize: 'var(--text-xs)', color: 'var(--amber)',
             letterSpacing: '0.06em', marginTop: '1px', fontStyle: 'italic',
           }}>
             ▸ {item.activeForm}

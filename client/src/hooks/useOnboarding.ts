@@ -60,6 +60,10 @@ export function useOnboarding() {
     saveState({ tourStarted: false, currentStep: 0, tourComplete: true });
   }, [saveState]);
 
+  const resetTour = useCallback(() => {
+    saveState({ tourStarted: false, currentStep: 0, tourComplete: false });
+  }, [saveState]);
+
   return {
     tourStarted: state.tourStarted,
     currentStep: state.currentStep,
@@ -69,5 +73,6 @@ export function useOnboarding() {
     prevStep,
     skipTour,
     completeTour,
+    resetTour,
   };
 }

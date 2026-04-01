@@ -102,7 +102,7 @@ export default function CompactAgentCard({
             {member.name}
             {isLead && (
               <span style={{
-                fontSize: '9px', padding: '0 3px', fontWeight: 700,
+                fontSize: 'var(--text-xs)', padding: '0 3px', fontWeight: 700,
                 color: 'var(--amber)', background: 'var(--amber-bg-subtle)',
                 border: '1px solid var(--amber-border-subtle)',
                 borderRadius: '2px', letterSpacing: '0.1em',
@@ -112,7 +112,7 @@ export default function CompactAgentCard({
               </span>
             )}
           </div>
-          <div style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+          <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
             {member.agentType}
           </div>
         </div>
@@ -147,7 +147,7 @@ export default function CompactAgentCard({
             }} />
           </div>
           <span style={{
-            fontSize: '9px', color: 'var(--text-muted)',
+            fontSize: 'var(--text-xs)', color: 'var(--text-muted)',
             fontFamily: 'var(--font-mono)', letterSpacing: '0.04em',
             whiteSpace: 'nowrap',
           }}>
@@ -161,7 +161,7 @@ export default function CompactAgentCard({
             onClick={e => { e.stopPropagation(); if (!isDemo) setRespondOpen(true); }}
             title={isDemo ? t('agent_card.demo_unavailable') : t('agent_card.respond_to', { name: member.name })}
             style={{
-              padding: '2px 8px', fontSize: '9px', letterSpacing: '0.08em', fontWeight: 700,
+              padding: '2px 8px', fontSize: 'var(--text-xs)', letterSpacing: '0.08em', fontWeight: 700,
               fontFamily: 'var(--font-mono)',
               background: isDemo ? 'transparent' : 'var(--amber-bg-subtle)',
               color: isDemo ? 'var(--text-muted)' : 'var(--amber)',

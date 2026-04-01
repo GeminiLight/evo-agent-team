@@ -75,7 +75,7 @@ export default function ApprovalPanel({ requests, resolvingId, onResolve, onOpen
             padding: 0,
           }}
         >
-          <span style={{ fontSize: '9px', letterSpacing: '0.15em', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+          <span style={{ fontSize: 'var(--text-xs)', letterSpacing: '0.15em', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
             {t('approval.pending_requests', { count: requests.length })}
           </span>
           <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: collapsed ? 700 : 400 }}>
@@ -109,7 +109,7 @@ export default function ApprovalPanel({ requests, resolvingId, onResolve, onOpen
                   <div style={{ color: 'var(--text-secondary)' }}>
                     {req.agentName || 'Agent'} → {req.toolName || 'Tool'}
                   </div>
-                  <div style={{ color: 'var(--text-muted)', fontSize: '9px' }}>
+                  <div style={{ color: 'var(--text-muted)', fontSize: 'var(--text-xs)' }}>
                     {req.reason ? `${req.reason.substring(0, 50)}…` : t('approval.no_reason')}
                   </div>
                 </div>
@@ -122,7 +122,7 @@ export default function ApprovalPanel({ requests, resolvingId, onResolve, onOpen
                     gap: '4px',
                     color: 'var(--amber)',
                     marginRight: '12px',
-                    fontSize: '9px',
+                    fontSize: 'var(--text-xs)',
                   }}
                 >
                   <Clock size={12} />
@@ -138,7 +138,7 @@ export default function ApprovalPanel({ requests, resolvingId, onResolve, onOpen
                     disabled={resolvingId === req.id}
                     style={{
                       padding: '4px 8px',
-                      fontSize: '9px',
+                      fontSize: 'var(--text-xs)',
                       fontWeight: 700,
                       background: 'var(--active-bg-med)',
                       color: 'var(--phosphor)',
@@ -158,7 +158,7 @@ export default function ApprovalPanel({ requests, resolvingId, onResolve, onOpen
                     disabled={resolvingId === req.id}
                     style={{
                       padding: '4px 8px',
-                      fontSize: '9px',
+                      fontSize: 'var(--text-xs)',
                       background: 'transparent',
                       color: 'var(--text-muted)',
                       border: '1px solid var(--border)',
@@ -187,7 +187,7 @@ export default function ApprovalPanel({ requests, resolvingId, onResolve, onOpen
                     onClick={() => onOpenDetails?.(req)}
                     style={{
                       padding: '4px 8px',
-                      fontSize: '9px',
+                      fontSize: 'var(--text-xs)',
                       background: 'transparent',
                       color: 'var(--text-secondary)',
                       border: '1px solid var(--border)',

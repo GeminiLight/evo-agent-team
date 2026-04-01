@@ -75,7 +75,7 @@ function StatusPopover({ currentStatus, onSelect, onClose }: StatusPopoverProps)
             onClick={() => { if (!isCurrent) { onSelect(opt.status); onClose(); } }}
             style={{
               padding: '5px 12px',
-              fontSize: '9px',
+              fontSize: 'var(--text-xs)',
               letterSpacing: '0.1em',
               display: 'flex',
               alignItems: 'center',
@@ -88,7 +88,7 @@ function StatusPopover({ currentStatus, onSelect, onClose }: StatusPopoverProps)
             onMouseEnter={e => { if (!isCurrent) e.currentTarget.style.background = 'var(--surface-2)'; }}
             onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
           >
-            <span style={{ fontSize: '9px', opacity: isCurrent ? 1 : 0.5 }}>
+            <span style={{ fontSize: 'var(--text-xs)', opacity: isCurrent ? 1 : 0.5 }}>
               {isCurrent ? '●' : '○'}
             </span>
             {opt.label}
@@ -232,7 +232,7 @@ export default function TaskList({ tasks, onTaskSelect, teamId, onTaskUpdated }:
         justifyContent: 'space-between',
         background: 'var(--surface-1)',
       }}>
-        <span style={{ fontSize: '9px', letterSpacing: '0.15em', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+        <span style={{ fontSize: 'var(--text-xs)', letterSpacing: '0.15em', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
           {t('task_list.registry')}
         </span>
 
@@ -254,8 +254,9 @@ export default function TaskList({ tasks, onTaskSelect, teamId, onTaskUpdated }:
                 onClick={() => setFilter(f)}
                 title={FILTER_TOOLTIPS[f]}
                 style={{
-                  padding: '3px 8px',
-                  fontSize: '10px',
+                  padding: '4px 8px',
+                  fontSize: 'var(--text-xs)',
+                  minHeight: 'var(--min-target)',
                   letterSpacing: '0.08em',
                   fontFamily: 'var(--font-mono)',
                   background: isActive ? `${color}18` : 'transparent',
@@ -314,10 +315,10 @@ export default function TaskList({ tasks, onTaskSelect, teamId, onTaskUpdated }:
               onMouseLeave={e => (e.currentTarget.style.background = 'var(--surface-0)')}
             >
               <span style={{ fontSize: '10px', color: 'var(--phosphor)', opacity: 0.7 }}>✓</span>
-              <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.08em' }}>
+              <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.08em' }}>
                 {completedTasks.length} {t('task_list.done').toLowerCase()}
               </span>
-              <span style={{ fontSize: '9px', color: 'var(--text-muted)', opacity: 0.5, marginLeft: 'auto' }}>
+              <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', opacity: 0.5, marginLeft: 'auto' }}>
                 {completedCollapsed ? '▸' : '▾'}
               </span>
             </div>
@@ -442,7 +443,7 @@ function TaskRow({ task, status, colors, isExpanded, idx, expandedId, setExpande
 
         {status === 'in_progress' && task.activeForm && (
           <span style={{
-            fontSize: '9px', color: 'var(--amber)', background: 'var(--amber-glow)',
+            fontSize: 'var(--text-xs)', color: 'var(--amber)', background: 'var(--amber-glow)',
             border: '1px solid var(--amber-dim)', borderRadius: '2px', padding: '2px 6px',
             letterSpacing: '0.04em', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
           }}>{task.activeForm}</span>
@@ -450,20 +451,20 @@ function TaskRow({ task, status, colors, isExpanded, idx, expandedId, setExpande
 
         {task.owner && (
           <span style={{
-            fontSize: '9px', color: agentColor(task.owner), background: `${agentColor(task.owner)}14`,
+            fontSize: 'var(--text-xs)', color: agentColor(task.owner), background: `${agentColor(task.owner)}14`,
             border: `1px solid ${agentColor(task.owner)}40`, borderRadius: '2px', padding: '2px 6px',
             letterSpacing: '0.06em', whiteSpace: 'nowrap', flexShrink: 0,
           }}>{task.owner}</span>
         )}
 
         {(status === 'in_progress' || status === 'pending') && task.updatedAt && (
-          <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.05em', whiteSpace: 'nowrap', flexShrink: 0, fontFamily: 'var(--font-mono)' }}>
+          <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.05em', whiteSpace: 'nowrap', flexShrink: 0, fontFamily: 'var(--font-mono)' }}>
             {timeInStatus(task.updatedAt)}
           </span>
         )}
 
         {task.createdAt && (
-          <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.05em', whiteSpace: 'nowrap', flexShrink: 0, fontFamily: 'var(--font-mono)' }} title={`Created: ${new Date(task.createdAt).toLocaleString()}`}>
+          <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.05em', whiteSpace: 'nowrap', flexShrink: 0, fontFamily: 'var(--font-mono)' }} title={`Created: ${new Date(task.createdAt).toLocaleString()}`}>
             +{timeAgoShort(task.createdAt)}
           </span>
         )}
@@ -473,9 +474,10 @@ function TaskRow({ task, status, colors, isExpanded, idx, expandedId, setExpande
             onClick={e => handleStatusClick(e, task, status)}
             title={!teamId ? undefined : status === 'blocked' ? t('task_list.blocked_hint') : t('task_list.status_hint', { status })}
             style={{
-              fontSize: '9px', color: colors.text,
+              fontSize: 'var(--text-xs)', color: colors.text,
               background: updatingId === task.id ? 'var(--surface-2)' : colors.bg,
-              border: `1px solid ${colors.border}40`, borderRadius: '2px', padding: '2px 6px',
+              border: `1px solid ${colors.border}40`, borderRadius: '2px', padding: '4px 8px',
+              minHeight: 'var(--min-target)', boxSizing: 'border-box',
               letterSpacing: '0.1em', minWidth: '52px', textAlign: 'center', fontFamily: 'var(--font-mono)',
               cursor: (!teamId || status === 'blocked') ? 'default' : 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px',
@@ -486,7 +488,7 @@ function TaskRow({ task, status, colors, isExpanded, idx, expandedId, setExpande
           >
             {updatingId === task.id
               ? <Loader2 size={10} style={{ animation: 'spin-slow 1s linear infinite' }} />
-              : <>{STATUS_LABELS[status]}{teamId && status !== 'blocked' && <span style={{ fontSize: '9px', opacity: 0.55, marginLeft: '1px' }}>▾</span>}</>
+              : <>{STATUS_LABELS[status]}{teamId && status !== 'blocked' && <span style={{ fontSize: 'var(--text-xs)', opacity: 0.55, marginLeft: '1px' }}>▾</span>}</>
             }
           </button>
           {openPopoverId === task.id && (
@@ -515,20 +517,20 @@ function TaskRow({ task, status, colors, isExpanded, idx, expandedId, setExpande
             <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginBottom: '8px', paddingBottom: '8px', borderBottom: '1px solid var(--border)' }}>
               {task.createdAt && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{t('task_list.created')}</span>
-                  <span style={{ fontSize: '9px', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', letterSpacing: '0.04em' }}>{fmtAbsoluteTime(task.createdAt)}</span>
+                  <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{t('task_list.created')}</span>
+                  <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', letterSpacing: '0.04em' }}>{fmtAbsoluteTime(task.createdAt)}</span>
                 </div>
               )}
               {task.updatedAt && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{t('task_list.updated')}</span>
-                  <span style={{ fontSize: '9px', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', letterSpacing: '0.04em' }}>{fmtAbsoluteTime(task.updatedAt)}</span>
+                  <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{t('task_list.updated')}</span>
+                  <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', letterSpacing: '0.04em' }}>{fmtAbsoluteTime(task.updatedAt)}</span>
                 </div>
               )}
               {task.createdAt && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{t('task_list.duration')}</span>
-                  <span style={{ fontSize: '9px', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', letterSpacing: '0.04em' }}>{durationSince(task.createdAt)}</span>
+                  <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{t('task_list.duration')}</span>
+                  <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', letterSpacing: '0.04em' }}>{durationSince(task.createdAt)}</span>
                 </div>
               )}
             </div>

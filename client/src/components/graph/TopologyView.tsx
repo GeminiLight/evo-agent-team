@@ -89,7 +89,7 @@ function LayoutToolbar({ layout, onChange, statusFilter, onStatusFilterChange }:
               border: isActive ? '1px solid var(--active-border-hi)' : '1px solid transparent',
               borderRadius: '6px',
               color: isActive ? 'var(--active-text)' : 'var(--text-muted)',
-              fontSize: '9px',
+              fontSize: 'var(--text-xs)',
               letterSpacing: '0.1em',
               fontFamily: 'var(--font-mono, monospace)',
               cursor: 'pointer',
@@ -99,10 +99,10 @@ function LayoutToolbar({ layout, onChange, statusFilter, onStatusFilterChange }:
               fontWeight: isActive ? 600 : 400,
             }}
             onMouseEnter={(e) => {
-              if (!isActive) (e.target as HTMLElement).style.color = 'var(--text-secondary)';
+              if (!isActive) (e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)';
             }}
             onMouseLeave={(e) => {
-              if (!isActive) (e.target as HTMLElement).style.color = 'var(--text-muted)';
+              if (!isActive) (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)';
             }}
           >
             <span style={{ fontSize: '12px', opacity: isActive ? 1 : 0.5 }}>{opt.icon}</span>
@@ -128,7 +128,7 @@ function LayoutToolbar({ layout, onChange, statusFilter, onStatusFilterChange }:
               border: isActive ? '1px solid var(--active-border-hi)' : '1px solid transparent',
               borderRadius: '6px',
               color: isActive ? 'var(--active-text)' : 'var(--text-muted)',
-              fontSize: '9px',
+              fontSize: 'var(--text-xs)',
               letterSpacing: '0.1em',
               fontFamily: 'var(--font-mono, monospace)',
               cursor: 'pointer',
@@ -138,10 +138,10 @@ function LayoutToolbar({ layout, onChange, statusFilter, onStatusFilterChange }:
               fontWeight: isActive ? 600 : 400,
             }}
             onMouseEnter={(e) => {
-              if (!isActive) (e.target as HTMLElement).style.color = 'var(--text-secondary)';
+              if (!isActive) (e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)';
             }}
             onMouseLeave={(e) => {
-              if (!isActive) (e.target as HTMLElement).style.color = 'var(--text-muted)';
+              if (!isActive) (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)';
             }}
           >
             {opt.label}

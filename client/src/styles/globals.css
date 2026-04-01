@@ -108,6 +108,31 @@
   --phosphor-bg-subtle:    rgba(57, 255, 106, 0.12);
   --ice-bg-subtle:         rgba(91, 200, 245, 0.08);
   --ice-border-subtle:     rgba(91, 200, 245, 0.25);
+
+  /* ── Design system tokens ── */
+
+  /* Spacing scale */
+  --space-xs:  4px;
+  --space-sm:  8px;
+  --space-md:  12px;
+  --space-lg:  16px;
+  --space-xl:  24px;
+  --space-2xl: 32px;
+
+  /* Typography scale (minimum 10px for readability) */
+  --text-xs:   10px;
+  --text-sm:   11px;
+  --text-base: 13px;
+  --text-lg:   15px;
+  --text-xl:   18px;
+  --text-2xl:  22px;
+
+  /* Transitions */
+  --transition-fast:   150ms ease;
+  --transition-normal: 250ms ease;
+
+  /* Min touch/click target */
+  --min-target: 32px;
 }
 
 /* ─── THEME 2: RADAR — deep space amber ─── */
@@ -1112,7 +1137,7 @@ body::before {
     rgba(0, 0, 0, var(--scanline-opacity)) 4px
   );
   pointer-events: none;
-  z-index: 9999;
+  z-index: 1;
 }
 
 /* Vignette */
@@ -1121,7 +1146,7 @@ body::after {
   position: fixed; inset: 0;
   background: radial-gradient(ellipse at center, transparent 60%, var(--vignette-strength) 100%);
   pointer-events: none;
-  z-index: 9998;
+  z-index: 1;
 }
 
 
@@ -1208,6 +1233,13 @@ html[data-theme-switching] *,
 html[data-theme-switching] *::before,
 html[data-theme-switching] *::after {
   transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease, box-shadow 0.25s ease;
+}
+
+/* Focus-visible — keyboard navigation indicator */
+:focus-visible {
+  outline: 2px solid var(--phosphor);
+  outline-offset: 2px;
+  border-radius: 2px;
 }
 
 /* Reduced motion — respect OS accessibility setting */

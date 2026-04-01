@@ -20,7 +20,7 @@ export default function ChatBubble({ message, isStreaming }: ChatBubbleProps) {
     }}>
       {/* Timestamp + role label */}
       <div style={{
-        fontSize: '9px',
+        fontSize: 'var(--text-xs)',
         color: 'var(--text-muted)',
         letterSpacing: '0.08em',
         marginBottom: '3px',

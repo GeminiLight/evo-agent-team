@@ -47,7 +47,7 @@ function StatusIcon({ status }: { status: StatusKey }) {
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.15em', marginBottom: '8px', fontFamily: 'var(--font-mono)' }}>
+    <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.15em', marginBottom: '8px', fontFamily: 'var(--font-mono)' }}>
       {children}
     </div>
   );
@@ -56,7 +56,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 function InfoRow({ label, value, mono = false, accent }: { label: string; value: React.ReactNode; mono?: boolean; accent?: string }) {
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', padding: '6px 0', borderBottom: '1px solid var(--border)' }}>
-      <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em', flexShrink: 0, paddingTop: '1px', textTransform: 'uppercase' }}>{label}</span>
+      <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.1em', flexShrink: 0, paddingTop: '1px', textTransform: 'uppercase' }}>{label}</span>
       <span style={{ fontSize: '10px', color: accent ?? 'var(--text-secondary)', fontFamily: mono ? 'var(--font-mono)' : undefined, letterSpacing: mono ? '0.04em' : undefined, wordBreak: 'break-all', textAlign: 'right' }}>
         {value}
       </span>
@@ -169,7 +169,7 @@ export default function AgentProfilePanel({ member, tasks, teamId, isLead = fals
 
         {/* Header */}
         <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
-          <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.15em', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>
+          <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.15em', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>
             {t('panel.agent_profile')}
           </span>
           <button onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', padding: '2px' }}
@@ -204,7 +204,7 @@ export default function AgentProfilePanel({ member, tasks, teamId, isLead = fals
                 </span>
                 {isLead && (
                   <span style={{
-                    padding: '1px 6px', fontSize: '9px', fontWeight: 700,
+                    padding: '1px 6px', fontSize: 'var(--text-xs)', fontWeight: 700,
                     letterSpacing: '0.12em', color: 'var(--amber)',
                     background: 'var(--amber-bg-subtle)',
                     border: '1px solid var(--amber-border-subtle)',
@@ -215,7 +215,7 @@ export default function AgentProfilePanel({ member, tasks, teamId, isLead = fals
                   </span>
                 )}
               </div>
-              <div style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '6px' }}>
+              <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '6px' }}>
                 {member.agentType}
               </div>
               {/* Status pill */}
@@ -226,7 +226,7 @@ export default function AgentProfilePanel({ member, tasks, teamId, isLead = fals
                   boxShadow: isActive ? `0 0 5px ${accent}` : 'none',
                   animation: isActive ? 'status-pulse 2s ease-in-out infinite' : 'none',
                 }} />
-                <span style={{ fontSize: '9px', color: isActive ? accent : 'var(--text-muted)', letterSpacing: '0.1em' }}>
+                <span style={{ fontSize: 'var(--text-xs)', color: isActive ? accent : 'var(--text-muted)', letterSpacing: '0.1em' }}>
                   {isActive ? 'ACTIVE' : 'IDLE'}
                 </span>
               </div>
@@ -265,7 +265,7 @@ export default function AgentProfilePanel({ member, tasks, teamId, isLead = fals
                   ? <ChevronDown size={10} style={{ color: 'var(--text-muted)' }} />
                   : <ChevronRight size={10} style={{ color: 'var(--text-muted)' }} />
                 }
-                <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.15em', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>
+                <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.15em', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>
                   {t('panel.system_prompt')}
                 </span>
               </button>
@@ -280,7 +280,7 @@ export default function AgentProfilePanel({ member, tasks, teamId, isLead = fals
                     background: 'transparent', border: '1px solid var(--border)',
                     borderRadius: '2px', cursor: 'pointer',
                     padding: '2px 7px',
-                    fontSize: '9px', letterSpacing: '0.1em',
+                    fontSize: 'var(--text-xs)', letterSpacing: '0.1em',
                     color: 'var(--text-muted)', fontFamily: 'var(--font-mono)',
                     transition: 'border-color 0.15s, color 0.15s',
                   }}
@@ -294,7 +294,7 @@ export default function AgentProfilePanel({ member, tasks, teamId, isLead = fals
               {promptExpanded && editing && (
                 <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                   {saveSuccess && (
-                    <span style={{ fontSize: '9px', color: 'var(--color-completed)', letterSpacing: '0.1em' }}>SAVED ✓</span>
+                    <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-completed)', letterSpacing: '0.1em' }}>SAVED ✓</span>
                   )}
                   <button
                     onClick={handleCancel}
@@ -304,7 +304,7 @@ export default function AgentProfilePanel({ member, tasks, teamId, isLead = fals
                       background: 'transparent', border: '1px solid var(--border)',
                       borderRadius: '2px', cursor: 'pointer',
                       padding: '2px 7px',
-                      fontSize: '9px', letterSpacing: '0.1em',
+                      fontSize: 'var(--text-xs)', letterSpacing: '0.1em',
                       color: 'var(--text-muted)', fontFamily: 'var(--font-mono)',
                     }}
                   >
@@ -319,7 +319,7 @@ export default function AgentProfilePanel({ member, tasks, teamId, isLead = fals
                       border: `1px solid ${saving ? 'var(--border)' : accent}`,
                       borderRadius: '2px', cursor: saving ? 'default' : 'pointer',
                       padding: '2px 9px',
-                      fontSize: '9px', letterSpacing: '0.1em',
+                      fontSize: 'var(--text-xs)', letterSpacing: '0.1em',
                       color: saving ? 'var(--text-muted)' : accent,
                       fontFamily: 'var(--font-mono)',
                       transition: 'all 0.15s',
@@ -362,7 +362,7 @@ export default function AgentProfilePanel({ member, tasks, teamId, isLead = fals
                       onBlur={e => { e.currentTarget.style.boxShadow = `0 0 0 1px ${accent}20`; }}
                     />
                     {saveError && (
-                      <div style={{ fontSize: '9px', color: 'var(--crimson)', marginTop: '4px', letterSpacing: '0.06em' }}>
+                      <div style={{ fontSize: 'var(--text-xs)', color: 'var(--crimson)', marginTop: '4px', letterSpacing: '0.06em' }}>
                         ✕ {saveError}
                       </div>
                     )}
@@ -395,7 +395,7 @@ export default function AgentProfilePanel({ member, tasks, teamId, isLead = fals
               <div
                 onClick={() => { setPromptExpanded(true); setEditing(true); }}
                 style={{
-                  fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.06em',
+                  fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.06em',
                   cursor: 'pointer', opacity: 0.6,
                   transition: 'opacity 0.15s',
                 }}
@@ -420,7 +420,7 @@ export default function AgentProfilePanel({ member, tasks, teamId, isLead = fals
               ].map(s => (
                 <div key={s.label} style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: '3px', padding: '10px 8px', textAlign: 'center' }}>
                   <div style={{ fontSize: '20px', fontWeight: 700, color: s.color, fontFamily: 'var(--font-mono)', lineHeight: 1, marginBottom: '4px' }}>{s.value}</div>
-                  <div style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>{s.label}</div>
+                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>{s.label}</div>
                 </div>
               ))}
             </div>
@@ -450,7 +450,7 @@ export default function AgentProfilePanel({ member, tasks, teamId, isLead = fals
                   borderRadius: '3px', padding: '8px 10px',
                   lineHeight: 1.5, letterSpacing: '0.02em', marginBottom: '6px',
                 }}>
-                  <span style={{ color: 'var(--amber-dim)', marginRight: '6px', fontSize: '9px' }}>▸ #{t.id}</span>
+                  <span style={{ color: 'var(--amber-dim)', marginRight: '6px', fontSize: 'var(--text-xs)' }}>▸ #{t.id}</span>
                   {t.activeForm || t.subject}
                 </div>
               ))}
@@ -475,12 +475,12 @@ export default function AgentProfilePanel({ member, tasks, teamId, isLead = fals
                     <div style={{ fontSize: '18px', fontWeight: 700, color: s.color, fontFamily: 'var(--font-mono)', lineHeight: 1, marginBottom: '4px' }}>
                       {s.value}
                     </div>
-                    <div style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>{s.label}</div>
+                    <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>{s.label}</div>
                   </div>
                 ))}
               </div>
               {sessionStats.cacheReadTokens > 0 && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', color: 'var(--text-muted)', padding: '4px 0', letterSpacing: '0.06em', borderTop: '1px solid var(--border)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--text-xs)', color: 'var(--text-muted)', padding: '4px 0', letterSpacing: '0.06em', borderTop: '1px solid var(--border)' }}>
                   <span>CACHE READ</span>
                   <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>
                     {fmtTokens(sessionStats.cacheReadTokens)}
@@ -488,7 +488,7 @@ export default function AgentProfilePanel({ member, tasks, teamId, isLead = fals
                 </div>
               )}
               {sessionStats.sessionDurationMs !== null && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', color: 'var(--text-muted)', padding: '4px 0', letterSpacing: '0.06em', borderTop: '1px solid var(--border)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--text-xs)', color: 'var(--text-muted)', padding: '4px 0', letterSpacing: '0.06em', borderTop: '1px solid var(--border)' }}>
                   <span>SESSION TIME</span>
                   <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>
                     {fmtDuration(sessionStats.sessionDurationMs)}
@@ -523,7 +523,7 @@ export default function AgentProfilePanel({ member, tasks, teamId, isLead = fals
                       animation: `fade-up 0.2s ease-out ${idx * 0.04}s both`,
                     }}>
                       <StatusIcon status={s} />
-                      <span style={{ fontSize: '9px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', minWidth: '22px' }}>
+                      <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', minWidth: '22px' }}>
                         #{t.id}
                       </span>
                       <span style={{
@@ -535,7 +535,7 @@ export default function AgentProfilePanel({ member, tasks, teamId, isLead = fals
                       }}>
                         {t.subject}
                       </span>
-                      <span style={{ fontSize: '9px', color: c.text, background: c.bg, border: `1px solid ${c.border}40`, borderRadius: '2px', padding: '1px 5px', letterSpacing: '0.08em', flexShrink: 0 }}>
+                      <span style={{ fontSize: 'var(--text-xs)', color: c.text, background: c.bg, border: `1px solid ${c.border}40`, borderRadius: '2px', padding: '1px 5px', letterSpacing: '0.08em', flexShrink: 0 }}>
                         {STATUS_LABELS[s]}
                       </span>
                     </div>

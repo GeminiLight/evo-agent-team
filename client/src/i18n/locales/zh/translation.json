@@ -58,7 +58,8 @@
     "idle": "空闲",
     "run": "运行",
     "lead": "主控",
-    "active": "活跃"
+    "active": "活跃",
+    "approval": "待审批"
   },
   "alert": {
     "input_one": "{{count}} 个输入",
@@ -116,7 +117,9 @@
     "session_todos": "会话待办",
     "no_agents": "暂无代理",
     "no_agents_sub": "等待团队成员连接...",
-    "done_count": "{{done}}/{{total}} 已完成"
+    "done_count": "{{done}}/{{total}} 已完成",
+    "expand_advanced": "+ 展开高级选项",
+    "collapse_advanced": "- 收起高级选项"
   },
   "agent_card": {
     "input": "⚠ 输入",
@@ -546,7 +549,9 @@
     "shortcuts_search": "/: 聚焦搜索",
     "shortcuts_close": "Esc: 关闭面板",
     "shortcuts_next": "n: 下一通知",
-    "shortcuts_refresh": "r: 刷新"
+    "shortcuts_refresh": "r: 刷新",
+    "onboarding": "引导",
+    "restart_tour": "重新开始导览"
   },
   "chat": {
     "title": "对话 // {{name}}",
@@ -637,6 +642,11 @@
     "watch_team": "实时监测你的团队",
     "respond_inline": "无需离开应用即可回复",
     "save_lessons": "保存经验教训供下次使用",
+    "tagline": "像管理人类团队一样管理你的 AI 编程团队",
+    "checklist_title": "入门清单",
+    "checklist_tour": "参加导览",
+    "checklist_dashboard": "了解仪表盘",
+    "checklist_approve": "尝试审批一个请求",
     "track_costs": "追踪每个代理的成本",
     "step1_title": "认识你的仪表盘",
     "step1_desc": "在一个地方查看所有代理、任务和警报",

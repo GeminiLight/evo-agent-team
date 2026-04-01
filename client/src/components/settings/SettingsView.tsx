@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { THEMES, useTheme, type ThemeId } from '../../context/ThemeContext';
+import { useOnboarding } from '../../hooks/useOnboarding';
 
 interface SettingsViewProps {
   teamId: string | null;
@@ -26,7 +27,7 @@ function SectionLabel({ label }: { label: string }) {
       marginBottom: '12px', marginTop: '28px',
     }}>
       <span style={{
-        fontSize: '9px', letterSpacing: '0.18em', color: 'var(--text-muted)',
+        fontSize: 'var(--text-xs)', letterSpacing: '0.18em', color: 'var(--text-muted)',
         fontFamily: 'var(--font-mono)', flexShrink: 0, textTransform: 'uppercase',
       }}>{label}</span>
       <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
@@ -42,7 +43,7 @@ function FieldRow({ label, children }: { label: string; children: React.ReactNod
     }}>
       <span style={{
         width: '110px', flexShrink: 0, textAlign: 'right',
-        fontSize: '9px', letterSpacing: '0.06em',
+        fontSize: 'var(--text-xs)', letterSpacing: '0.06em',
         color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)',
         textTransform: 'uppercase',
       }}>
@@ -56,6 +57,7 @@ function FieldRow({ label, children }: { label: string; children: React.ReactNod
 export default function SettingsView({ teamId, wsConnected }: SettingsViewProps) {
   const { t, i18n } = useTranslation();
   const { theme, setTheme } = useTheme();
+  const { tourComplete, resetTour } = useOnboarding();
 
   const [config, setConfig] = useState<ServerConfig | null>(null);
   const [form, setForm] = useState({ teamsDir: '', tasksDir: '', pollIntervalMs: 2000, demoMode: 'auto' });
@@ -118,7 +120,7 @@ export default function SettingsView({ teamId, wsConnected }: SettingsViewProps)
         flexShrink: 0,
       }}>
         <span style={{
-          fontSize: '9px', letterSpacing: '0.15em', color: 'var(--text-muted)',
+          fontSize: 'var(--text-xs)', letterSpacing: '0.15em', color: 'var(--text-muted)',
           fontFamily: 'var(--font-mono)', textTransform: 'uppercase',
         }}>
           {t('settings.title', { name: teamName })}
@@ -181,7 +183,7 @@ export default function SettingsView({ teamId, wsConnected }: SettingsViewProps)
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{
-                      fontSize: '9px', fontWeight: 600, letterSpacing: '0.06em',
+                      fontSize: 'var(--text-xs)', fontWeight: 600, letterSpacing: '0.06em',
                       color: isActive ? themeItem.accent : 'var(--text-primary)',
                       fontFamily: 'var(--font-mono)',
                       textTransform: 'uppercase',
@@ -189,7 +191,7 @@ export default function SettingsView({ teamId, wsConnected }: SettingsViewProps)
                       {t(`theme.${themeItem.id}.label`)}
                     </div>
                     <div style={{
-                      fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.03em',
+                      fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.03em',
                       fontFamily: 'var(--font-mono)',
                     }}>
                       {t(`theme.${themeItem.id}.desc`)}
@@ -239,6 +241,37 @@ export default function SettingsView({ teamId, wsConnected }: SettingsViewProps)
           </div>
         </FieldRow>
 
+        {tourComplete && (
+          <FieldRow label={t('settings.onboarding')}>
+            <button
+              onClick={resetTour}
+              style={{
+                padding: '4px 14px',
+                fontSize: 'var(--text-xs)', fontWeight: 600,
+                fontFamily: 'var(--font-mono)',
+                letterSpacing: '0.08em',
+                background: 'var(--surface-1)',
+                color: 'var(--text-secondary)',
+                border: '1px solid var(--border)',
+                borderRadius: '3px',
+                cursor: 'pointer',
+                transition: 'all 0.15s',
+                textTransform: 'uppercase',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.background = 'var(--surface-2)';
+                e.currentTarget.style.color = 'var(--text-primary)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = 'var(--surface-1)';
+                e.currentTarget.style.color = 'var(--text-secondary)';
+              }}
+            >
+              {t('settings.restart_tour')}
+            </button>
+          </FieldRow>
+        )}
+
         {/* ── SERVER ── */}
         <SectionLabel label={t('settings.server')} />
 
@@ -270,7 +303,7 @@ export default function SettingsView({ teamId, wsConnected }: SettingsViewProps)
                   onClick={() => setForm(f => ({ ...f, pollIntervalMs: ms }))}
                   style={{
                     padding: '4px 12px',
-                    fontSize: '9px', fontWeight: 600,
+                    fontSize: 'var(--text-xs)', fontWeight: 600,
                     fontFamily: 'var(--font-mono)',
                     letterSpacing: '0.06em',
                     background: isActive ? 'var(--active-bg-med)' : 'var(--surface-1)',
@@ -303,7 +336,7 @@ export default function SettingsView({ teamId, wsConnected }: SettingsViewProps)
                   onClick={() => setForm(f => ({ ...f, demoMode: opt.value }))}
                   style={{
                     padding: '4px 14px',
-                    fontSize: '9px', fontWeight: 600,
+                    fontSize: 'var(--text-xs)', fontWeight: 600,
                     fontFamily: 'var(--font-mono)',
                     letterSpacing: '0.06em',
                     background: isActive ? 'var(--active-bg-med)' : 'var(--surface-1)',
@@ -329,7 +362,7 @@ export default function SettingsView({ teamId, wsConnected }: SettingsViewProps)
             disabled={saveState === 'saving'}
             style={{
               padding: '5px 18px',
-              fontSize: '9px', fontWeight: 700,
+              fontSize: 'var(--text-xs)', fontWeight: 700,
               fontFamily: 'var(--font-mono)',
               letterSpacing: '0.1em',
               textTransform: 'uppercase',
@@ -397,7 +430,7 @@ export default function SettingsView({ teamId, wsConnected }: SettingsViewProps)
               padding: '4px 0', maxWidth: '530px',
             }}>
               <code style={{
-                padding: '2px 8px', fontSize: '9px',
+                padding: '2px 8px', fontSize: 'var(--text-xs)',
                 fontFamily: 'var(--font-mono)',
                 background: 'var(--surface-2)',
                 border: '1px solid var(--border)',
@@ -406,7 +439,7 @@ export default function SettingsView({ teamId, wsConnected }: SettingsViewProps)
                 letterSpacing: '0.06em',
                 minWidth: '50px', textAlign: 'center',
               }}>{key}</code>
-              <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.04em' }}>{desc}</span>
+              <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.04em' }}>{desc}</span>
             </div>
           );
         })}

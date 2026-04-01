@@ -133,7 +133,7 @@ export default function ContextSummaryView({ teamId, isDemoMode }: ContextSummar
             transition: 'width 0.3s',
           }} />
         </div>
-        <span style={{ fontSize: '9px', color, letterSpacing: '0.06em', fontFamily: 'var(--font-mono)' }}>
+        <span style={{ fontSize: 'var(--text-xs)', color, letterSpacing: '0.06em', fontFamily: 'var(--font-mono)' }}>
           ≈ {t('context.token_count', { used: tokens, limit: TOKEN_BUDGET })}
         </span>
       </div>

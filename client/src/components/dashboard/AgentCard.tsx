@@ -87,7 +87,7 @@ export default function AgentCard({ member, tasks, onAgentSelect, sortRank, awai
         <div style={{
           position: 'absolute', top: '6px', left: '6px',
           padding: '1px 5px',
-          fontSize: '9px', fontWeight: 700, letterSpacing: '0.12em',
+          fontSize: 'var(--text-xs)', fontWeight: 700, letterSpacing: '0.12em',
           color: 'var(--amber)',
           background: 'var(--amber-bg-subtle)',
           border: '1px solid var(--amber-border-subtle)',
@@ -108,7 +108,7 @@ export default function AgentCard({ member, tasks, onAgentSelect, sortRank, awai
           background: sortRank === 1 ? `${accent}22` : 'var(--surface-2)',
           border: `1px solid ${sortRank === 1 ? `${accent}55` : 'var(--border)'}`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '9px', fontWeight: 700,
+          fontSize: 'var(--text-xs)', fontWeight: 700,
           color: sortRank === 1 ? accent : 'var(--text-muted)',
           fontFamily: 'var(--font-mono)',
           lineHeight: 1,
@@ -141,7 +141,7 @@ export default function AgentCard({ member, tasks, onAgentSelect, sortRank, awai
               background: 'var(--crimson)',
               boxShadow: '0 0 6px var(--crimson-glow)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '9px', fontWeight: 700, color: '#fff',
+              fontSize: 'var(--text-xs)', fontWeight: 700, color: '#fff',
               fontFamily: 'var(--font-mono)', lineHeight: 1,
               border: '1px solid var(--surface-0)',
             }}>
@@ -159,7 +159,7 @@ export default function AgentCard({ member, tasks, onAgentSelect, sortRank, awai
           }}>
             {member.name}
           </div>
-          <div style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+          <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
             {member.agentType}
           </div>
         </div>
@@ -178,7 +178,7 @@ export default function AgentCard({ member, tasks, onAgentSelect, sortRank, awai
             boxShadow: awaitingInput ? '0 0 5px var(--amber)' : isActive ? `0 0 5px ${accent}` : 'none',
             animation: (awaitingInput || isActive) ? 'status-pulse 2s ease-in-out infinite' : 'none',
           }} />
-          <span style={{ fontSize: '9px', color: awaitingInput ? 'var(--amber)' : isActive ? accent : 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+          <span style={{ fontSize: 'var(--text-xs)', color: awaitingInput ? 'var(--amber)' : isActive ? accent : 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
             {awaitingInput ? blockingLabel(blockingTool, t) : isActive ? t('status.run') : t('status.idle')}
           </span>
         </div>
@@ -241,11 +241,11 @@ export default function AgentCard({ member, tasks, onAgentSelect, sortRank, awai
             flexShrink: 0,
           }} />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: '9px', fontWeight: 700, color: 'var(--amber)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+            <div style={{ fontSize: 'var(--text-xs)', fontWeight: 700, color: 'var(--amber)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
               {t('agent_card.awaiting_input')}
             </div>
             {blockingTool && (
-              <div style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.06em', marginTop: '1px' }}>
+              <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.06em', marginTop: '1px' }}>
                 {blockingTool}
               </div>
             )}
@@ -254,7 +254,7 @@ export default function AgentCard({ member, tasks, onAgentSelect, sortRank, awai
             onClick={e => { e.stopPropagation(); if (!isDemo) setRespondOpen(true); }}
             title={isDemo ? t('agent_card.demo_unavailable') : t('agent_card.respond_to', { name: member.name })}
             style={{
-              padding: '3px 10px', fontSize: '9px', letterSpacing: '0.1em', fontWeight: 700,
+              padding: '3px 10px', fontSize: 'var(--text-xs)', letterSpacing: '0.1em', fontWeight: 700,
               fontFamily: 'var(--font-mono)',
               background: isDemo ? 'transparent' : 'var(--amber-bg-subtle)',
               color: isDemo ? 'var(--text-muted)' : 'var(--amber)',

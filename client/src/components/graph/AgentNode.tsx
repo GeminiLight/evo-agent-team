@@ -53,35 +53,35 @@ function AgentTooltip({ member, isActive, taskCount, inProgressCount = 0, comple
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px' }}>
-          <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.08em' }}>TYPE</span>
-          <span style={{ fontSize: '9px', color: 'var(--text-secondary)', letterSpacing: '0.06em' }}>{member.agentType || '—'}</span>
+          <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.08em' }}>TYPE</span>
+          <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', letterSpacing: '0.06em' }}>{member.agentType || '—'}</span>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px' }}>
-          <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.08em' }}>STATUS</span>
-          <span style={{ fontSize: '9px', color: isActive ? 'var(--phosphor)' : 'var(--text-muted)', letterSpacing: '0.08em', textShadow: isActive ? '0 0 6px var(--phosphor-glow)' : 'none' }}>
+          <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.08em' }}>STATUS</span>
+          <span style={{ fontSize: 'var(--text-xs)', color: isActive ? 'var(--phosphor)' : 'var(--text-muted)', letterSpacing: '0.08em', textShadow: isActive ? '0 0 6px var(--phosphor-glow)' : 'none' }}>
             {isActive ? 'ACTIVE' : 'IDLE'}
           </span>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px' }}>
-          <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.08em' }}>TASKS</span>
-          <span style={{ fontSize: '9px', color: 'var(--ice)', letterSpacing: '0.06em' }}>{taskCount}</span>
+          <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.08em' }}>TASKS</span>
+          <span style={{ fontSize: 'var(--text-xs)', color: 'var(--ice)', letterSpacing: '0.06em' }}>{taskCount}</span>
         </div>
         {inProgressCount > 0 && (
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px' }}>
-            <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.08em' }}>ACTIVE</span>
-            <span style={{ fontSize: '9px', color: 'var(--amber)', letterSpacing: '0.06em' }}>{inProgressCount}</span>
+            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.08em' }}>ACTIVE</span>
+            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--amber)', letterSpacing: '0.06em' }}>{inProgressCount}</span>
           </div>
         )}
         {completedCount > 0 && (
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px' }}>
-            <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.08em' }}>DONE</span>
-            <span style={{ fontSize: '9px', color: 'var(--phosphor)', letterSpacing: '0.06em' }}>{completedCount}</span>
+            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.08em' }}>DONE</span>
+            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--phosphor)', letterSpacing: '0.06em' }}>{completedCount}</span>
           </div>
         )}
         {member.model && (
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px' }}>
-            <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.08em' }}>MODEL</span>
-            <span style={{ fontSize: '9px', color: 'var(--text-secondary)', letterSpacing: '0.06em', maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis' }}>{member.model}</span>
+            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.08em' }}>MODEL</span>
+            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', letterSpacing: '0.06em', maxWidth: '100px', overflow: 'hidden', textOverflow: 'ellipsis' }}>{member.model}</span>
           </div>
         )}
       </div>
@@ -186,7 +186,7 @@ export function AgentNode({ data }: { data: AgentNodeData }) {
             </div>
             {isLead && (
               <span style={{
-                fontSize: '9px', padding: '1px 3px',
+                fontSize: 'var(--text-xs)', padding: '1px 3px',
                 color: 'var(--amber)', background: 'var(--amber-bg-subtle)',
                 border: '1px solid var(--amber-border-subtle)', borderRadius: '2px',
                 fontFamily: 'var(--font-mono)', letterSpacing: '0.12em', fontWeight: 700,
@@ -194,7 +194,7 @@ export function AgentNode({ data }: { data: AgentNodeData }) {
             )}
           </div>
           <div style={{
-            fontSize: '9px', color: 'var(--text-muted)',
+            fontSize: 'var(--text-xs)', color: 'var(--text-muted)',
             letterSpacing: '0.08em', textTransform: 'uppercase',
             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
           }}>
@@ -214,7 +214,7 @@ export function AgentNode({ data }: { data: AgentNodeData }) {
             animation: isActive ? 'status-pulse 2s ease-in-out infinite' : 'none',
           }} />
           <span style={{
-            fontSize: '9px',
+            fontSize: 'var(--text-xs)',
             color: isActive ? 'var(--active-text)' : 'var(--text-muted)',
             letterSpacing: '0.1em',
           }}>
@@ -223,7 +223,7 @@ export function AgentNode({ data }: { data: AgentNodeData }) {
         </div>
         {taskCount > 0 && (
           <span style={{
-            fontSize: '9px', color: 'var(--ice)',
+            fontSize: 'var(--text-xs)', color: 'var(--ice)',
             background: 'var(--ice-glow)', border: '1px solid var(--ice-dim)',
             borderRadius: '3px', padding: '1px 5px',
             letterSpacing: '0.06em', fontWeight: 600,

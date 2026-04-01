@@ -16,7 +16,7 @@ export default function LangSwitcher() {
         onClick={() => i18n.changeLanguage('en')}
         style={{
           padding: '3px 8px',
-          fontSize: '9px',
+          fontSize: 'var(--text-xs)',
           fontFamily: 'var(--font-mono)',
           letterSpacing: '0.08em',
           background: !isZh ? 'var(--active-bg-med)' : 'transparent',
@@ -35,7 +35,7 @@ export default function LangSwitcher() {
         onClick={() => i18n.changeLanguage('zh')}
         style={{
           padding: '3px 8px',
-          fontSize: '9px',
+          fontSize: 'var(--text-xs)',
           fontFamily: 'var(--font-mono)',
           background: isZh ? 'var(--active-bg-med)' : 'transparent',
           color: isZh ? 'var(--active-text)' : 'var(--text-muted)',

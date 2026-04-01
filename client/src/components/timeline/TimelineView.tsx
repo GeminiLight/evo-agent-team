@@ -130,7 +130,7 @@ export default function TimelineView({ teamId, teamDetail, onEventsChange }: Tim
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         flexShrink: 0,
       }}>
-        <span style={{ fontSize: '9px', letterSpacing: '0.15em', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+        <span style={{ fontSize: 'var(--text-xs)', letterSpacing: '0.15em', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
           {t('timeline.title', { name: teamName })}
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -150,7 +150,7 @@ export default function TimelineView({ teamId, teamDetail, onEventsChange }: Tim
               borderRadius: '3px',
               cursor: 'pointer',
               fontFamily: 'var(--font-mono)',
-              fontSize: '9px', letterSpacing: '0.1em',
+              fontSize: 'var(--text-xs)', letterSpacing: '0.1em',
               color: isFollowing ? 'var(--active-text)' : 'var(--text-muted)',
               transition: 'all 0.15s',
             }}
@@ -165,7 +165,7 @@ export default function TimelineView({ teamId, teamDetail, onEventsChange }: Tim
             <span style={{ textTransform: 'uppercase' }}>{t('timeline.follow')}</span>
           </button>
           {!loading && (
-            <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
               {t('timeline.event', { count: sorted.length })}
             </span>
           )}
@@ -207,7 +207,7 @@ export default function TimelineView({ teamId, teamDetail, onEventsChange }: Tim
             border: '1px solid var(--active-border-hi)',
             borderRadius: '20px',
             color: 'var(--active-text)',
-            fontSize: '9px', letterSpacing: '0.12em',
+            fontSize: 'var(--text-xs)', letterSpacing: '0.12em',
             fontFamily: 'var(--font-mono)',
             cursor: 'pointer',
             boxShadow: '0 2px 12px rgba(0,0,0,0.4), 0 0 10px var(--phosphor-glow)',
@@ -229,7 +229,7 @@ function OrderBtn({ active, onClick, title, children }: { active: boolean; onCli
       onClick={onClick}
       title={title}
       style={{
-        padding: '2px 7px', fontSize: '9px', letterSpacing: '0.08em',
+        padding: '2px 7px', fontSize: 'var(--text-xs)', letterSpacing: '0.08em',
         fontFamily: 'var(--font-mono)',
         background: active ? 'var(--active-bg-med)' : 'transparent',
         color: active ? 'var(--active-text)' : 'var(--text-muted)',

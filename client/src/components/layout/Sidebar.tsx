@@ -150,12 +150,15 @@ export default function Sidebar({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        fontSize: '8px',
+        fontSize: 'var(--text-xs)',
         fontWeight: 700,
         color: 'var(--surface-0)',
         padding: '0 3px',
       }}>
-        {count > 9 ? '9+' : count}
+        <span aria-hidden="true">{count > 9 ? '9+' : count}</span>
+        <span style={{ position: 'absolute', width: '1px', height: '1px', overflow: 'hidden', clip: 'rect(0,0,0,0)' }}>
+          {count} pending
+        </span>
       </span>
     );
   }
@@ -194,7 +197,7 @@ export default function Sidebar({
                   alignItems: 'center',
                   gap: '6px',
                   padding: '6px 8px',
-                  fontSize: '9px',
+                  fontSize: 'var(--text-xs)',
                   letterSpacing: '0.12em',
                   color: 'var(--text-muted)',
                   textTransform: 'uppercase',
@@ -207,7 +210,7 @@ export default function Sidebar({
               )}
 
               {/* Group items */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                 {group.items.map(item => {
                   const Icon = item.icon;
                   const active = isItemActive(item, view);
@@ -225,7 +228,8 @@ export default function Sidebar({
                         display: 'flex',
                         alignItems: 'center',
                         gap: '10px',
-                        padding: collapsed ? '8px 0' : '7px 10px',
+                        padding: collapsed ? '8px 0' : '8px 10px',
+                        minHeight: 'var(--min-target)',
                         justifyContent: collapsed ? 'center' : 'flex-start',
                         background: active ? 'var(--active-bg-med)' : 'transparent',
                         color: active ? 'var(--active-text)' : 'var(--text-secondary)',
@@ -280,7 +284,7 @@ export default function Sidebar({
         }}>
           {!collapsed && (
             <div style={{
-              fontSize: '9px',
+              fontSize: 'var(--text-xs)',
               letterSpacing: '0.12em',
               color: 'var(--text-muted)',
               textTransform: 'uppercase',
@@ -288,10 +292,10 @@ export default function Sidebar({
               padding: '0 2px',
               opacity: 0.7,
             }}>
-              TEAM: {teamDetail?.name?.toUpperCase() ?? '—'}
+              {t('sidebar.team', 'TEAM')}: {teamDetail?.name?.toUpperCase() ?? '—'}
             </div>
           )}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
             {members.map(member => {
               const status = getAgentStatus(member.name);
               const dotColor = statusDotColor[status];
@@ -306,7 +310,8 @@ export default function Sidebar({
                     display: 'flex',
                     alignItems: 'center',
                     gap: collapsed ? '0' : '8px',
-                    padding: collapsed ? '4px 0' : '4px 6px',
+                    padding: collapsed ? '6px 0' : '6px 8px',
+                    minHeight: '28px',
                     justifyContent: collapsed ? 'center' : 'flex-start',
                     width: '100%',
                     background: 'transparent',
@@ -327,7 +332,7 @@ export default function Sidebar({
                       background: `${color}22`,
                       border: `1.5px solid ${color}55`,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: '9px', fontWeight: 700,
+                      fontSize: 'var(--text-xs)', fontWeight: 700,
                       color,
                       position: 'relative',
                       flexShrink: 0,
@@ -380,16 +385,18 @@ export default function Sidebar({
         padding: collapsed ? '4px 6px' : '4px 8px',
         display: 'flex',
         flexDirection: 'column',
-        gap: '1px',
+        gap: '2px',
       }}>
         <button
           onClick={() => onViewChange('settings')}
           title={collapsed ? t('nav.settings') : undefined}
+          aria-label={t('nav.settings')}
           style={{
             display: 'flex',
             alignItems: 'center',
             gap: '10px',
-            padding: collapsed ? '6px 0' : '5px 10px',
+            padding: collapsed ? '8px 0' : '8px 10px',
+            minHeight: 'var(--min-target)',
             justifyContent: collapsed ? 'center' : 'flex-start',
             width: '100%',
             background: view === 'settings' ? 'var(--active-bg-med)' : 'transparent',
@@ -429,13 +436,14 @@ export default function Sidebar({
             display: 'flex',
             alignItems: 'center',
             gap: '10px',
-            padding: collapsed ? '6px 0' : '5px 10px',
+            padding: collapsed ? '8px 0' : '8px 10px',
             justifyContent: collapsed ? 'center' : 'flex-start',
             width: '100%',
             background: 'transparent',
             color: 'var(--text-secondary)',
             border: 'none',
             borderRadius: '3px',
+            minHeight: 'var(--min-target)',
             cursor: 'pointer',
             fontFamily: 'var(--font-mono)',
             fontSize: '10px',

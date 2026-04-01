@@ -138,7 +138,7 @@ export default function Layout({
 
             {isDemoMode && (
               <span style={{
-                fontSize: '9px', letterSpacing: '0.12em',
+                fontSize: 'var(--text-xs)', letterSpacing: '0.12em',
                 color: 'var(--status-warn)', background: 'var(--amber-glow)',
                 border: '1px solid var(--amber-dim)',
                 padding: '1px 6px', borderRadius: '2px', lineHeight: '14px',
@@ -161,14 +161,14 @@ export default function Layout({
                   borderRadius: '3px',
                   cursor: 'pointer',
                   fontFamily: 'var(--font-mono)',
-                  fontSize: '9px', letterSpacing: '0.1em', lineHeight: '14px',
+                  fontSize: 'var(--text-xs)', letterSpacing: '0.1em', lineHeight: '14px',
                   color: 'var(--amber)',
                   animation: 'status-pulse 2s ease-in-out infinite',
                   flexShrink: 0,
                   textTransform: 'uppercase',
                 }}
               >
-                <span style={{ fontSize: '9px' }}>!</span>
+                <span style={{ fontSize: 'var(--text-xs)' }}>!</span>
                 {t('alert.input', { count: pendingHumanCount })}
               </button>
             )}
@@ -186,14 +186,14 @@ export default function Layout({
                   borderRadius: '3px',
                   cursor: 'pointer',
                   fontFamily: 'var(--font-mono)',
-                  fontSize: '9px', letterSpacing: '0.1em', lineHeight: '14px',
+                  fontSize: 'var(--text-xs)', letterSpacing: '0.1em', lineHeight: '14px',
                   color: criticalAlertCount > 0 ? 'var(--crimson)' : 'var(--amber)',
                   animation: criticalAlertCount > 0 ? 'status-pulse 2s ease-in-out infinite' : 'none',
                   flexShrink: 0,
                   textTransform: 'uppercase',
                 }}
               >
-                <span style={{ fontSize: '9px' }}>●</span>
+                <span style={{ fontSize: 'var(--text-xs)' }}>●</span>
                 {t('alert.alert', { count: alertCount })}
               </button>
             )}
@@ -286,7 +286,7 @@ function ExportMenu({ onExportPng, onExportJson, onExportCsv, canExportPng, view
         style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           width: '26px', height: '26px',
-          fontSize: '9px',
+          fontSize: 'var(--text-xs)',
           fontFamily: 'var(--font-mono)',
           background: open ? 'var(--active-bg-med)' : 'transparent',
           color: open ? 'var(--text-primary)' : 'var(--text-muted)',
@@ -360,7 +360,7 @@ function ExportItem({ label, sublabel, onClick, divided }: {
       onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
     >
       <span style={{ fontSize: '10px', letterSpacing: '0.06em' }}>{label}</span>
-      {sublabel && <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.06em' }}>{sublabel}</span>}
+      {sublabel && <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.06em' }}>{sublabel}</span>}
     </button>
   );
 }

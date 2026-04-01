@@ -53,13 +53,13 @@ export default function SessionTodoPanel({ sessions, onClose }: SessionTodoPanel
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <span style={{
-              fontSize: '9px', color: 'var(--text-muted)',
+              fontSize: 'var(--text-xs)', color: 'var(--text-muted)',
               letterSpacing: '0.15em', fontFamily: 'var(--font-mono)',
             }}>
               SESSION TODOS
             </span>
             <span style={{
-              fontSize: '9px',
+              fontSize: 'var(--text-xs)',
               color: totalActive > 0 ? 'var(--amber)' : 'var(--text-muted)',
               background: totalActive > 0 ? 'var(--amber-glow)' : 'var(--surface-2)',
               border: `1px solid ${totalActive > 0 ? 'var(--amber-dim)' : 'var(--border)'}`,
@@ -121,7 +121,7 @@ function SessionBlock({ session }: { session: SessionTodo }) {
           SESSION // {session.shortId}
         </span>
         <span style={{
-          fontSize: '9px', color: 'var(--text-muted)',
+          fontSize: 'var(--text-xs)', color: 'var(--text-muted)',
           fontFamily: 'var(--font-mono)', letterSpacing: '0.08em',
         }}>
           {doneCount}/{session.items.length} done
@@ -165,7 +165,7 @@ function TodoRow({ item }: { item: TodoItem }) {
         </div>
         {isActive && item.activeForm && item.activeForm !== item.content && (
           <div style={{
-            fontSize: '9px', color: 'var(--amber)',
+            fontSize: 'var(--text-xs)', color: 'var(--amber)',
             letterSpacing: '0.06em', marginTop: '2px', fontStyle: 'italic',
           }}>
             ▸ {item.activeForm}

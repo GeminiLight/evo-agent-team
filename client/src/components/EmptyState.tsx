@@ -12,13 +12,13 @@ export default function EmptyState({ onEnableDemo }: EmptyStateProps) {
     useOnboarding();
 
   const handleStartTour = () => {
-    startTour();
+    onEnableDemo(); // First load the dashboard so data-tour elements exist
+    setTimeout(() => startTour(), 500); // Then start tour after render
   };
 
   const handleTourComplete = () => {
     completeTour();
-    // After tour, enable demo mode automatically
-    onEnableDemo();
+    // Demo is already enabled from handleStartTour
   };
 
   return (
@@ -66,7 +66,7 @@ export default function EmptyState({ onEnableDemo }: EmptyStateProps) {
                 letterSpacing: '0.06em',
               }}
             >
-              Manage your AI coding team like humans
+              {t('onboarding.tagline')}
             </p>
           </div>
 
@@ -196,7 +196,7 @@ export default function EmptyState({ onEnableDemo }: EmptyStateProps) {
           >
             <div
               style={{
-                fontSize: '9px',
+                fontSize: 'var(--text-xs)',
                 color: 'var(--text-muted)',
                 letterSpacing: '0.1em',
                 textTransform: 'uppercase',
@@ -204,16 +204,16 @@ export default function EmptyState({ onEnableDemo }: EmptyStateProps) {
                 fontWeight: 600,
               }}
             >
-              📋 Onboarding Checklist
+              {t('onboarding.checklist_title')}
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               {[
-                { label: 'Take guided tour', key: 'tour' },
-                { label: 'Understand Dashboard', key: 'dashboard' },
-                { label: 'Try approving a request', key: 'approve' },
+                { key: 'checklist_tour' },
+                { key: 'checklist_dashboard' },
+                { key: 'checklist_approve' },
               ].map((item, idx) => (
-                <label
+                <div
                   key={idx}
                   style={{
                     fontSize: '10px',
@@ -221,18 +221,12 @@ export default function EmptyState({ onEnableDemo }: EmptyStateProps) {
                     display: 'flex',
                     alignItems: 'center',
                     gap: '6px',
-                    cursor: 'pointer',
                     letterSpacing: '0.02em',
                   }}
                 >
-                  <input
-                    type="checkbox"
-                    disabled
-                    checked={idx === 1}
-                    style={{ cursor: 'not-allowed' }}
-                  />
-                  {item.label}
-                </label>
+                  <span style={{ fontSize: '10px', lineHeight: 1 }}>☐</span>
+                  {t(`onboarding.${item.key}`)}
+                </div>
               ))}
             </div>
           </div>

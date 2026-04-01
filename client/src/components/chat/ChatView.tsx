@@ -87,7 +87,7 @@ export default function ChatView({ teamId, teamDetail }: ChatViewProps) {
                 background: `${color}22`,
                 border: `1px solid ${color}44`,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '9px', fontWeight: 700, color,
+                fontSize: 'var(--text-xs)', fontWeight: 700, color,
               }}>
                 {agentInitials(name)}
               </span>
@@ -218,7 +218,7 @@ function ChatBody({ teamId, agentName }: { teamId: string; agentName: string }) 
             <span style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.12em' }}>
               {t('chat.no_messages')}
             </span>
-            <span style={{ fontSize: '9px', color: 'var(--text-muted)', opacity: 0.6 }}>
+            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', opacity: 0.6 }}>
               {t('chat.no_messages_sub')}
             </span>
           </div>
@@ -289,7 +289,7 @@ function ChatBody({ teamId, agentName }: { teamId: string; agentName: string }) 
         alignItems: 'center',
         gap: '8px',
         padding: '4px 0 0',
-        fontSize: '9px',
+        fontSize: 'var(--text-xs)',
         color: 'var(--text-muted)',
         letterSpacing: '0.06em',
       }}>

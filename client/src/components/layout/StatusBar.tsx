@@ -33,16 +33,16 @@ export default function StatusBar({ teamDetail, wsConnected, pendingApprovalCoun
   const runtimeStr = createdAt ? formatRuntime(Date.now() - createdAt) : null;
 
   return (
-    <div style={{
-      height: '28px',
-      minHeight: '28px',
+    <div role="status" style={{
+      height: '34px',
+      minHeight: '34px',
       background: 'var(--surface-0)',
       borderTop: '1px solid var(--border)',
       display: 'flex',
       alignItems: 'center',
       padding: '0 16px',
       fontFamily: 'var(--font-mono)',
-      fontSize: '9px',
+      fontSize: 'var(--text-sm)',
       flexShrink: 0,
     }}>
       {/* ─── Left: Progress ─── */}
@@ -123,7 +123,7 @@ export default function StatusBar({ teamDetail, wsConnected, pendingApprovalCoun
             animation: wsConnected ? 'status-pulse 2s ease-in-out infinite' : 'none',
           }} />
           <span style={{
-            fontSize: '9px',
+            fontSize: 'var(--text-xs)',
             color: wsConnected ? 'var(--status-ok)' : 'var(--status-warn)',
             letterSpacing: '0.1em',
             textTransform: 'uppercase',
@@ -139,7 +139,7 @@ export default function StatusBar({ teamDetail, wsConnected, pendingApprovalCoun
             textTransform: 'uppercase',
             fontVariantNumeric: 'tabular-nums',
           }}>
-            {pendingApprovalCount} APPROVAL
+            {pendingApprovalCount} {t('status.approval', 'APPROVAL')}
           </span>
         )}
 

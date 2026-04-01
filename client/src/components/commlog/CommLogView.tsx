@@ -114,7 +114,7 @@ function MessageThread({ group, teamId, pendingAgentNames }: { group: MessageGro
             border: 'none', borderTop: `1px solid ${senderColor}15`,
             cursor: 'pointer',
             fontFamily: 'var(--font-mono)',
-            fontSize: '9px', color: senderColor,
+            fontSize: 'var(--text-xs)', color: senderColor,
             letterSpacing: '0.1em',
             textAlign: 'left',
             transition: 'background 0.1s',
@@ -139,7 +139,7 @@ function MessageThread({ group, teamId, pendingAgentNames }: { group: MessageGro
               border: 'none', borderTop: `1px solid ${senderColor}15`,
               cursor: 'pointer',
               fontFamily: 'var(--font-mono)',
-              fontSize: '9px', color: 'var(--text-muted)',
+              fontSize: 'var(--text-xs)', color: 'var(--text-muted)',
               letterSpacing: '0.1em',
               textAlign: 'left',
               transition: 'background 0.1s',
@@ -164,12 +164,12 @@ function OrderBtn({ active, onClick, title, children }: { active: boolean; onCli
       onClick={onClick}
       title={title}
       style={{
-        padding: '2px 7px', fontSize: '9px', letterSpacing: '0.08em',
+        padding: '4px 7px', fontSize: 'var(--text-xs)', letterSpacing: '0.08em',
         fontFamily: 'var(--font-mono)',
         background: active ? 'var(--active-bg-med)' : 'transparent',
         color: active ? 'var(--active-text)' : 'var(--text-muted)',
         border: `1px solid ${active ? 'var(--active-border)' : 'transparent'}`,
-        borderRadius: '2px', cursor: 'pointer', transition: 'all 0.1s',
+        borderRadius: '2px', cursor: 'pointer', transition: 'var(--transition-fast)',
       }}
       onMouseEnter={e => { if (!active) e.currentTarget.style.color = 'var(--text-secondary)'; }}
       onMouseLeave={e => { if (!active) e.currentTarget.style.color = active ? 'var(--active-text)' : 'var(--text-muted)'; }}
@@ -336,7 +336,7 @@ export default function CommLogView({ teamId, teamDetail, onMessagesChange, pend
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           flexShrink: 0,
         }}>
-          <span style={{ fontSize: '9px', letterSpacing: '0.15em', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+          <span style={{ fontSize: 'var(--text-xs)', letterSpacing: '0.15em', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
             {t('commlog.comms', { name: teamName.toUpperCase() })}
           </span>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -356,7 +356,7 @@ export default function CommLogView({ teamId, teamDetail, onMessagesChange, pend
                 borderRadius: '3px',
                 cursor: 'pointer',
                 fontFamily: 'var(--font-mono)',
-                fontSize: '9px', letterSpacing: '0.1em',
+                fontSize: 'var(--text-xs)', letterSpacing: '0.1em',
                 color: isFollowing ? 'var(--active-text)' : 'var(--text-muted)',
                 transition: 'all 0.15s',
               }}
@@ -371,7 +371,7 @@ export default function CommLogView({ teamId, teamDetail, onMessagesChange, pend
               <span style={{ textTransform: 'uppercase' }}>{t('commlog.follow')}</span>
             </button>
             {!loading && (
-              <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+              <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
                 {t('commlog.msg', { count: filtered.length })}
               </span>
             )}
@@ -402,7 +402,7 @@ export default function CommLogView({ teamId, teamDetail, onMessagesChange, pend
                 border: '1px solid var(--border)',
                 borderRadius: '3px',
                 fontFamily: 'var(--font-mono)',
-                fontSize: '9px',
+                fontSize: 'var(--text-xs)',
                 letterSpacing: '0.1em',
                 color: 'var(--text-primary)',
                 outline: 'none',
@@ -448,7 +448,7 @@ export default function CommLogView({ teamId, teamDetail, onMessagesChange, pend
                   borderRadius: '20px',
                   background: isActive ? (agent === 'ALL' ? 'var(--active-bg-med)' : color + '1a') : 'transparent',
                   color: isActive ? (agent === 'ALL' ? 'var(--active-text)' : color) : 'var(--text-muted)',
-                  fontSize: '9px', letterSpacing: '0.08em',
+                  fontSize: 'var(--text-xs)', letterSpacing: '0.08em',
                   fontFamily: 'var(--font-mono)', cursor: 'pointer',
                   whiteSpace: 'nowrap', transition: 'all 0.15s',
                   textTransform: 'uppercase',
@@ -490,7 +490,7 @@ export default function CommLogView({ teamId, teamDetail, onMessagesChange, pend
                   borderRadius: '20px',
                   background: isActive ? opt.color + '1a' : 'transparent',
                   color: isActive ? opt.color : 'var(--text-muted)',
-                  fontSize: '9px', letterSpacing: '0.12em',
+                  fontSize: 'var(--text-xs)', letterSpacing: '0.12em',
                   fontFamily: 'var(--font-mono)',
                   cursor: 'pointer',
                   whiteSpace: 'nowrap',
@@ -519,7 +519,7 @@ export default function CommLogView({ teamId, teamDetail, onMessagesChange, pend
               padding: '8px 14px',
             }}>
               <span style={{ fontSize: '13px', lineHeight: 1 }}>⚠</span>
-              <span style={{ flex: 1, fontSize: '9px', color: 'var(--amber)', letterSpacing: '0.12em', fontWeight: 700, textTransform: 'uppercase' }}>
+              <span style={{ flex: 1, fontSize: 'var(--text-xs)', color: 'var(--amber)', letterSpacing: '0.12em', fontWeight: 700, textTransform: 'uppercase' }}>
                 {t('commlog.pending_alert', { count: pendingHumanRequests!.count })}
               </span>
             </div>
@@ -539,18 +539,18 @@ export default function CommLogView({ teamId, teamDetail, onMessagesChange, pend
                       setRespondText('');
                     }}
                   >
-                    <span style={{ fontSize: '9px', color: 'var(--text-muted)' }}>{isExpanded ? '▾' : '▸'}</span>
-                    <span style={{ fontSize: '9px', color: 'var(--amber)', fontWeight: 600, letterSpacing: '0.08em' }}>{detail.name}</span>
+                    <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>{isExpanded ? '▾' : '▸'}</span>
+                    <span style={{ fontSize: 'var(--text-xs)', color: 'var(--amber)', fontWeight: 600, letterSpacing: '0.08em' }}>{detail.name}</span>
                     {detail.blocking.toolName && (
-                      <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.06em' }}>[{detail.blocking.toolName}]</span>
+                      <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.06em' }}>[{detail.blocking.toolName}]</span>
                     )}
                     {detail.blocking.detail && (
-                      <span style={{ flex: 1, fontSize: '9px', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <span style={{ flex: 1, fontSize: 'var(--text-xs)', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {detail.blocking.detail.slice(0, 80)}
                       </span>
                     )}
                     {isSent && (
-                      <span style={{ fontSize: '9px', color: 'var(--phosphor)', letterSpacing: '0.1em' }}>✓ Sent</span>
+                      <span style={{ fontSize: 'var(--text-xs)', color: 'var(--phosphor)', letterSpacing: '0.1em' }}>✓ Sent</span>
                     )}
                   </div>
                   {isExpanded && !isSent && (
@@ -579,7 +579,7 @@ export default function CommLogView({ teamId, teamDetail, onMessagesChange, pend
                           padding: '6px 8px', resize: 'vertical',
                           background: 'var(--surface-1)', color: 'var(--text-primary)',
                           border: '1px solid var(--border)', borderRadius: '3px',
-                          fontFamily: 'var(--font-mono)', fontSize: '9px', letterSpacing: '0.06em',
+                          fontFamily: 'var(--font-mono)', fontSize: 'var(--text-xs)', letterSpacing: '0.06em',
                           outline: 'none',
                         }}
                       />
@@ -587,7 +587,7 @@ export default function CommLogView({ teamId, teamDetail, onMessagesChange, pend
                         <button
                           onClick={() => { setExpandedRespond(null); setRespondText(''); }}
                           style={{
-                            padding: '3px 10px', fontSize: '9px', letterSpacing: '0.1em',
+                            padding: '3px 10px', fontSize: 'var(--text-xs)', letterSpacing: '0.1em',
                             fontFamily: 'var(--font-mono)',
                             background: 'transparent', color: 'var(--text-muted)',
                             border: '1px solid var(--border)', borderRadius: '2px', cursor: 'pointer',
@@ -606,7 +606,7 @@ export default function CommLogView({ teamId, teamDetail, onMessagesChange, pend
                             });
                           }}
                           style={{
-                            padding: '3px 10px', fontSize: '9px', letterSpacing: '0.1em',
+                            padding: '3px 10px', fontSize: 'var(--text-xs)', letterSpacing: '0.1em',
                             fontFamily: 'var(--font-mono)', fontWeight: 700,
                             background: 'var(--amber-bg-subtle)', color: 'var(--amber)',
                             border: '1px solid var(--amber-dim)', borderRadius: '2px', cursor: 'pointer',
@@ -626,7 +626,7 @@ export default function CommLogView({ teamId, teamDetail, onMessagesChange, pend
         <div
           ref={scrollRef}
           onScroll={handleScroll}
-          style={{ flex: 1, overflowY: 'auto', padding: '8px', position: 'relative' }}
+          style={{ flex: 1, overflowY: 'auto', padding: '6px 12px', position: 'relative' }}
         >
           {loading && (
             <div style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.1em', padding: '40px', textAlign: 'center', textTransform: 'uppercase' }}>
@@ -664,7 +664,7 @@ export default function CommLogView({ teamId, teamDetail, onMessagesChange, pend
               border: '1px solid var(--active-border-hi)',
               borderRadius: '20px',
               color: 'var(--active-text)',
-              fontSize: '9px', letterSpacing: '0.12em',
+              fontSize: 'var(--text-xs)', letterSpacing: '0.12em',
               fontFamily: 'var(--font-mono)',
               cursor: 'pointer',
               boxShadow: '0 2px 12px rgba(0,0,0,0.4), 0 0 10px var(--phosphor-glow)',

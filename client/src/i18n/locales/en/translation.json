@@ -58,7 +58,8 @@
     "idle": "Idle",
     "run": "Run",
     "lead": "Lead",
-    "active": "Active"
+    "active": "Active",
+    "approval": "Approval"
   },
   "alert": {
     "input_one": "{{count}} Input",
@@ -116,7 +117,9 @@
     "session_todos": "Session Todos",
     "no_agents": "No Agents",
     "no_agents_sub": "Waiting for team members to connect...",
-    "done_count": "{{done}}/{{total}} done"
+    "done_count": "{{done}}/{{total}} done",
+    "expand_advanced": "+ Expand advanced",
+    "collapse_advanced": "- Collapse advanced"
   },
   "agent_card": {
     "input": "⚠ Input",
@@ -546,7 +549,9 @@
     "shortcuts_search": "/: Focus search",
     "shortcuts_close": "Esc: Close panel",
     "shortcuts_next": "n: Next notification",
-    "shortcuts_refresh": "r: Refresh"
+    "shortcuts_refresh": "r: Refresh",
+    "onboarding": "Onboarding",
+    "restart_tour": "Restart Tour"
   },
   "chat": {
     "title": "Chat // {{name}}",
@@ -637,6 +642,11 @@
     "watch_team": "Watch your team in real-time",
     "respond_inline": "Respond without leaving app",
     "save_lessons": "Save lessons for next time",
+    "tagline": "Manage your AI coding team like humans",
+    "checklist_title": "Onboarding Checklist",
+    "checklist_tour": "Take guided tour",
+    "checklist_dashboard": "Understand Dashboard",
+    "checklist_approve": "Try approving a request",
     "track_costs": "Track costs per agent",
     "step1_title": "Meet Your Dashboard",
     "step1_desc": "See all agents, tasks, and alerts in one place",

@@ -77,7 +77,7 @@ export default function AgentHeatmap({ teamId, agentNames }: AgentHeatmapProps) 
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         minHeight: '120px',
       }}>
-        <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.15em' }}>
+        <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.15em' }}>
           — NEED ≥2 AGENTS FOR MATRIX —
         </span>
       </div>
@@ -133,10 +133,10 @@ export default function AgentHeatmap({ teamId, agentNames }: AgentHeatmapProps) 
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           flexShrink: 0,
         }}>
-          <span style={{ fontSize: '9px', letterSpacing: '0.15em', color: 'var(--text-muted)' }}>
+          <span style={{ fontSize: 'var(--text-xs)', letterSpacing: '0.15em', color: 'var(--text-muted)' }}>
             COMM MATRIX // INTENSITY
           </span>
-          <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>
+          <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>
             {totalMessages} TOTAL MSG{totalMessages !== 1 ? 'S' : ''}
           </span>
         </div>
@@ -148,7 +148,7 @@ export default function AgentHeatmap({ teamId, agentNames }: AgentHeatmapProps) 
             {agents.map((name, ci) => (
               <div key={ci} style={{ width: cellSize, flexShrink: 0, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: '6px', height: '48px' }}>
                 <span style={{
-                  fontSize: '9px', color: agentColor(name), letterSpacing: '0.08em',
+                  fontSize: 'var(--text-xs)', color: agentColor(name), letterSpacing: '0.08em',
                   writingMode: 'vertical-rl', transform: 'rotate(180deg)',
                   whiteSpace: 'nowrap', maxHeight: '44px', overflow: 'hidden', textOverflow: 'ellipsis',
                 }}>
@@ -157,7 +157,7 @@ export default function AgentHeatmap({ teamId, agentNames }: AgentHeatmapProps) 
               </div>
             ))}
             <div style={{ width: 40, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: '6px', height: '48px' }}>
-              <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.08em', writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
+              <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.08em', writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
                 TOTAL
               </span>
             </div>
@@ -168,7 +168,7 @@ export default function AgentHeatmap({ teamId, agentNames }: AgentHeatmapProps) 
             <div key={ri} style={{ display: 'flex', alignItems: 'center', marginBottom: '2px' }}>
               <div style={{
                 width: labelWidth, flexShrink: 0,
-                fontSize: '9px', color: agentColor(rowName), letterSpacing: '0.06em',
+                fontSize: 'var(--text-xs)', color: agentColor(rowName), letterSpacing: '0.06em',
                 overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                 paddingRight: '8px', textAlign: 'right',
               }}>
@@ -208,14 +208,14 @@ export default function AgentHeatmap({ teamId, agentNames }: AgentHeatmapProps) 
                   >
                     {!isSelf && val > 0 && (
                       <span style={{
-                        fontSize: '9px',
+                        fontSize: 'var(--text-xs)',
                         color: val / maxVal > 0.5 ? 'var(--void, #000)' : agentColor(rowName),
                         fontFamily: 'var(--font-mono)', fontWeight: 600, letterSpacing: 0, lineHeight: 1,
                       }}>
                         {val}
                       </span>
                     )}
-                    {isSelf && <span style={{ fontSize: '9px', color: 'var(--text-muted)', opacity: 0.4 }}>—</span>}
+                    {isSelf && <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', opacity: 0.4 }}>—</span>}
                   </div>
                 );
               })}
@@ -229,7 +229,7 @@ export default function AgentHeatmap({ teamId, agentNames }: AgentHeatmapProps) 
                   boxShadow: `0 0 4px ${agentColor(rowName)}88`,
                   transition: 'width 0.4s ease-out',
                 }} />
-                <span style={{ fontSize: '9px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+                <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
                   {workload[ri]}
                 </span>
               </div>
@@ -238,10 +238,10 @@ export default function AgentHeatmap({ teamId, agentNames }: AgentHeatmapProps) 
 
           {/* Legend */}
           <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '8px', paddingLeft: labelWidth + 4 }}>
-            <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>LOW</span>
+            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>LOW</span>
             <div style={{ height: '6px', width: '80px', borderRadius: '2px', background: 'linear-gradient(90deg, transparent, var(--ice))' }} />
-            <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>HIGH</span>
-            <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.06em', marginLeft: '8px' }}>
+            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>HIGH</span>
+            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.06em', marginLeft: '8px' }}>
               (ROW = SENDER, COL = RECIPIENT)
             </span>
           </div>
@@ -267,19 +267,19 @@ export default function AgentHeatmap({ teamId, agentNames }: AgentHeatmapProps) 
             flexShrink: 0,
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '5px', minWidth: 0 }}>
-              <span style={{ fontSize: '9px', fontWeight: 600, color: agentColor(activeCell.sender), letterSpacing: '0.06em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <span style={{ fontSize: 'var(--text-xs)', fontWeight: 600, color: agentColor(activeCell.sender), letterSpacing: '0.06em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {activeCell.sender.toUpperCase()}
               </span>
-              <span style={{ fontSize: '9px', color: 'var(--text-muted)' }}>→</span>
-              <span style={{ fontSize: '9px', fontWeight: 600, color: agentColor(activeCell.recipient), letterSpacing: '0.06em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>→</span>
+              <span style={{ fontSize: 'var(--text-xs)', fontWeight: 600, color: agentColor(activeCell.recipient), letterSpacing: '0.06em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {activeCell.recipient.toUpperCase()}
               </span>
               {!selectedCell && (
-                <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em', border: '1px solid var(--border)', padding: '1px 4px', borderRadius: '2px', flexShrink: 0 }}>
+                <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.1em', border: '1px solid var(--border)', padding: '1px 4px', borderRadius: '2px', flexShrink: 0 }}>
                   TOP
                 </span>
               )}
-              <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em', flexShrink: 0 }}>
+              <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.1em', flexShrink: 0 }}>
                 · {selectedMessages.length}
               </span>
             </div>
@@ -295,7 +295,7 @@ export default function AgentHeatmap({ teamId, agentNames }: AgentHeatmapProps) 
           {/* Scrollable message list — height capped to match heatmap */}
           <div style={{ overflowY: 'auto', padding: '6px', maxHeight: '400px' }}>
             {selectedMessages.length === 0 ? (
-              <div style={{ padding: '24px', textAlign: 'center', fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.12em' }}>
+              <div style={{ padding: '24px', textAlign: 'center', fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.12em' }}>
                 — NO MESSAGES —
               </div>
             ) : (

@@ -73,7 +73,7 @@ export default function ApprovalModal({ request, resolving, onDecision }: Approv
         }}
       >
         <div style={{ marginBottom: '16px' }}>
-          <div style={{ fontSize: '9px', letterSpacing: '0.18em', color: 'var(--crimson)', textTransform: 'uppercase', marginBottom: '8px' }}>
+          <div style={{ fontSize: 'var(--text-xs)', letterSpacing: '0.18em', color: 'var(--crimson)', textTransform: 'uppercase', marginBottom: '8px' }}>
             {t('approval.title')}
           </div>
           <div style={{ fontSize: '12px', color: 'var(--text-primary)', lineHeight: 1.5 }}>
@@ -84,7 +84,7 @@ export default function ApprovalModal({ request, resolving, onDecision }: Approv
           </div>
         </div>
 
-        <div style={{ fontSize: '9px', color: 'var(--amber)', marginBottom: '12px', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+        <div style={{ fontSize: 'var(--text-xs)', color: 'var(--amber)', marginBottom: '12px', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
           {expiryTime}
         </div>
 
@@ -98,7 +98,7 @@ export default function ApprovalModal({ request, resolving, onDecision }: Approv
 
         {request.command && (
           <div style={{ marginBottom: '16px' }}>
-            <div style={{ fontSize: '9px', letterSpacing: '0.12em', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '6px' }}>
+            <div style={{ fontSize: 'var(--text-xs)', letterSpacing: '0.12em', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '6px' }}>
               {t('approval.command')}
             </div>
             <pre style={{ margin: 0, padding: '12px', background: 'var(--surface-0)', border: '1px solid var(--border)', borderRadius: '3px', color: 'var(--amber)', fontSize: '11px', overflowX: 'auto', whiteSpace: 'pre-wrap' }}>
@@ -119,7 +119,7 @@ export default function ApprovalModal({ request, resolving, onDecision }: Approv
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
-                fontSize: '9px',
+                fontSize: 'var(--text-xs)',
                 letterSpacing: '0.12em',
                 color: 'var(--text-secondary)',
                 textTransform: 'uppercase',
@@ -143,7 +143,7 @@ export default function ApprovalModal({ request, resolving, onDecision }: Approv
             disabled={resolving}
             style={{
               padding: '6px 14px',
-              fontSize: '9px',
+              fontSize: 'var(--text-xs)',
               letterSpacing: '0.12em',
               fontFamily: 'var(--font-mono)',
               background: 'transparent',
@@ -160,7 +160,7 @@ export default function ApprovalModal({ request, resolving, onDecision }: Approv
             disabled={resolving}
             style={{
               padding: '6px 18px',
-              fontSize: '9px',
+              fontSize: 'var(--text-xs)',
               letterSpacing: '0.12em',
               fontWeight: 700,
               fontFamily: 'var(--font-mono)',
@@ -183,7 +183,7 @@ export default function ApprovalModal({ request, resolving, onDecision }: Approv
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <div style={{ display: 'flex', gap: '12px' }}>
-      <span style={{ minWidth: '64px', fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>{label}</span>
+      <span style={{ minWidth: '64px', fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>{label}</span>
       <span style={{ fontSize: '10px', color: 'var(--text-secondary)', letterSpacing: '0.04em', lineHeight: 1.5, wordBreak: 'break-word' }}>{value}</span>
     </div>
   );

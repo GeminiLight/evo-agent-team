@@ -42,7 +42,7 @@ function TokenBar({ agent, maxTokens, index }: { agent: AgentCostSummary; maxTok
       {/* Agent name */}
       <div style={{
         width: '90px', flexShrink: 0,
-        fontSize: '9px', letterSpacing: '0.06em',
+        fontSize: 'var(--text-xs)', letterSpacing: '0.06em',
         color, fontFamily: 'var(--font-mono)',
         textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
       }}>
@@ -64,7 +64,7 @@ function TokenBar({ agent, maxTokens, index }: { agent: AgentCostSummary; maxTok
       {/* Total */}
       <div style={{
         width: '44px', flexShrink: 0, textAlign: 'right',
-        fontSize: '9px', color: 'var(--text-secondary)',
+        fontSize: 'var(--text-xs)', color: 'var(--text-secondary)',
         fontFamily: 'var(--font-mono)',
       }}>
         {fmtK(total)}
@@ -73,7 +73,7 @@ function TokenBar({ agent, maxTokens, index }: { agent: AgentCostSummary; maxTok
       {/* Pct */}
       <div style={{
         width: '30px', flexShrink: 0, textAlign: 'right',
-        fontSize: '9px', color: 'var(--text-muted)',
+        fontSize: 'var(--text-xs)', color: 'var(--text-muted)',
         fontFamily: 'var(--font-mono)',
       }}>
         {agent.percentage}%
@@ -153,7 +153,7 @@ function TokenSparkline({ series, allAgents }: { series: AgentTimeSeries[]; allA
 
   return (
     <div style={{ marginTop: '8px' }}>
-      <div style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.12em', marginBottom: '6px', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>
+      <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.12em', marginBottom: '6px', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>
         {t('cost.cumulative')}
       </div>
       <svg
@@ -254,7 +254,7 @@ function TokenSparkline({ series, allAgents }: { series: AgentTimeSeries[]; allA
           return (
             <div key={s.agentName} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
               <div style={{ width: '14px', height: '2px', background: color, borderRadius: '1px' }} />
-              <span style={{ fontSize: '9px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}>
+              <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}>
                 {s.agentName}
               </span>
             </div>
@@ -276,7 +276,7 @@ function ToolChart({ tools }: { tools: ToolCostSummary[] }) {
         <div key={tool.toolName} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '5px' }}>
           <div style={{
             width: '80px', flexShrink: 0, textAlign: 'right',
-            fontSize: '9px', color: 'var(--text-secondary)',
+            fontSize: 'var(--text-xs)', color: 'var(--text-secondary)',
             fontFamily: 'var(--font-mono)', letterSpacing: '0.04em',
             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
           }}>
@@ -296,7 +296,7 @@ function ToolChart({ tools }: { tools: ToolCostSummary[] }) {
           </div>
           <div style={{
             width: '28px', flexShrink: 0, textAlign: 'right',
-            fontSize: '9px', color: 'var(--text-muted)',
+            fontSize: 'var(--text-xs)', color: 'var(--text-muted)',
             fontFamily: 'var(--font-mono)',
           }}>
             {tool.callCount}
@@ -331,7 +331,7 @@ export default function CostView({ teamId, data, loading }: CostViewProps) {
         background: 'var(--surface-1)',
         flexShrink: 0,
       }}>
-        <span style={{ fontSize: '9px', letterSpacing: '0.15em', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>
+        <span style={{ fontSize: 'var(--text-xs)', letterSpacing: '0.15em', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>
           {t('cost.title', { name: teamName.toUpperCase() })}
         </span>
       </div>
@@ -374,7 +374,7 @@ function SectionLabel({ label }: { label: string }) {
       marginBottom: '12px', marginTop: '28px',
     }}>
       <span style={{
-        fontSize: '9px', letterSpacing: '0.18em', color: 'var(--text-muted)',
+        fontSize: 'var(--text-xs)', letterSpacing: '0.18em', color: 'var(--text-muted)',
         fontFamily: 'var(--font-mono)', flexShrink: 0, textTransform: 'uppercase',
       }}>{label}</span>
       <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
@@ -406,7 +406,7 @@ function TotalsRow({ data }: { data: CostData }) {
           borderRadius: '3px',
         }}>
           <span style={{ fontSize: '14px', fontWeight: 700, color: c.color, fontFamily: 'var(--font-mono)', lineHeight: 1 }}>{c.value}</span>
-          <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>{c.label}</span>
+          <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.1em', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>{c.label}</span>
         </div>
       ))}
     </div>
@@ -428,7 +428,7 @@ function AgentSection({ data }: { data: CostData }) {
         ].map(l => (
           <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
             <div style={{ width: '12px', height: '6px', background: l.color, opacity: parseFloat(l.opacity), borderRadius: '1px' }} />
-            <span style={{ fontSize: '9px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{l.label}</span>
+            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{l.label}</span>
           </div>
         ))}
       </div>
@@ -452,7 +452,7 @@ function ToolsSection({ data }: { data: CostData }) {
     <CRTEmptyState title={t('cost.no_tool')} subtitle={t('cost.no_tool_sub')} />
   ) : (
     <>
-      <div style={{ marginBottom: '4px', fontSize: '9px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+      <div style={{ marginBottom: '4px', fontSize: 'var(--text-xs)', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
         {t('cost.total_calls', { count: totalCalls })}
       </div>
       <ToolChart tools={data.byTool} />

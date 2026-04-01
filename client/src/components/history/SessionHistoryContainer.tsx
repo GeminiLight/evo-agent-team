@@ -46,7 +46,7 @@ export default function SessionHistoryContainer({ teamId, teamDetail }: SessionH
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         flexShrink: 0, flexWrap: 'wrap', gap: '8px',
       }}>
-        <span style={{ fontSize: '9px', letterSpacing: '0.15em', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>
+        <span style={{ fontSize: 'var(--text-xs)', letterSpacing: '0.15em', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>
           {t('history.title', { name: teamName })}
         </span>
 
@@ -75,7 +75,7 @@ export default function SessionHistoryContainer({ teamId, teamDetail }: SessionH
         )}
 
         {agentsLoading && agents.length === 0 && (
-          <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>
+          <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.1em', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>
             {t('history.scanning')}
           </span>
         )}
@@ -116,7 +116,7 @@ function AgentTab({
         borderRadius: '2px',
         cursor: 'pointer',
         fontFamily: 'var(--font-mono)',
-        fontSize: '9px', letterSpacing: '0.08em',
+        fontSize: 'var(--text-xs)', letterSpacing: '0.08em',
         color: active ? color : 'var(--text-muted)',
         transition: 'all 0.1s',
       }}
@@ -124,11 +124,11 @@ function AgentTab({
       onMouseLeave={e => { if (!active) { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-muted)'; } }}
     >
       {isLead && (
-        <span style={{ fontSize: '9px', color: active ? color : 'var(--text-muted)' }}>★</span>
+        <span style={{ fontSize: 'var(--text-xs)', color: active ? color : 'var(--text-muted)' }}>★</span>
       )}
       {label.toUpperCase()}
       {msgCount !== undefined && (
-        <span style={{ fontSize: '9px', opacity: 0.6 }}>{msgCount}</span>
+        <span style={{ fontSize: 'var(--text-xs)', opacity: 0.6 }}>{msgCount}</span>
       )}
     </button>
   );

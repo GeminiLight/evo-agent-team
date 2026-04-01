@@ -11,7 +11,7 @@ import { useSummary } from '../../hooks/useSummary';
 function StatCell({ label, value, color, title }: { label: string; value: string; color: string; title?: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }} title={title}>
-      <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{label}</span>
+      <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{label}</span>
       <span style={{ fontSize: '11px', fontWeight: 600, color, fontFamily: 'var(--font-mono)', letterSpacing: '0.04em' }}>
         {value}
       </span>
@@ -105,18 +105,18 @@ export function ExecSummaryBlock({ teamId }: ExecSummaryBlockProps) {
     }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-        <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.15em', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', flex: 1 }}>
+        <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.15em', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', flex: 1 }}>
           {t('overview.exec_summary')}
         </span>
         {data?.isAIGenerated && (
           <span style={{
-            fontSize: '9px', letterSpacing: '0.08em', color: 'var(--ice)',
+            fontSize: 'var(--text-xs)', letterSpacing: '0.08em', color: 'var(--ice)',
             border: '1px solid var(--ice)', borderRadius: '2px', padding: '0 4px',
             opacity: 0.7, fontFamily: 'var(--font-mono)',
           }}>AI</span>
         )}
         {data?.isStale && (
-          <span style={{ fontSize: '9px', color: 'var(--amber)', opacity: 0.7, fontFamily: 'var(--font-mono)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+          <span style={{ fontSize: 'var(--text-xs)', color: 'var(--amber)', opacity: 0.7, fontFamily: 'var(--font-mono)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
             {t('overview.stale')}
           </span>
         )}
@@ -135,7 +135,7 @@ export function ExecSummaryBlock({ teamId }: ExecSummaryBlockProps) {
           <RefreshCw size={9} style={{ animation: refreshing ? 'spin 1s linear infinite' : 'none' }} />
         </button>
         {data?.generatedAt && (
-          <span style={{ fontSize: '9px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', opacity: 0.5 }}>
+          <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', opacity: 0.5 }}>
             {new Date(data.generatedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}
           </span>
         )}
@@ -144,13 +144,13 @@ export function ExecSummaryBlock({ teamId }: ExecSummaryBlockProps) {
       {/* Content — always visible */}
       <div>
         {(loading && !data) ? (
-          <div style={{ fontSize: '9px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+          <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
             {t('overview.generating')}
           </div>
         ) : data ? (
           <SummaryContent text={data.summary} />
         ) : (
-          <div style={{ fontSize: '9px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em', opacity: 0.6 }}>
+          <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em', opacity: 0.6 }}>
             {t('overview.no_summary')}
           </div>
         )}
@@ -189,7 +189,7 @@ export function ProgressSection({ stats }: ProgressSectionProps) {
         }}>
           {overallPct}
         </span>
-        <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{t('overview.pct_done')}</span>
+        <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{t('overview.pct_done')}</span>
       </div>
 
       {/* Stacked bar */}
@@ -213,7 +213,7 @@ export function ProgressSection({ stats }: ProgressSectionProps) {
               background: bar.count > 0 ? bar.color : 'var(--surface-3)',
               boxShadow: bar.count > 0 ? `0 0 3px ${bar.glow}` : 'none',
             }} />
-            <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{bar.label}</span>
+            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{bar.label}</span>
             <span style={{ fontSize: '10px', fontWeight: 600, color: bar.count > 0 ? bar.color : 'var(--text-muted)', fontFamily: 'var(--font-mono)', marginLeft: 'auto' }}>
               {bar.count}
             </span>
@@ -242,7 +242,7 @@ export function StatsRow({ sessionStats }: StatsRowProps) {
       display: 'flex', flexDirection: 'column', gap: '6px',
       minWidth: '140px',
     }}>
-      <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.12em', textTransform: 'uppercase', flexShrink: 0 }}>
+      <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.12em', textTransform: 'uppercase', flexShrink: 0 }}>
         SESSION
       </span>
       {agg ? (
@@ -258,7 +258,7 @@ export function StatsRow({ sessionStats }: StatsRowProps) {
           )}
         </div>
       ) : (
-        <span style={{ fontSize: '9px', color: 'var(--text-muted)', opacity: 0.5, letterSpacing: '0.06em' }}>—</span>
+        <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', opacity: 0.5, letterSpacing: '0.06em' }}>—</span>
       )}
     </div>
   );
@@ -309,7 +309,7 @@ export default function TeamOverview({ team, sessionStats = {} }: TeamOverviewPr
         {/* Left: label + name + description */}
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
-            <div style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
+            <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
               {t('overview.sys_overview')}
             </div>
             {/* GUIDE button */}
@@ -324,7 +324,7 @@ export default function TeamOverview({ team, sessionStats = {} }: TeamOverviewPr
                 borderRadius: '2px',
                 cursor: 'pointer',
                 fontFamily: 'var(--font-mono)',
-                fontSize: '9px', letterSpacing: '0.1em',
+                fontSize: 'var(--text-xs)', letterSpacing: '0.1em',
                 color: 'var(--text-muted)',
                 transition: 'all 0.15s',
                 textTransform: 'uppercase',
@@ -356,7 +356,7 @@ export default function TeamOverview({ team, sessionStats = {} }: TeamOverviewPr
           {team.config?.description && (
             <div style={{ marginBottom: '14px', maxWidth: '480px' }}>
               <div style={{
-                fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.15em',
+                fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.15em',
                 marginBottom: '4px', textTransform: 'uppercase',
               }}>
                 {t('overview.mission')}
@@ -439,7 +439,7 @@ export default function TeamOverview({ team, sessionStats = {} }: TeamOverviewPr
               marginTop: '14px', paddingTop: '12px',
               borderTop: '1px solid var(--border)',
             }}>
-              <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.15em', flexShrink: 0, textTransform: 'uppercase' }}>
+              <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.15em', flexShrink: 0, textTransform: 'uppercase' }}>
                 SESSION
               </span>
               <StatCell label={t('overview.in_tokens')} value={fmtTokens(aggregatedStats.inputTokens)} color="var(--ice)" title={`Total input tokens: ${aggregatedStats.inputTokens.toLocaleString()}`} />
@@ -524,7 +524,7 @@ function TeamGuidePanel({ teamId, teamName, onClose }: { teamId: string; teamNam
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <BookOpen size={12} style={{ color: 'var(--phosphor)' }} />
-            <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.15em', fontFamily: 'var(--font-mono)' }}>
+            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.15em', fontFamily: 'var(--font-mono)' }}>
               TEAM GUIDE // {teamName.toUpperCase()}
             </span>
           </div>
@@ -549,7 +549,7 @@ function TeamGuidePanel({ teamId, teamName, onClose }: { teamId: string; teamNam
             <div style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.08em', textAlign: 'center', paddingTop: '40px', lineHeight: 1.8 }}>
               <div style={{ fontSize: '24px', marginBottom: '12px', opacity: 0.3 }}>📄</div>
               NO GUIDE FILE FOUND
-              <div style={{ marginTop: '8px', fontSize: '9px', opacity: 0.6 }}>
+              <div style={{ marginTop: '8px', fontSize: 'var(--text-xs)', opacity: 0.6 }}>
                 Create <code style={{ fontFamily: 'var(--font-mono)', background: 'var(--surface-2)', padding: '1px 4px', borderRadius: '2px' }}>TEAM_GUIDE.md</code> in<br />
                 <code style={{ fontFamily: 'var(--font-mono)', background: 'var(--surface-2)', padding: '1px 4px', borderRadius: '2px' }}>~/.claude/teams/{teamId}/</code>
               </div>
@@ -598,18 +598,18 @@ function InlineExecSummaryBlock({ data, loading, refreshing, open, onToggle, onR
             ? <ChevronDown size={10} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
             : <ChevronRight size={10} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
           }
-          <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.15em', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>
+          <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.15em', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>
             {t('overview.exec_summary')}
           </span>
           {data?.isAIGenerated && (
             <span style={{
-              fontSize: '9px', letterSpacing: '0.08em', color: 'var(--ice)',
+              fontSize: 'var(--text-xs)', letterSpacing: '0.08em', color: 'var(--ice)',
               border: '1px solid var(--ice)', borderRadius: '2px', padding: '0 4px',
               opacity: 0.7, fontFamily: 'var(--font-mono)',
             }}>AI</span>
           )}
           {data?.isStale && (
-            <span style={{ fontSize: '9px', color: 'var(--amber)', opacity: 0.7, fontFamily: 'var(--font-mono)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--amber)', opacity: 0.7, fontFamily: 'var(--font-mono)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
               {t('overview.stale')}
             </span>
           )}
@@ -631,7 +631,7 @@ function InlineExecSummaryBlock({ data, loading, refreshing, open, onToggle, onR
         </button>
 
         {data?.generatedAt && (
-          <span style={{ fontSize: '9px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', opacity: 0.5 }}>
+          <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', opacity: 0.5 }}>
             {new Date(data.generatedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}
           </span>
         )}
@@ -641,7 +641,7 @@ function InlineExecSummaryBlock({ data, loading, refreshing, open, onToggle, onR
       {open && (
         <div style={{ marginTop: '8px', paddingLeft: '15px' }}>
           {(loading && !data) ? (
-            <div style={{ fontSize: '9px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+            <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
               {t('overview.generating')}
             </div>
           ) : data ? (
@@ -663,7 +663,7 @@ function SummaryContent({ text }: { text: string }) {
         return (
           <div key={i} style={{ display: 'flex', gap: '6px', alignItems: 'flex-start' }}>
             {isBullet && (
-              <span style={{ color: 'var(--phosphor)', fontSize: '9px', flexShrink: 0, marginTop: '1px', opacity: 0.6 }}>▸</span>
+              <span style={{ color: 'var(--phosphor)', fontSize: 'var(--text-xs)', flexShrink: 0, marginTop: '1px', opacity: 0.6 }}>▸</span>
             )}
             <span style={{
               fontSize: '10px', color: 'var(--text-secondary)', lineHeight: 1.5,

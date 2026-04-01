@@ -48,7 +48,7 @@ export default function ThemeSwitcher() {
           cursor: 'pointer',
           color: 'var(--text-muted)',
           fontFamily: 'var(--font-mono)',
-          fontSize: '9px',
+          fontSize: 'var(--text-xs)',
           letterSpacing: '0.1em',
           transition: 'border-color 0.15s, color 0.15s',
           textTransform: 'uppercase',
@@ -96,7 +96,7 @@ export default function ThemeSwitcher() {
           <div style={{
             padding: '8px 12px 6px',
             borderBottom: '1px solid var(--border)',
-            fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.18em',
+            fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.18em',
             fontFamily: 'var(--font-mono)',
             textTransform: 'uppercase',
           }}>
@@ -174,7 +174,7 @@ export default function ThemeSwitcher() {
                       {t(`theme.${themeItem.id}.label`)}
                     </div>
                     <div style={{
-                      fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.03em',
+                      fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.03em',
                       fontFamily: 'var(--font-mono)',
                       whiteSpace: 'nowrap',
                     }}>

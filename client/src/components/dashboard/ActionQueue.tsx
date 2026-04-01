@@ -57,12 +57,12 @@ export default function ActionQueue({
             flexShrink: 0,
           }}>
             <Zap size={10} style={{ color: needsAction.length > 0 ? 'var(--amber)' : 'var(--phosphor)' }} />
-            <span style={{ fontSize: '9px', letterSpacing: '0.15em', color: 'var(--text-muted)', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
+            <span style={{ fontSize: 'var(--text-xs)', letterSpacing: '0.15em', color: 'var(--text-muted)', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
               {t('action_queue.title')}
             </span>
             {needsAction.length > 0 && (
               <span style={{
-                fontSize: '9px', color: 'var(--amber)',
+                fontSize: 'var(--text-xs)', color: 'var(--amber)',
                 background: 'var(--amber-glow)',
                 border: '1px solid var(--amber-dim)',
                 borderRadius: '2px', padding: '1px 6px',
@@ -102,7 +102,7 @@ export default function ActionQueue({
               <AlertChip key={a.id} alert={a} onDismiss={() => onDismissAlert(a.id)} />
             ))}
             {nonCritical.length > 3 && (
-              <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.06em', whiteSpace: 'nowrap', flexShrink: 0 }}>
+              <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.06em', whiteSpace: 'nowrap', flexShrink: 0 }}>
                 +{nonCritical.length - 3} more
               </span>
             )}
@@ -121,7 +121,7 @@ export default function ActionQueue({
                 onClick={() => onViewChange('timeline')}
                 style={{
                   background: 'transparent', border: 'none', cursor: 'pointer',
-                  fontSize: '9px', color: 'var(--phosphor)', letterSpacing: '0.08em',
+                  fontSize: 'var(--text-xs)', color: 'var(--phosphor)', letterSpacing: '0.08em',
                   fontFamily: 'var(--font-mono)', textTransform: 'uppercase',
                   opacity: 0.7, whiteSpace: 'nowrap', flexShrink: 0, padding: '2px 4px',
                 }}
@@ -168,14 +168,14 @@ function HumanInputChip({ detail, isDemo, onRespond }: { detail: BlockingDetail;
         {detail.name}
       </span>
       {detail.blocking.toolName && (
-        <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.04em' }}>
+        <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.04em' }}>
           {detail.blocking.toolName}
         </span>
       )}
       <button
         onClick={e => { e.stopPropagation(); if (!isDemo) onRespond(); }}
         style={{
-          padding: '2px 8px', fontSize: '9px', letterSpacing: '0.08em', fontWeight: 700,
+          padding: '2px 8px', fontSize: 'var(--text-xs)', letterSpacing: '0.08em', fontWeight: 700,
           fontFamily: 'var(--font-mono)',
           background: isDemo ? 'transparent' : 'var(--amber-bg-subtle)',
           color: isDemo ? 'var(--text-muted)' : 'var(--amber)',
@@ -205,7 +205,7 @@ function AlertChip({ alert, onDismiss }: { alert: Alert; onDismiss: () => void }
     }}>
       <AlertTriangle size={9} style={{ color: sevColor, flexShrink: 0 }} />
       <span style={{
-        fontSize: '9px', color: 'var(--text-secondary)', letterSpacing: '0.02em',
+        fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', letterSpacing: '0.02em',
         overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
       }}>
         {alert.title}
@@ -239,11 +239,11 @@ function EventChip({ event }: { event: TaskChangeEvent }) {
       display: 'flex', alignItems: 'center', gap: '5px',
       flexShrink: 0, whiteSpace: 'nowrap',
     }}>
-      <span style={{ fontSize: '9px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', letterSpacing: '0.04em' }}>
+      <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', letterSpacing: '0.04em' }}>
         {time}
       </span>
       <span style={{
-        fontSize: '9px', letterSpacing: '0.06em', fontWeight: 600,
+        fontSize: 'var(--text-xs)', letterSpacing: '0.06em', fontWeight: 600,
         padding: '1px 4px', borderRadius: '2px',
         background: statusStyle.bg, color: statusStyle.text,
         border: `1px solid ${statusStyle.border}`,
@@ -252,7 +252,7 @@ function EventChip({ event }: { event: TaskChangeEvent }) {
         {statusLabel}
       </span>
       <span style={{
-        fontSize: '9px', color: 'var(--text-secondary)', letterSpacing: '0.02em',
+        fontSize: 'var(--text-xs)', color: 'var(--text-secondary)', letterSpacing: '0.02em',
         maxWidth: '140px', overflow: 'hidden', textOverflow: 'ellipsis',
       }}>
         {event.taskSubject}

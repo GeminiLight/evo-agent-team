@@ -53,7 +53,7 @@ function StatusBadge({ status }: { status: string }) {
   if (!colors) return null;
   return (
     <span style={{
-      fontSize: '9px', letterSpacing: '0.1em',
+      fontSize: 'var(--text-xs)', letterSpacing: '0.1em',
       color: colors.text, background: colors.bg,
       border: `1px solid ${colors.border}`,
       padding: '1px 5px', borderRadius: '2px',
@@ -92,11 +92,11 @@ function EventItem({ event }: { event: TaskChangeEvent }) {
       {/* Content */}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginBottom: '3px' }}>
-          <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.06em', opacity: 0.7, flexShrink: 0 }}>
+          <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.06em', opacity: 0.7, flexShrink: 0 }}>
             {formatTs(event.timestamp)}
           </span>
           <span style={{
-            fontSize: '9px', letterSpacing: '0.14em',
+            fontSize: 'var(--text-xs)', letterSpacing: '0.14em',
             color: dotColor, background: `${dotColor}15`,
             border: `1px solid ${dotColor}30`,
             padding: '0px 5px', borderRadius: '2px',
@@ -104,7 +104,7 @@ function EventItem({ event }: { event: TaskChangeEvent }) {
           }}>
             EVENT
           </span>
-          <span style={{ fontSize: '9px', color: 'var(--text-muted)' }}>#{event.taskId}</span>
+          <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>#{event.taskId}</span>
           <span style={{ fontSize: '10px', color: 'var(--text-primary)', letterSpacing: '0.02em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {event.taskSubject}
           </span>
@@ -113,11 +113,11 @@ function EventItem({ event }: { event: TaskChangeEvent }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
           {event.oldStatus === null ? (
             <span style={{
-              fontSize: '9px', letterSpacing: '0.1em', color: 'var(--text-muted)',
+              fontSize: 'var(--text-xs)', letterSpacing: '0.1em', color: 'var(--text-muted)',
               border: '1px solid var(--border)', padding: '1px 5px', borderRadius: '2px',
             }}>CREATED</span>
           ) : (
-            <><StatusBadge status={event.oldStatus} /><span style={{ fontSize: '9px', color: 'var(--text-muted)' }}>→</span></>
+            <><StatusBadge status={event.oldStatus} /><span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>→</span></>
           )}
           <StatusBadge status={event.newStatus} />
 
@@ -126,10 +126,10 @@ function EventItem({ event }: { event: TaskChangeEvent }) {
               <div style={{
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                 width: '16px', height: '16px', borderRadius: '3px',
-                fontSize: '9px', fontWeight: 700, fontFamily: 'var(--font-mono)',
+                fontSize: 'var(--text-xs)', fontWeight: 700, fontFamily: 'var(--font-mono)',
                 ...avatarStyle,
               }}>{agentInitials(event.owner)}</div>
-              <span style={{ fontSize: '9px', color: ownerColor, letterSpacing: '0.06em', fontFamily: 'var(--font-mono)' }}>
+              <span style={{ fontSize: 'var(--text-xs)', color: ownerColor, letterSpacing: '0.06em', fontFamily: 'var(--font-mono)' }}>
                 {event.owner}
               </span>
             </div>
@@ -173,7 +173,7 @@ function MessageItem({ message }: { message: AgentMessage }) {
       <div style={{
         width: '22px', height: '22px', borderRadius: '3px',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: '9px', fontWeight: 700, letterSpacing: '0.04em',
+        fontSize: 'var(--text-xs)', fontWeight: 700, letterSpacing: '0.04em',
         fontFamily: 'var(--font-mono)', flexShrink: 0, marginTop: '1px',
         ...avatarStyle,
       }}>
@@ -186,16 +186,16 @@ function MessageItem({ message }: { message: AgentMessage }) {
           <span style={{ fontSize: '10px', fontWeight: 600, color: senderColor, letterSpacing: '0.04em', fontFamily: 'var(--font-mono)' }}>
             {message.sender}
           </span>
-          <span style={{ fontSize: '9px', color: 'var(--text-muted)' }}>→</span>
+          <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>→</span>
           <span style={{ fontSize: '10px', color: recipientColor, letterSpacing: '0.04em', fontFamily: 'var(--font-mono)' }}>
             {message.recipient}
           </span>
-          <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.06em' }}>
+          <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.06em' }}>
             {formatTs(message.timestamp)}
           </span>
           {badge && (
             <span style={{
-              fontSize: '9px', letterSpacing: '0.12em',
+              fontSize: 'var(--text-xs)', letterSpacing: '0.12em',
               color: badge.color, border: `1px solid ${badge.color}`,
               padding: '0px 5px', borderRadius: '2px', opacity: 0.85,
               boxShadow: badge.glow ? `0 0 6px ${badge.color}88` : 'none',
@@ -222,7 +222,7 @@ function MessageItem({ message }: { message: AgentMessage }) {
           {expanded ? message.text : preview}
         </div>
         {isLong && (
-          <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.08em', cursor: 'pointer', textTransform: 'uppercase' }}>
+          <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.08em', cursor: 'pointer', textTransform: 'uppercase' }}>
             {expanded ? t('commlog.collapse') : t('commlog.expand')}
           </span>
         )}

@@ -29,7 +29,7 @@ export default function MarkdownContent({ content }: { content: string }) {
           fontFamily: 'var(--font-mono)', letterSpacing: '0.02em',
           margin: '10px 0',
         }}>
-          {lang && <div style={{ fontSize: '9px', color: 'var(--text-muted)', marginBottom: '6px', letterSpacing: '0.1em' }}>{lang.toUpperCase()}</div>}
+          {lang && <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', marginBottom: '6px', letterSpacing: '0.1em' }}>{lang.toUpperCase()}</div>}
           {codeLines.join('\n')}
         </pre>
       );
@@ -85,7 +85,7 @@ export default function MarkdownContent({ content }: { content: string }) {
               <thead>
                 <tr>
                   {head.map((cell, ci) => (
-                    <th key={ci} style={{ padding: '6px 10px', textAlign: 'left', color: 'var(--text-primary)', background: 'var(--surface-2)', border: '1px solid var(--border)', letterSpacing: '0.06em', fontWeight: 600, fontSize: '9px' }}>
+                    <th key={ci} style={{ padding: '6px 10px', textAlign: 'left', color: 'var(--text-primary)', background: 'var(--surface-2)', border: '1px solid var(--border)', letterSpacing: '0.06em', fontWeight: 600, fontSize: 'var(--text-xs)' }}>
                       {inlineRender(cell)}
                     </th>
                   ))}
@@ -170,7 +170,7 @@ export function inlineRender(text: string): React.ReactNode {
     if (m[2] !== undefined) {
       parts.push(<strong key={m.index} style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{m[2]}</strong>);
     } else if (m[3] !== undefined) {
-      parts.push(<code key={m.index} style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: '2px', padding: '1px 5px', fontSize: '9px', fontFamily: 'var(--font-mono)', color: 'var(--phosphor)' }}>{m[3]}</code>);
+      parts.push(<code key={m.index} style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: '2px', padding: '1px 5px', fontSize: 'var(--text-xs)', fontFamily: 'var(--font-mono)', color: 'var(--phosphor)' }}>{m[3]}</code>);
     } else if (m[4] !== undefined) {
       parts.push(<em key={m.index} style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>{m[4]}</em>);
     } else if (m[5] !== undefined && m[6] !== undefined) {

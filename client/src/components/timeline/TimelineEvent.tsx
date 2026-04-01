@@ -13,7 +13,7 @@ function StatusBadge({ status }: { status: string }) {
   if (!colors) return null;
   return (
     <span style={{
-      fontSize: '9px',
+      fontSize: 'var(--text-xs)',
       letterSpacing: '0.1em',
       color: colors.text,
       background: colors.bg,
@@ -69,10 +69,10 @@ export default function TimelineEvent({ event }: TimelineEventProps) {
       <div style={{ flex: 1, paddingBottom: '10px' }}>
         {/* Row 1: timestamp + task id + subject */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '4px' }}>
-          <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.08em', flexShrink: 0 }}>
+          <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.08em', flexShrink: 0 }}>
             {formatTs(event.timestamp)}
           </span>
-          <span style={{ fontSize: '9px', color: 'var(--text-muted)' }}>#{event.taskId}</span>
+          <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>#{event.taskId}</span>
           <span style={{ fontSize: '12px', color: 'var(--text-primary)', letterSpacing: '0.02em' }}>
             {event.taskSubject}
           </span>
@@ -82,7 +82,7 @@ export default function TimelineEvent({ event }: TimelineEventProps) {
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginBottom: event.owner ? '5px' : 0 }}>
           {event.oldStatus === null ? (
             <span style={{
-              fontSize: '9px',
+              fontSize: 'var(--text-xs)',
               letterSpacing: '0.12em',
               color: 'var(--text-muted)',
               border: '1px solid var(--border)',
@@ -94,7 +94,7 @@ export default function TimelineEvent({ event }: TimelineEventProps) {
           ) : (
             <>
               <StatusBadge status={event.oldStatus} />
-              <span style={{ fontSize: '9px', color: 'var(--text-muted)' }}>→</span>
+              <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>→</span>
             </>
           )}
           <StatusBadge status={event.newStatus} />
@@ -107,14 +107,14 @@ export default function TimelineEvent({ event }: TimelineEventProps) {
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
               width: '18px', height: '18px',
               borderRadius: '3px',
-              fontSize: '9px', fontWeight: 700, letterSpacing: '0.04em',
+              fontSize: 'var(--text-xs)', fontWeight: 700, letterSpacing: '0.04em',
               fontFamily: 'var(--font-mono)',
               ...avatarStyle,
             }}>
               {agentInitials(event.owner)}
             </div>
             <span style={{
-              fontSize: '9px',
+              fontSize: 'var(--text-xs)',
               letterSpacing: '0.08em',
               color: ownerColor,
               fontFamily: 'var(--font-mono)',

@@ -115,7 +115,7 @@ export default function ExpertProfilePanel({ teamId, teamName }: ExpertProfilePa
           <User size={15} style={{ color: 'var(--phosphor)' }} />
         </div>
         <div>
-          <div style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
+          <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
             {t('expert.title')}
           </div>
           <div style={{ fontSize: '12px', color: 'var(--phosphor)', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
@@ -167,10 +167,10 @@ export default function ExpertProfilePanel({ teamId, teamName }: ExpertProfilePa
                         border: '1px solid var(--amber)',
                         borderLeftWidth: '2px',
                       }}>
-                        <span style={{ fontSize: '9px', color: 'var(--amber)', fontWeight: 600, flex: 1, letterSpacing: '0.04em' }}>
+                        <span style={{ fontSize: 'var(--text-xs)', color: 'var(--amber)', fontWeight: 600, flex: 1, letterSpacing: '0.04em' }}>
                           {d.agentName}
                         </span>
-                        <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.04em' }}>
+                        <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.04em' }}>
                           {fmtRelative(d.waitingSince)}
                         </span>
                       </div>
@@ -185,7 +185,7 @@ export default function ExpertProfilePanel({ teamId, teamName }: ExpertProfilePa
               <SectionBlock label={t('expert.activity_heatmap')} icon={<Activity size={10} />}>
                 <HeatmapGrid data={heatmapData} />
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px' }}>
-                  <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.06em' }}>
+                  <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.06em' }}>
                     {t('expert.heatmap_less')}
                   </span>
                   <div style={{ display: 'flex', gap: '2px', alignItems: 'center' }}>
@@ -198,7 +198,7 @@ export default function ExpertProfilePanel({ teamId, teamName }: ExpertProfilePa
                       }} />
                     ))}
                   </div>
-                  <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.06em' }}>
+                  <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.06em' }}>
                     {t('expert.heatmap_more')}
                   </span>
                 </div>
@@ -223,9 +223,9 @@ export default function ExpertProfilePanel({ teamId, teamName }: ExpertProfilePa
                         border: '1px solid var(--border)',
                       }}>
                         <span style={{ fontSize: '10px', color: 'var(--text-primary)', letterSpacing: '0.04em', flex: 1 }}>{name}</span>
-                        <span style={{ fontSize: '9px', color: 'var(--phosphor)' }}>👍{p}</span>
-                        <span style={{ fontSize: '9px', color: 'var(--amber)' }}>👎{c}</span>
-                        <span style={{ fontSize: '9px', color: 'var(--ice)' }}>📌{b}</span>
+                        <span style={{ fontSize: 'var(--text-xs)', color: 'var(--phosphor)' }}>👍{p}</span>
+                        <span style={{ fontSize: 'var(--text-xs)', color: 'var(--amber)' }}>👎{c}</span>
+                        <span style={{ fontSize: 'var(--text-xs)', color: 'var(--ice)' }}>📌{b}</span>
                       </div>
                     );
                   })}
@@ -249,16 +249,16 @@ export default function ExpertProfilePanel({ teamId, teamName }: ExpertProfilePa
                     }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
                         <span style={{
-                          fontSize: '9px', fontWeight: 600, letterSpacing: '0.06em',
+                          fontSize: 'var(--text-xs)', fontWeight: 600, letterSpacing: '0.06em',
                           color: entry.type === 'praise' ? 'var(--phosphor)'
                             : entry.type === 'correction' ? 'var(--amber)' : 'var(--ice)',
                         }}>
                           {entry.type === 'praise' ? '👍' : entry.type === 'correction' ? '👎' : '📌'}
                         </span>
-                        <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.06em', flex: 1 }}>
+                        <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.06em', flex: 1 }}>
                           {entry.agentName}
                         </span>
-                        <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.04em' }}>
+                        <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.04em' }}>
                           {fmtRelative(entry.createdAt)}
                         </span>
                       </div>
@@ -288,18 +288,18 @@ export default function ExpertProfilePanel({ teamId, teamName }: ExpertProfilePa
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   {Object.entries(preferences).map(([agentName, rules]) => (
                     <div key={agentName}>
-                      <div style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.12em', marginBottom: '4px', textTransform: 'uppercase' }}>
+                      <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.12em', marginBottom: '4px', textTransform: 'uppercase' }}>
                         {agentName}
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', paddingLeft: '8px', borderLeft: '2px solid var(--border)' }}>
                         {rules.slice(0, 3).map((rule, i) => (
                           <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
-                            <span style={{ color: 'var(--ice)', fontSize: '9px', flexShrink: 0, marginTop: '2px' }}>▸</span>
+                            <span style={{ color: 'var(--ice)', fontSize: 'var(--text-xs)', flexShrink: 0, marginTop: '2px' }}>▸</span>
                             <span style={{ fontSize: '10px', color: 'var(--text-primary)', lineHeight: 1.5 }}>{rule}</span>
                           </div>
                         ))}
                         {rules.length > 3 && (
-                          <span style={{ fontSize: '9px', color: 'var(--text-muted)', paddingLeft: '14px', letterSpacing: '0.06em' }}>
+                          <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', paddingLeft: '14px', letterSpacing: '0.06em' }}>
                             +{rules.length - 3} more
                           </span>
                         )}
@@ -318,11 +318,11 @@ export default function ExpertProfilePanel({ teamId, teamName }: ExpertProfilePa
             {guide?.content && guideRules.length > 0 && (
               <SectionBlock label={t('expert.team_guide')} icon={<FileText size={10} />}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-                  <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.08em', fontFamily: 'var(--font-mono)' }}>
+                  <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.08em', fontFamily: 'var(--font-mono)' }}>
                     {guide.filename}
                   </span>
                   <span style={{
-                    fontSize: '9px', padding: '1px 5px', borderRadius: '2px',
+                    fontSize: 'var(--text-xs)', padding: '1px 5px', borderRadius: '2px',
                     background: 'var(--surface-1)', border: '1px solid var(--border)',
                     color: 'var(--text-muted)', letterSpacing: '0.1em',
                   }}>
@@ -332,12 +332,12 @@ export default function ExpertProfilePanel({ teamId, teamName }: ExpertProfilePa
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', paddingLeft: '8px', borderLeft: '2px solid var(--phosphor)', borderLeftStyle: 'dashed' }}>
                   {guideRules.map((rule, i) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
-                      <span style={{ color: 'var(--phosphor)', fontSize: '9px', flexShrink: 0, marginTop: '2px' }}>▹</span>
+                      <span style={{ color: 'var(--phosphor)', fontSize: 'var(--text-xs)', flexShrink: 0, marginTop: '2px' }}>▹</span>
                       <span style={{ fontSize: '10px', color: 'var(--text-primary)', lineHeight: 1.5 }}>{rule}</span>
                     </div>
                   ))}
                   {guide.content.split('\n').filter(l => /^\s*[-*]\s+/.test(l)).length > 10 && (
-                    <span style={{ fontSize: '9px', color: 'var(--text-muted)', paddingLeft: '14px', letterSpacing: '0.06em' }}>
+                    <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', paddingLeft: '14px', letterSpacing: '0.06em' }}>
                       +{guide.content.split('\n').filter(l => /^\s*[-*]\s+/.test(l)).length - 10} more
                     </span>
                   )}
@@ -362,7 +362,7 @@ function SectionBlock({ label, icon, children }: { label: string; icon?: React.R
       padding: '14px 16px',
     }}>
       <div style={{
-        fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.18em',
+        fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.18em',
         textTransform: 'uppercase', marginBottom: '12px',
         display: 'flex', alignItems: 'center', gap: '8px',
       }}>
@@ -386,7 +386,7 @@ function StatCard({ icon, label, value, color }: { icon?: React.ReactNode; label
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
         {icon && <span style={{ color, opacity: 0.7 }}>{icon}</span>}
-        <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{label}</span>
+        <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{label}</span>
       </div>
       <span style={{ fontSize: '18px', fontWeight: 700, color, letterSpacing: '0.04em', fontFamily: 'var(--font-mono)' }}>
         {value}
@@ -398,7 +398,7 @@ function StatCard({ icon, label, value, color }: { icon?: React.ReactNode; label
 function MiniStat({ label, value }: { label: string; value: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-      <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{label}</span>
+      <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{label}</span>
       <span style={{ fontSize: '10px', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)' }}>{value}</span>
     </div>
   );
@@ -413,7 +413,7 @@ function MiniCard({ label, value, color }: { label: string; value: string; color
       borderRadius: '3px',
       display: 'flex', flexDirection: 'column', gap: '3px',
     }}>
-      <span style={{ fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{label}</span>
+      <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{label}</span>
       <span style={{ fontSize: '14px', fontWeight: 700, color, letterSpacing: '0.04em', fontFamily: 'var(--font-mono)' }}>{value}</span>
     </div>
   );
@@ -454,7 +454,7 @@ function HeatmapGrid({ data }: { data: HeatmapCell[] }) {
         {SLOT_LABELS.map(sl => (
           <div key={sl} style={{
             flex: 1, textAlign: 'center',
-            fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.04em',
+            fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.04em',
           }}>
             {sl}
           </div>
@@ -463,7 +463,7 @@ function HeatmapGrid({ data }: { data: HeatmapCell[] }) {
       {/* Day rows */}
       {DAY_LABELS.map((dayLabel, dayIdx) => (
         <div key={dayLabel} style={{ display: 'flex', gap: '2px', alignItems: 'center' }}>
-          <span style={{ width: '28px', fontSize: '9px', color: 'var(--text-muted)', letterSpacing: '0.04em', textAlign: 'right', marginRight: '2px' }}>
+          <span style={{ width: '28px', fontSize: 'var(--text-xs)', color: 'var(--text-muted)', letterSpacing: '0.04em', textAlign: 'right', marginRight: '2px' }}>
             {dayLabel}
           </span>
           {[0, 1, 2, 3].map(slot => {

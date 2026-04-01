@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { 
   LayoutDashboard, Network, Activity, ScrollText, MessageSquare, 
   DollarSign, Star, Brain, ChevronLeft, ChevronRight, Settings,
-  BarChart3, Zap, Check, BookOpen, MonitorCog
+  BarChart3, Zap, Check, MonitorCog
 } from 'lucide-react';
 import type { ViewType } from '../Layout';
 import type { TeamDetail } from '../../types';
@@ -60,6 +60,7 @@ const buildNavStructure = (pendingApprovalCount: number = 0): NavGroup[] => [
       { key: 'commlog',   icon: MessageSquare,   labelKey: 'sidebar.messages' },
       { key: 'approvals', icon: Check,           labelKey: 'sidebar.approvals', badgeCount: pendingApprovalCount },
       { key: 'history',   icon: ScrollText,      labelKey: 'sidebar.sessions' },
+      { key: 'chat',      icon: MessageSquare,   labelKey: 'sidebar.chat' },
     ],
     badgeCount: pendingApprovalCount,
   },
@@ -69,8 +70,6 @@ const buildNavStructure = (pendingApprovalCount: number = 0): NavGroup[] => [
     icon: Brain,
     items: [
       { key: 'knowledge', icon: Brain,           labelKey: 'sidebar.knowledge' },
-      { key: 'chat',      icon: MessageSquare,   labelKey: 'sidebar.chat' },
-      { key: 'timeline',  icon: BookOpen,        labelKey: 'sidebar.memory' },
     ],
   },
   {

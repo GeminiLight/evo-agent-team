@@ -5,6 +5,7 @@ import { Router } from 'express';
 import teamsRouter from './teams.js';
 import messagesRouter from './messages.js';
 import feedbackRouter from './feedback.js';
+import preferencesRouter from './preferences.js';
 import memoryRouter from './memory.js';
 import knowledgeRouter from './knowledge.js';
 import hooksRouter from './hooks.js';
@@ -27,6 +28,7 @@ router.param('id', (req, res, next, id) => {
 router.use(teamsRouter);
 router.use(messagesRouter);
 router.use(feedbackRouter);
+router.use(preferencesRouter);
 router.use(memoryRouter);
 router.use(knowledgeRouter);
 router.use(hooksRouter);

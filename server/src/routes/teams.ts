@@ -10,7 +10,7 @@ import { getSessionStatsForTeam } from '../sessionScanner.js';
 import { getSessionHistory, listAvailableAgentSessions } from '../sessionHistory.js';
 import { computeAlerts, DEFAULT_THRESHOLDS } from '../alertEngine.js';
 import { getSummary, invalidateSummary } from '../summaryEngine.js';
-import { readJsonFile, dirExists, getSubdirs, hasNonHiddenFiles, isHiddenFile } from './helpers.js';
+import { readJsonFile, dirExists, getSubdirs, hasNonHiddenFiles, isHiddenFile, loadTeamContext, loadTeamTasks } from './helpers.js';
 import { generateETag, eTagMatches } from '../utils/etagUtils.js';
 import type { Task, TeamConfig, TeamSummary, TeamDetail } from '../types.js';
 
@@ -247,22 +247,16 @@ router.get('/teams/:id/human-input-status', async (req, res) => {
   const { id } = req.params;
 
   if (id === 'demo-team') {
-    // Demo: return empty list (no real sessions to scan)
     res.json({ teamId: id, waitingAgents: [] });
     return;
   }
 
-  const configPath = path.join(config.teamsDir, id, 'config.json');
-  const teamConfig = await readJsonFile<TeamConfig>(configPath);
+  const { memberNames, memberCwds, leadSessionId } = await loadTeamContext(id);
 
-  if (!teamConfig?.members?.length) {
+  if (memberNames.length === 0) {
     res.json({ teamId: id, waitingAgents: [] });
     return;
   }
-
-  const memberNames = teamConfig.members.map(m => m.name);
-  const memberCwds = teamConfig.members.map(m => m.cwd ?? '').filter(Boolean);
-  const leadSessionId = teamConfig.leadSessionId;
 
   try {
     const status = await detectHumanInputWaiters(memberNames, memberCwds, leadSessionId);
@@ -304,16 +298,12 @@ router.get('/teams/:id/todos', async (req, res) => {
     return;
   }
 
-  const configPath = path.join(config.teamsDir, id, 'config.json');
-  const teamConfig = await readJsonFile<TeamConfig>(configPath);
+  const { memberCwds, leadSessionId } = await loadTeamContext(id);
 
-  if (!teamConfig?.members?.length) {
+  if (memberCwds.length === 0) {
     res.json({ teamId: id, sessions: [] });
     return;
   }
-
-  const memberCwds    = teamConfig.members.map(m => m.cwd ?? '').filter(Boolean);
-  const leadSessionId = teamConfig.leadSessionId;
 
   try {
     const result = await getTodosForTeam(memberCwds, leadSessionId);
@@ -333,20 +323,12 @@ router.get('/teams/:id/session-stats', async (req, res) => {
     return;
   }
 
-  const configPath = path.join(config.teamsDir, id, 'config.json');
-  const teamConfig = await readJsonFile<TeamConfig>(configPath);
+  const { memberNames, memberCwds, leadSessionId, leadName } = await loadTeamContext(id);
 
-  if (!teamConfig?.members?.length) {
+  if (memberNames.length === 0) {
     res.json({ teamId: id, agents: [] });
     return;
   }
-
-  const memberNames   = teamConfig.members.map(m => m.name);
-  const memberCwds    = teamConfig.members.map(m => m.cwd ?? '').filter(Boolean);
-  const leadSessionId = teamConfig.leadSessionId;
-  const leadName      = teamConfig.leadAgentId
-    ? teamConfig.leadAgentId.split('@')[0]
-    : teamConfig.members.find(m => !m.backendType)?.name;
 
   try {
     const agents = await getSessionStatsForTeam(memberNames, memberCwds, leadSessionId, leadName);
@@ -367,25 +349,17 @@ router.get('/teams/:id/session-history', async (req, res) => {
     return;
   }
 
-  const configPath = path.join(config.teamsDir, id, 'config.json');
-  const teamConfig = await readJsonFile<TeamConfig>(configPath);
-
-  // For B3: if agentName provided, find their sessionId from the session list
-  // For lead (no agentName), use leadSessionId as before
-  const memberCwds = (teamConfig?.members ?? []).map(m => m.cwd ?? '').filter(Boolean);
+  const { memberNames, memberCwds, leadSessionId, leadName } = await loadTeamContext(id);
 
   let targetSessionId: string | null = null;
   if (agentName) {
-    const memberNames   = (teamConfig?.members ?? []).map(m => m.name);
-    const leadSessionId = teamConfig?.leadSessionId;
-    const leadName      = teamConfig?.members?.find(m => !m.backendType)?.name;
     try {
       const sessions = await listAvailableAgentSessions(memberNames, memberCwds, leadSessionId, leadName);
       const found = sessions.find(s => s.agentName === agentName);
       targetSessionId = found?.sessionId ?? null;
     } catch { /* non-critical */ }
   } else {
-    targetSessionId = teamConfig?.leadSessionId ?? null;
+    targetSessionId = leadSessionId ?? null;
   }
 
   if (!targetSessionId) {
@@ -411,23 +385,8 @@ router.get('/teams/:id/alerts', async (req, res) => {
     return;
   }
 
-  const configPath = path.join(config.teamsDir, id, 'config.json');
-  const teamConfig = await readJsonFile<TeamConfig>(configPath);
-
-  const taskDir = path.join(config.tasksDir, id);
-  const tasks: Task[] = [];
-  if (await dirExists(taskDir)) {
-    const files = await fs.readdir(taskDir);
-    for (const file of files.filter(f => f.endsWith('.json') && !isHiddenFile(f))) {
-      const task = await readJsonFile<Task>(path.join(taskDir, file));
-      if (task && task.metadata?._internal !== true) tasks.push(task);
-    }
-  }
-
-  const memberNames = teamConfig?.members.map(m => m.name) ?? [];
-  const memberCwds  = teamConfig?.members.map(m => m.cwd ?? '').filter(Boolean) ?? [];
-  const leadSessionId = teamConfig?.leadSessionId;
-  const leadName = teamConfig?.members.find(m => !m.backendType)?.name;
+  const { memberNames, memberCwds, leadSessionId, leadName } = await loadTeamContext(id);
+  const tasks = await loadTeamTasks(id);
 
   let sessionStats: import('../types.js').AgentSessionStats[] = [];
   try {
@@ -459,18 +418,12 @@ router.get('/teams/:id/session-agents', async (req, res) => {
     return;
   }
 
-  const configPath = path.join(config.teamsDir, id, 'config.json');
-  const teamConfig = await readJsonFile<TeamConfig>(configPath);
+  const { memberNames, memberCwds, leadSessionId, leadName } = await loadTeamContext(id);
 
-  if (!teamConfig?.members?.length) {
+  if (memberNames.length === 0) {
     res.json({ teamId: id, agents: [] });
     return;
   }
-
-  const memberNames   = teamConfig.members.map(m => m.name);
-  const memberCwds    = teamConfig.members.map(m => m.cwd ?? '').filter(Boolean);
-  const leadSessionId = teamConfig.leadSessionId;
-  const leadName      = teamConfig.members.find(m => !m.backendType)?.name;
 
   try {
     const agents = await listAvailableAgentSessions(memberNames, memberCwds, leadSessionId, leadName);
@@ -490,18 +443,12 @@ router.get('/teams/:id/cost', async (req, res) => {
     return;
   }
 
-  const configPath = path.join(config.teamsDir, id, 'config.json');
-  const teamConfig = await readJsonFile<TeamConfig>(configPath);
+  const { memberNames, memberCwds, leadSessionId, leadName } = await loadTeamContext(id);
 
-  if (!teamConfig?.members?.length) {
+  if (memberNames.length === 0) {
     res.json({ teamId: id, totals: { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0 }, byAgent: [], byTool: [], timeSeries: [] });
     return;
   }
-
-  const memberNames   = teamConfig.members.map(m => m.name);
-  const memberCwds    = teamConfig.members.map(m => m.cwd ?? '').filter(Boolean);
-  const leadSessionId = teamConfig.leadSessionId;
-  const leadName      = teamConfig.members.find(m => !m.backendType)?.name;
 
   try {
     const agents = await getSessionStatsForTeam(memberNames, memberCwds, leadSessionId, leadName);
@@ -567,24 +514,9 @@ router.get('/teams/:id/summary', async (req, res) => {
     return;
   }
 
-  const configPath = path.join(config.teamsDir, id, 'config.json');
-  const teamConfig = await readJsonFile<TeamConfig>(configPath);
-
+  const { teamConfig, memberNames, memberCwds, leadSessionId, leadName } = await loadTeamContext(id);
   const teamName = teamConfig?.name ?? id;
-  const memberNames   = teamConfig?.members.map(m => m.name) ?? [];
-  const memberCwds    = teamConfig?.members.map(m => m.cwd ?? '').filter(Boolean) ?? [];
-  const leadSessionId = teamConfig?.leadSessionId;
-  const leadName      = teamConfig?.members.find(m => !m.backendType)?.name;
-
-  const taskDir = path.join(config.tasksDir, id);
-  const tasks: Task[] = [];
-  if (await dirExists(taskDir)) {
-    const files = await fs.readdir(taskDir);
-    for (const file of files.filter(f => f.endsWith('.json') && !isHiddenFile(f))) {
-      const task = await readJsonFile<Task>(path.join(taskDir, file));
-      if (task && task.metadata?._internal !== true) tasks.push(task);
-    }
-  }
+  const tasks = await loadTeamTasks(id);
 
   let agentStats: import('../types.js').AgentSessionStats[] = [];
   try {
@@ -612,24 +544,10 @@ router.post('/teams/:id/summary/refresh', async (req, res) => {
     return;
   }
   invalidateSummary(id);
-  // Redirect to GET with refresh=1
-  const configPath = path.join(config.teamsDir, id, 'config.json');
-  const teamConfig = await readJsonFile<TeamConfig>(configPath);
-  const teamName = teamConfig?.name ?? id;
-  const memberNames   = teamConfig?.members.map(m => m.name) ?? [];
-  const memberCwds    = teamConfig?.members.map(m => m.cwd ?? '').filter(Boolean) ?? [];
-  const leadSessionId = teamConfig?.leadSessionId;
-  const leadName      = teamConfig?.members.find(m => !m.backendType)?.name;
 
-  const taskDir = path.join(config.tasksDir, id);
-  const tasks: Task[] = [];
-  if (await dirExists(taskDir)) {
-    const files = await fs.readdir(taskDir);
-    for (const file of files.filter(f => f.endsWith('.json') && !isHiddenFile(f))) {
-      const task = await readJsonFile<Task>(path.join(taskDir, file));
-      if (task && task.metadata?._internal !== true) tasks.push(task);
-    }
-  }
+  const { teamConfig, memberNames, memberCwds, leadSessionId, leadName } = await loadTeamContext(id);
+  const teamName = teamConfig?.name ?? id;
+  const tasks = await loadTeamTasks(id);
 
   let agentStats: import('../types.js').AgentSessionStats[] = [];
   try {

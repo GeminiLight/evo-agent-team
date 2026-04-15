@@ -29,6 +29,53 @@ export function getAppConfig(): AppConfig {
   return config;
 }
 
+// ── Team Context Loading ──────────────────────────────────────────────────────
+
+export interface TeamContext {
+  teamConfig: TeamConfig | null;
+  memberNames: string[];
+  memberCwds: string[];
+  leadSessionId: string | undefined;
+  leadName: string | undefined;
+}
+
+/**
+ * Load team config and extract common context fields.
+ * Eliminates 8x duplication of config.json loading + member extraction.
+ */
+export async function loadTeamContext(teamId: string): Promise<TeamContext> {
+  const configPath = path.join(config.teamsDir, teamId, 'config.json');
+  const teamConfig = await readJsonFile<TeamConfig>(configPath);
+
+  const members = teamConfig?.members ?? [];
+  return {
+    teamConfig,
+    memberNames: members.map(m => m.name),
+    memberCwds: members.map(m => m.cwd ?? '').filter(Boolean) as string[],
+    leadSessionId: teamConfig?.leadSessionId,
+    leadName: teamConfig?.leadAgentId
+      ? teamConfig.leadAgentId.split('@')[0]
+      : members.find(m => !m.backendType)?.name,
+  };
+}
+
+/**
+ * Load tasks for a team from disk.
+ * Eliminates 3x duplication of task-loading logic.
+ */
+export async function loadTeamTasks(teamId: string): Promise<Task[]> {
+  const taskDir = path.join(config.tasksDir, teamId);
+  const tasks: Task[] = [];
+  if (await dirExists(taskDir)) {
+    const files = await fs.readdir(taskDir);
+    for (const file of files.filter(f => f.endsWith('.json') && !isHiddenFile(f))) {
+      const task = await readJsonFile<Task>(path.join(taskDir, file));
+      if (task && task.metadata?._internal !== true) tasks.push(task);
+    }
+  }
+  return tasks;
+}
+
 // ── Filesystem helpers ───────────────────────────────────────────────────────
 
 export function isHiddenFile(name: string): boolean {

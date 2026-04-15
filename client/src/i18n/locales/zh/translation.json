@@ -393,6 +393,11 @@
     "no_dependencies": "— 无依赖 —",
     "close": "关闭"
   },
+  "approvals": {
+    "title": "权限请求",
+    "empty": "暂无待处理的权限请求",
+    "empty_sub": "当代理需要你的审批时，请求将显示在这里"
+  },
   "approval": {
     "title": "权限请求",
     "team": "团队",
@@ -559,18 +564,31 @@
     "loading": "加载中...",
     "no_messages": "暂无消息",
     "no_messages_sub": "代理活跃时将显示对话历史",
-    "input_placeholder": "给 {{name}} 发消息...（Ctrl+Enter 发送）",
-    "send_hint": "Ctrl+Enter 发送 · Esc 清空",
+    "group_empty_sub": "代理之间的对话将在此实时显示",
+    "messages_count": "条消息",
+    "send_to": "发送给",
+    "select_agent_first": "请先选择上方的代理...",
+    "agents_waiting": "等待你的输入：{{names}}",
+    "input_placeholder": "给 {{name}} 发消息...（Enter 发送）",
+    "send_hint": "Enter 发送 · Shift+Enter 换行",
     "sending": "发送中...",
     "sent": "✓ 已发送"
   },
   "topology": {
+    "layout_swim": "泳道",
+    "layout_swim_desc": "泳道 — 按 Agent 分组显示任务",
+    "layout_cluster": "集群",
+    "layout_cluster_desc": "集群 — 每个 Agent 双列网格",
+    "layout_radial": "放射",
+    "layout_radial_desc": "放射 — Agent 环形分布，任务向外展开",
     "filter_all": "全部",
     "filter_active": "活跃",
     "filter_blocked": "阻塞",
     "filter_all_tooltip": "显示所有任务（含已完成）",
     "filter_active_tooltip": "隐藏已完成任务（默认）",
-    "filter_blocked_tooltip": "仅显示被阻塞的任务"
+    "filter_blocked_tooltip": "仅显示被阻塞的任务",
+    "empty_title": "暂无拓扑",
+    "empty_subtitle": "团队组建后将在此显示 Agent 节点"
   },
   "memory": {
     "title": "记忆 // {{id}}",

@@ -107,8 +107,16 @@ export function renderMarkdown(md: string): React.ReactElement {
   return <>{elements}</>;
 }
 
-function inlineFormat(text: string): string {
+function escapeHtml(text: string): string {
   return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function inlineFormat(text: string): string {
+  return escapeHtml(text)
     .replace(/`([^`]+)`/g, '<code style="background:var(--surface-1);padding:1px 4px;border-radius:2px;font-size:10px;color:var(--phosphor)">$1</code>')
     .replace(/\*\*([^*]+)\*\*/g, '<strong style="color:var(--text-primary)">$1</strong>')
     .replace(/\*([^*]+)\*/g, '<em>$1</em>');

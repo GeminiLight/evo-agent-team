@@ -11,6 +11,18 @@ import hooksRouter from './hooks.js';
 
 const router = Router();
 
+/**
+ * Path-traversal guard: reject any :id param containing path separators or '..'
+ * Applied globally before any route handler.
+ */
+router.param('id', (req, res, next, id) => {
+  if (typeof id !== 'string' || /[\/\\]|\.\./.test(id)) {
+    res.status(400).json({ error: 'Invalid team ID' });
+    return;
+  }
+  next();
+});
+
 router.use(teamsRouter);
 router.use(messagesRouter);
 router.use(feedbackRouter);

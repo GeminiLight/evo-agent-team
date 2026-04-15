@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { type Request, type Response, type NextFunction } from 'express';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -14,13 +14,30 @@ const clientDist = path.resolve(__dirname, 'public');
 const app = express();
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
 app.use('/api', apiRouter);
 
-// Serve built client in production
-app.use(express.static(clientDist));
+// Serve built client in production — disable caching to ensure fresh loads
+app.disable('etag');
+app.use(express.static(clientDist, {
+  etag: false,
+  lastModified: false,
+  setHeaders: (res) => {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+  },
+}));
 app.get('*', (_req, res) => {
-  res.sendFile(path.join(clientDist, 'index.html'));
+  res.sendFile(path.join(clientDist, 'index.html'), (err) => {
+    if (err) res.status(500).send('Dashboard not built. Run: npm run build');
+  });
+});
+
+// Global error handler — prevent stack trace leaks
+app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+  console.error('[server] Unhandled error:', err.message);
+  res.status(500).json({ error: 'Internal server error' });
 });
 
 const httpServer = app.listen(config.port, () => {

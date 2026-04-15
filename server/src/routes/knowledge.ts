@@ -24,8 +24,8 @@ router.post('/teams/:id/knowledge/analyze', async (req, res) => {
   const { id: targetId } = req.params;
   const { sourceTeamId } = req.body as { sourceTeamId: string };
 
-  if (!sourceTeamId) {
-    res.status(400).json({ error: 'sourceTeamId is required' });
+  if (!sourceTeamId || /[\/\\]|\.\./.test(sourceTeamId)) {
+    res.status(400).json({ error: 'Valid sourceTeamId is required' });
     return;
   }
 

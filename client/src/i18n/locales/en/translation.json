@@ -393,6 +393,11 @@
     "no_dependencies": "— No Dependencies —",
     "close": "Close"
   },
+  "approvals": {
+    "title": "Permission Requests",
+    "empty": "No pending permission requests",
+    "empty_sub": "Requests will appear here when agents need your approval"
+  },
   "approval": {
     "title": "Permission Request",
     "team": "Team",
@@ -559,18 +564,31 @@
     "loading": "LOADING...",
     "no_messages": "No Messages",
     "no_messages_sub": "Conversation history will appear when the agent is active",
-    "input_placeholder": "Message {{name}}... (Ctrl+Enter to send)",
-    "send_hint": "Ctrl+Enter to send · Esc to clear",
+    "group_empty_sub": "Agent conversations will appear here in real-time",
+    "messages_count": "messages",
+    "send_to": "SEND TO",
+    "select_agent_first": "Select an agent above...",
+    "agents_waiting": "Waiting for your input: {{names}}",
+    "input_placeholder": "Message {{name}}... (Enter to send)",
+    "send_hint": "Enter to send · Shift+Enter for new line",
     "sending": "Sending...",
     "sent": "✓ Sent"
   },
   "topology": {
+    "layout_swim": "SWIM",
+    "layout_swim_desc": "Swimlane — tasks grouped under each agent",
+    "layout_cluster": "CLUSTER",
+    "layout_cluster_desc": "Cluster — 2-column grid per agent",
+    "layout_radial": "RADIAL",
+    "layout_radial_desc": "Radial — agents in ring, tasks fan outward",
     "filter_all": "All",
     "filter_active": "Active",
     "filter_blocked": "Blocked",
     "filter_all_tooltip": "Show all tasks including completed",
     "filter_active_tooltip": "Hide completed tasks (default)",
-    "filter_blocked_tooltip": "Show only blocked tasks"
+    "filter_blocked_tooltip": "Show only blocked tasks",
+    "empty_title": "NO TOPOLOGY",
+    "empty_subtitle": "Agent nodes will appear when the team forms"
   },
   "memory": {
     "title": "Memory // {{id}}",

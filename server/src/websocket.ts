@@ -54,7 +54,7 @@ export function initWebSocket(httpServer: Server): void {
     });
   });
 
-  // Ping/pong keepalive every 30s, terminate clients that miss pong within 10s
+  // Ping/pong keepalive every 30s using native WebSocket ping frames
   const pingInterval = setInterval(() => {
     for (const ws of clients) {
       const extWs = ws as WebSocket & { isAlive: boolean };
@@ -64,14 +64,7 @@ export function initWebSocket(httpServer: Server): void {
         continue;
       }
       extWs.isAlive = false;
-      send(ws, { type: 'ping' });
-      // Give 10s to respond
-      setTimeout(() => {
-        if (!extWs.isAlive && ws.readyState === WebSocket.OPEN) {
-          ws.terminate();
-          clients.delete(ws);
-        }
-      }, 10000);
+      ws.ping();
     }
   }, 30000);
 

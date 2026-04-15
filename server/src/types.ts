@@ -29,7 +29,7 @@ export interface Task {
   subject: string;
   description: string;
   activeForm: string;
-  status: 'pending' | 'in_progress' | 'completed';
+  status: 'pending' | 'in_progress' | 'completed' | 'deleted';
   blocks: string[];
   blockedBy: string[];
   owner?: string;
@@ -208,7 +208,7 @@ export interface CommLogResponse {
 // Session todo lists (from ~/.claude/todos/) — scoped to project, not agent
 export interface TodoItem {
   content: string;
-  status: 'pending' | 'in_progress' | 'completed';
+  status: 'pending' | 'in_progress' | 'completed' | 'deleted';
   activeForm?: string;
 }
 export interface SessionTodo {

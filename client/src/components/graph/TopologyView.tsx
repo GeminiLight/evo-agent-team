@@ -1,4 +1,5 @@
 import { useMemo, useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import type React from 'react';
 import {
   ReactFlow,
@@ -37,10 +38,10 @@ function cssVar(name: string, fallback: string): string {
   return val || fallback;
 }
 
-const LAYOUT_OPTIONS: { mode: LayoutMode; label: string; icon: string; desc: string }[] = [
-  { mode: 'hierarchical', label: 'SWIM', icon: '▥', desc: 'Swimlane — tasks grouped under each agent' },
-  { mode: 'force',        label: 'CLUSTER', icon: '⊞', desc: 'Cluster — 2-column grid per agent' },
-  { mode: 'circular',     label: 'RADIAL', icon: '◎', desc: 'Radial — agents in ring, tasks fan outward' },
+const LAYOUT_OPTIONS: { mode: LayoutMode; labelKey: string; icon: string; descKey: string }[] = [
+  { mode: 'hierarchical', labelKey: 'topology.layout_swim', icon: '▥', descKey: 'topology.layout_swim_desc' },
+  { mode: 'force',        labelKey: 'topology.layout_cluster', icon: '⊞', descKey: 'topology.layout_cluster_desc' },
+  { mode: 'circular',     labelKey: 'topology.layout_radial', icon: '◎', descKey: 'topology.layout_radial_desc' },
 ];
 
 function LayoutToolbar({ layout, onChange, statusFilter, onStatusFilterChange }: {
@@ -49,10 +50,11 @@ function LayoutToolbar({ layout, onChange, statusFilter, onStatusFilterChange }:
   statusFilter: StatusFilter;
   onStatusFilterChange: (f: StatusFilter) => void;
 }) {
-  const STATUS_FILTER_OPTIONS: { mode: StatusFilter; label: string; desc: string }[] = [
-    { mode: 'all',     label: 'ALL',     desc: 'Show all tasks including completed' },
-    { mode: 'active',  label: 'ACTIVE',  desc: 'Hide completed tasks (default)' },
-    { mode: 'blocked', label: 'BLOCKED', desc: 'Show only blocked tasks' },
+  const { t } = useTranslation();
+  const STATUS_FILTER_OPTIONS: { mode: StatusFilter; labelKey: string; descKey: string }[] = [
+    { mode: 'all',     labelKey: 'topology.filter_all',     descKey: 'topology.filter_all_tooltip' },
+    { mode: 'active',  labelKey: 'topology.filter_active',  descKey: 'topology.filter_active_tooltip' },
+    { mode: 'blocked', labelKey: 'topology.filter_blocked', descKey: 'topology.filter_blocked_tooltip' },
   ];
 
   return (
@@ -78,7 +80,7 @@ function LayoutToolbar({ layout, onChange, statusFilter, onStatusFilterChange }:
         return (
           <button
             key={opt.mode}
-            title={opt.desc}
+            title={t(opt.descKey)}
             onClick={() => onChange(opt.mode)}
             style={{
               display: 'flex',
@@ -106,7 +108,7 @@ function LayoutToolbar({ layout, onChange, statusFilter, onStatusFilterChange }:
             }}
           >
             <span style={{ fontSize: '12px', opacity: isActive ? 1 : 0.5 }}>{opt.icon}</span>
-            {opt.label}
+            {t(opt.labelKey)}
           </button>
         );
       })}
@@ -120,7 +122,7 @@ function LayoutToolbar({ layout, onChange, statusFilter, onStatusFilterChange }:
         return (
           <button
             key={opt.mode}
-            title={opt.desc}
+            title={t(opt.descKey)}
             onClick={() => onStatusFilterChange(opt.mode)}
             style={{
               padding: '5px 10px',
@@ -144,7 +146,7 @@ function LayoutToolbar({ layout, onChange, statusFilter, onStatusFilterChange }:
               if (!isActive) (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)';
             }}
           >
-            {opt.label}
+            {t(opt.labelKey)}
           </button>
         );
       })}
@@ -153,6 +155,7 @@ function LayoutToolbar({ layout, onChange, statusFilter, onStatusFilterChange }:
 }
 
 function TopologyViewInner({ team, onTaskSelect, onAgentSelect, containerRef, selectedAgentId, alertedAgentNames }: TopologyViewProps) {
+  const { t } = useTranslation();
   const [layout, setLayout] = useState<LayoutMode>('hierarchical');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('active');
   const { fitView } = useReactFlow();
@@ -240,7 +243,7 @@ function TopologyViewInner({ team, onTaskSelect, onAgentSelect, containerRef, se
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           background: 'var(--graph-bg)',
         }}>
-          <CRTEmptyState title="NO TOPOLOGY" subtitle="Agent nodes will appear when the team forms" />
+          <CRTEmptyState title={t('topology.empty_title')} subtitle={t('topology.empty_subtitle')} />
         </div>
       )}
 

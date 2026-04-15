@@ -182,7 +182,8 @@ export default function Sidebar({
         flexDirection: 'column', 
         gap: '8px',
         overflowY: 'auto',
-        flex: 1,
+        flex: '1 1 0',
+        minHeight: 0,
       }}>
         {navGroups.map(group => {
           const GroupIcon = group.icon;
@@ -271,15 +272,14 @@ export default function Sidebar({
         })}
       </nav>
 
-      {/* ─── Spacer ─── */}
-      <div style={{ flex: 1 }} />
-
       {/* ─── Agent mini-list ─── */}
       {members.length > 0 && (
         <div style={{
           borderTop: '1px solid var(--border)',
           padding: collapsed ? '8px 6px' : '8px 8px',
-          overflow: 'auto',
+          overflowY: 'auto',
+          flexShrink: 0,
+          maxHeight: '40%',
         }}>
           {!collapsed && (
             <div style={{

@@ -8,6 +8,7 @@ import feedbackRouter from './feedback.js';
 import memoryRouter from './memory.js';
 import knowledgeRouter from './knowledge.js';
 import hooksRouter from './hooks.js';
+import supervisionRouter from './supervision.js';
 
 const router = Router();
 
@@ -29,5 +30,6 @@ router.use(feedbackRouter);
 router.use(memoryRouter);
 router.use(knowledgeRouter);
 router.use(hooksRouter);
+router.use(supervisionRouter);
 
 export default router;

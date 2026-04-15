@@ -1,339 +1,462 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Send } from 'lucide-react';
-import type { TeamDetail, SessionMessage } from '../../types';
-import { useAgentSessions } from '../../hooks/useAgentSessions';
+import { Send, Users } from 'lucide-react';
+import type { TeamDetail, AgentMessage, CommLogResponse } from '../../types';
 import { useAgentRespond } from '../../hooks/useAgentRespond';
 import { agentColor, agentInitials } from '../../utils/agentColors';
-import ChatBubble from './ChatBubble';
+import type { PendingHumanRequests } from '../../hooks/usePendingHumanRequests';
+import MarkdownContent from '../shared/MarkdownContent';
 
 interface ChatViewProps {
   teamId: string;
   teamDetail: TeamDetail | null;
+  pendingHumanRequests?: PendingHumanRequests;
 }
 
-export default function ChatView({ teamId, teamDetail }: ChatViewProps) {
-  const { t } = useTranslation();
-  const members = teamDetail?.config?.members ?? [];
-  const { agents: sessionAgents } = useAgentSessions(teamId);
+// ─── Data hook: fetch agent-to-agent messages ────────────────────────────────
+function useGroupChat(teamId: string) {
+  const [data, setData] = useState<CommLogResponse | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Pick agent names that have sessions — stabilized reference
-  const agentNames = useMemo(() => {
-    return sessionAgents.length > 0
-      ? sessionAgents.map(a => a.agentName)
-      : members.map(m => m.name);
-  }, [sessionAgents, members]);
-
-  const [selectedAgent, setSelectedAgent] = useState<string>('');
-
-  // Auto-select first agent; reset if selected agent is no longer in list
   useEffect(() => {
-    if (agentNames.length === 0) {
-      setSelectedAgent('');
-    } else if (!selectedAgent || !agentNames.includes(selectedAgent)) {
-      setSelectedAgent(agentNames[0]);
+    let cancelled = false;
+    async function fetchData() {
+      try {
+        const res = await fetch(`/api/teams/${teamId}/messages`);
+        if (!res.ok) return;
+        const json = await res.json();
+        if (!cancelled) setData(json);
+      } catch { /* silent */ }
+      finally { if (!cancelled) setLoading(false); }
     }
-  }, [agentNames, selectedAgent]);
+    setLoading(true);
+    fetchData();
+    const interval = setInterval(fetchData, 3000);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [teamId]);
 
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
-      {/* ─── Header: Agent tabs ─── */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '4px',
-        marginBottom: '12px',
-        flexWrap: 'wrap',
-      }}>
-        <span style={{
-          fontSize: '11px',
-          fontWeight: 700,
-          color: 'var(--phosphor)',
-          letterSpacing: '0.12em',
-          textTransform: 'uppercase',
-          textShadow: '0 0 10px var(--phosphor-glow)',
-          marginRight: '8px',
-        }}>
-          {t('chat.title', { name: teamDetail?.name ?? teamId })}
-        </span>
-
-        {agentNames.map(name => {
-          const active = name === selectedAgent;
-          const color = agentColor(name);
-          return (
-            <button
-              key={name}
-              onClick={() => setSelectedAgent(name)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '5px',
-                padding: '4px 10px',
-                background: active ? `${color}22` : 'transparent',
-                border: `1px solid ${active ? `${color}55` : 'var(--border)'}`,
-                borderRadius: '12px',
-                cursor: 'pointer',
-                fontFamily: 'var(--font-mono)',
-                fontSize: '10px',
-                color: active ? color : 'var(--text-secondary)',
-                transition: 'all 0.15s',
-              }}
-              onMouseEnter={e => { if (!active) e.currentTarget.style.borderColor = `${color}44`; }}
-              onMouseLeave={e => { if (!active) e.currentTarget.style.borderColor = 'var(--border)'; }}
-            >
-              <span style={{
-                width: '18px', height: '18px',
-                borderRadius: '50%',
-                background: `${color}22`,
-                border: `1px solid ${color}44`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 'var(--text-xs)', fontWeight: 700, color,
-              }}>
-                {agentInitials(name)}
-              </span>
-              {name}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* ─── Chat body ─── */}
-      {selectedAgent ? (
-        <ChatBody key={selectedAgent} teamId={teamId} agentName={selectedAgent} />
-      ) : (
-        <div style={{
-          flex: 1,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: 'var(--text-muted)',
-          fontSize: '11px',
-          letterSpacing: '0.1em',
-        }}>
-          {t('chat.select_agent')}
-        </div>
-      )}
-    </div>
-  );
+  return { data, loading };
 }
 
-// ─── Chat body: message list + input ─────────────────────────────────────────
-
-function ChatBody({ teamId, agentName }: { teamId: string; agentName: string }) {
+// ─── Main view ──────────────────────────────────────────────────────────────
+export default function ChatView({ teamId, teamDetail, pendingHumanRequests }: ChatViewProps) {
   const { t } = useTranslation();
-  const { messages, loading } = useChatHistory(teamId, agentName);
-  const { respond, sending, error: respondError, clearError } = useAgentRespond(teamId);
+  const { data, loading } = useGroupChat(teamId);
+  const { respond, sending } = useAgentRespond(teamId);
+
   const [inputText, setInputText] = useState('');
-  const [sentMessages, setSentMessages] = useState<SessionMessage[]>([]);
+  const [targetAgent, setTargetAgent] = useState<string>('');
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [isFollowing, setIsFollowing] = useState(true);
   const prevCountRef = useRef(0);
+
+  const teamName = teamDetail?.name ?? teamId;
+  const agentNames = data?.agentNames ?? [];
+  const messages = useMemo(() => {
+    const msgs = data?.messages ?? [];
+    return [...msgs].sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+  }, [data?.messages]);
+
+  const pendingAgents = pendingHumanRequests?.agentNames ?? [];
+
+  // Auto-select first pending agent as target, or first agent
+  useEffect(() => {
+    if (!targetAgent || !agentNames.includes(targetAgent)) {
+      if (pendingAgents.length > 0) {
+        setTargetAgent(pendingAgents[0]);
+      } else if (agentNames.length > 0) {
+        setTargetAgent(agentNames[0]);
+      }
+    }
+  }, [agentNames, pendingAgents, targetAgent]);
 
   // Auto-scroll when new messages arrive
   useEffect(() => {
-    if (messages.length > prevCountRef.current) {
-      scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+    if (messages.length > prevCountRef.current && isFollowing && scrollRef.current) {
+      scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
     }
     prevCountRef.current = messages.length;
-  }, [messages.length]);
+  }, [messages.length, isFollowing]);
 
-  // Clear optimistic messages when real message count grows (server confirmed receipt)
-  const prevRealCountRef = useRef(0);
-  useEffect(() => {
-    if (sentMessages.length > 0 && messages.length > prevRealCountRef.current) {
-      setSentMessages([]);
+  // Detect user scroll
+  const handleScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const distFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    if (distFromBottom > 80) {
+      setIsFollowing(false);
+    } else {
+      setIsFollowing(true);
     }
-    prevRealCountRef.current = messages.length;
-  }, [messages.length, sentMessages.length]);
-
-  // Clear input and sent messages when agent changes
-  useEffect(() => {
-    setInputText('');
-    setSentMessages([]);
-    clearError();
-  }, [agentName, clearError]);
-
-  const allMessages = [...messages, ...sentMessages];
+  }, []);
 
   const handleSend = useCallback(async () => {
     const text = inputText.trim();
-    if (!text || sending) return;
-
-    // Optimistic update
-    const optimistic: SessionMessage = {
-      uuid: `optimistic-${Date.now()}`,
-      role: 'user',
-      timestamp: new Date().toISOString(),
-      entries: [{ kind: 'text', text }],
-    };
-    setSentMessages(prev => [...prev, optimistic]);
+    if (!text || sending || !targetAgent) return;
     setInputText('');
-
-    const ok = await respond(agentName, text);
-    if (!ok) {
-      // Remove optimistic message on failure
-      setSentMessages(prev => prev.filter(m => m.uuid !== optimistic.uuid));
-      setInputText(text); // restore
-    }
-  }, [inputText, sending, respond, agentName]);
+    await respond(targetAgent, text);
+  }, [inputText, sending, targetAgent, respond]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
-    }
-    if (e.key === 'Escape') {
-      setInputText('');
     }
   };
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-      {/* Message area */}
-      <div
-        ref={scrollRef}
-        style={{
-          flex: 1,
-          overflow: 'auto',
-          padding: '8px 4px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '8px',
-        }}
-      >
-        {loading && allMessages.length === 0 && (
-          <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            height: '200px', color: 'var(--text-muted)', fontSize: '10px',
-            letterSpacing: '0.12em',
+    <div style={{
+      display: 'flex', flexDirection: 'column',
+      height: '100%', minHeight: '300px',
+    }}>
+      {/* Header */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px',
+        flexShrink: 0,
+      }}>
+        <Users size={14} style={{ color: 'var(--phosphor)' }} />
+        <span style={{
+          fontSize: '11px', fontWeight: 700,
+          color: 'var(--phosphor)', letterSpacing: '0.12em',
+          textTransform: 'uppercase',
+          textShadow: '0 0 10px var(--phosphor-glow)',
+        }}>
+          {t('chat.title', { name: teamName })}
+        </span>
+        <span style={{ flex: 1 }} />
+        {!loading && (
+          <span style={{
+            fontSize: 'var(--text-xs)', color: 'var(--text-muted)',
+            letterSpacing: '0.1em',
           }}>
-            {t('chat.loading')}
-          </div>
+            {messages.length} {t('chat.messages_count', 'messages')}
+          </span>
         )}
-        {!loading && allMessages.length === 0 && (
-          <div style={{
-            display: 'flex', flexDirection: 'column',
-            alignItems: 'center', justifyContent: 'center',
-            height: '200px', gap: '8px',
-          }}>
-            <span style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.12em' }}>
-              {t('chat.no_messages')}
-            </span>
-            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', opacity: 0.6 }}>
-              {t('chat.no_messages_sub')}
-            </span>
-          </div>
-        )}
-        {allMessages.map((msg, idx) => {
-          const isLast = idx === allMessages.length - 1;
-          const isStreaming = isLast && msg.role === 'assistant' && !msg.uuid.startsWith('optimistic-');
-          return <ChatBubble key={msg.uuid} message={msg} isStreaming={isStreaming} />;
-        })}
       </div>
 
-      {/* ─── Input bar ─── */}
+      {/* Chat area */}
       <div style={{
-        borderTop: '1px solid var(--border)',
-        padding: '10px 0 0',
-        display: 'flex',
-        gap: '8px',
-        alignItems: 'flex-end',
+        flex: 1, minHeight: 0,
+        background: 'var(--surface-0)',
+        border: '1px solid var(--border)',
+        borderRadius: '4px',
+        display: 'flex', flexDirection: 'column',
+        overflow: 'hidden',
       }}>
-        <textarea
-          value={inputText}
-          onChange={e => setInputText(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder={t('chat.input_placeholder', { name: agentName })}
-          rows={2}
+        {/* Message scroll area */}
+        <div
+          ref={scrollRef}
+          onScroll={handleScroll}
           style={{
-            flex: 1,
-            background: 'var(--surface-1)',
-            border: '1px solid var(--border)',
-            borderRadius: '6px',
-            padding: '8px 12px',
-            fontFamily: 'var(--font-mono)',
-            fontSize: '11px',
-            color: 'var(--text-primary)',
-            resize: 'none',
-            outline: 'none',
-            lineHeight: 1.5,
-          }}
-          onFocus={e => { e.currentTarget.style.borderColor = 'var(--phosphor)'; }}
-          onBlur={e => { e.currentTarget.style.borderColor = 'var(--border)'; }}
-        />
-        <button
-          onClick={handleSend}
-          disabled={!inputText.trim() || sending}
-          title="Ctrl+Enter to send"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '36px',
-            height: '36px',
-            background: inputText.trim() ? 'var(--phosphor)' : 'var(--surface-1)',
-            color: inputText.trim() ? 'var(--void)' : 'var(--text-muted)',
-            border: `1px solid ${inputText.trim() ? 'var(--phosphor)' : 'var(--border)'}`,
-            borderRadius: '6px',
-            cursor: inputText.trim() && !sending ? 'pointer' : 'default',
-            transition: 'all 0.15s',
-            opacity: sending ? 0.5 : 1,
+            flex: 1, overflowY: 'auto',
+            padding: '12px 16px',
+            display: 'flex', flexDirection: 'column',
+            gap: '4px',
           }}
         >
-          <Send size={14} />
-        </button>
-      </div>
+          {loading && messages.length === 0 && (
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              height: '200px', color: 'var(--text-muted)',
+              fontSize: '10px', letterSpacing: '0.12em',
+            }}>
+              {t('common.loading', 'LOADING...')}
+            </div>
+          )}
+          {!loading && messages.length === 0 && (
+            <div style={{
+              display: 'flex', flexDirection: 'column',
+              alignItems: 'center', justifyContent: 'center',
+              height: '200px', gap: '8px',
+            }}>
+              <Users size={28} style={{ color: 'var(--text-muted)', opacity: 0.3 }} />
+              <span style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.12em' }}>
+                {t('chat.no_messages', 'No Messages')}
+              </span>
+              <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', opacity: 0.6 }}>
+                {t('chat.group_empty_sub', 'Agent conversations will appear here in real-time')}
+              </span>
+            </div>
+          )}
+          {messages.map((msg, idx) => (
+            <GroupChatBubble
+              key={msg.id}
+              message={msg}
+              prevMessage={idx > 0 ? messages[idx - 1] : null}
+              isPendingHuman={pendingAgents.includes(msg.sender)}
+            />
+          ))}
+        </div>
 
-      {/* Status line */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-        padding: '4px 0 0',
-        fontSize: 'var(--text-xs)',
-        color: 'var(--text-muted)',
-        letterSpacing: '0.06em',
-      }}>
-        <span style={{ opacity: 0.6 }}>{t('chat.send_hint')}</span>
-        <span style={{ flex: 1 }} />
-        {sending && <span style={{ color: 'var(--amber)' }}>{t('chat.sending')}</span>}
-        {respondError && <span style={{ color: 'var(--crimson, #ff4466)' }}>{respondError}</span>}
+        {/* Pending human input banner */}
+        {pendingAgents.length > 0 && (
+          <div style={{
+            padding: '6px 16px',
+            borderTop: '1px solid var(--amber-dim, rgba(255,191,0,0.2))',
+            background: 'rgba(255,191,0,0.05)',
+            display: 'flex', alignItems: 'center', gap: '8px',
+            flexShrink: 0,
+          }}>
+            <span style={{ fontSize: '11px' }}>⚠</span>
+            <span style={{
+              fontSize: 'var(--text-xs)', color: 'var(--amber)',
+              letterSpacing: '0.1em', fontWeight: 700,
+            }}>
+              {t('chat.agents_waiting', {
+                names: pendingAgents.join(', '),
+                defaultValue: `Waiting for your input: ${pendingAgents.join(', ')}`,
+              })}
+            </span>
+          </div>
+        )}
+
+        {/* Input area */}
+        <div style={{
+          borderTop: '1px solid var(--border)',
+          padding: '10px 12px',
+          display: 'flex', flexDirection: 'column', gap: '8px',
+          flexShrink: 0,
+          background: 'var(--surface-1)',
+        }}>
+          {/* Target agent selector */}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '4px',
+            flexWrap: 'wrap',
+          }}>
+            <span style={{
+              fontSize: 'var(--text-xs)', color: 'var(--text-muted)',
+              letterSpacing: '0.1em', marginRight: '4px',
+            }}>
+              {t('chat.send_to', 'SEND TO')}:
+            </span>
+            {agentNames.map(name => {
+              const active = name === targetAgent;
+              const color = agentColor(name);
+              const isPending = pendingAgents.includes(name);
+              return (
+                <button
+                  key={name}
+                  onClick={() => setTargetAgent(name)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '4px',
+                    padding: '2px 8px',
+                    background: active ? `${color}22` : 'transparent',
+                    border: `1px solid ${active ? `${color}55` : 'var(--border)'}`,
+                    borderRadius: '10px',
+                    cursor: 'pointer',
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: 'var(--text-xs)',
+                    color: active ? color : 'var(--text-muted)',
+                    transition: 'all 0.15s',
+                    position: 'relative',
+                  }}
+                >
+                  <span style={{
+                    width: '14px', height: '14px',
+                    borderRadius: '50%',
+                    background: `${color}22`,
+                    border: `1px solid ${color}44`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '7px', fontWeight: 700, color,
+                  }}>
+                    {agentInitials(name)}
+                  </span>
+                  {name}
+                  {isPending && (
+                    <span style={{
+                      width: '5px', height: '5px', borderRadius: '50%',
+                      background: 'var(--amber)',
+                      boxShadow: '0 0 4px var(--amber)',
+                      animation: 'status-pulse 2s ease-in-out infinite',
+                    }} />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Text input + send */}
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
+            <textarea
+              value={inputText}
+              onChange={e => setInputText(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder={targetAgent
+                ? t('chat.input_placeholder', { name: targetAgent })
+                : t('chat.select_agent_first', 'Select an agent above...')
+              }
+              rows={2}
+              disabled={!targetAgent}
+              style={{
+                flex: 1,
+                background: 'var(--surface-0)',
+                border: '1px solid var(--border)',
+                borderRadius: '6px',
+                padding: '8px 12px',
+                fontFamily: 'var(--font-mono)',
+                fontSize: '11px',
+                color: 'var(--text-primary)',
+                resize: 'none',
+                outline: 'none',
+                lineHeight: 1.5,
+                opacity: targetAgent ? 1 : 0.5,
+              }}
+              onFocus={e => { e.currentTarget.style.borderColor = 'var(--phosphor)'; }}
+              onBlur={e => { e.currentTarget.style.borderColor = 'var(--border)'; }}
+            />
+            <button
+              onClick={handleSend}
+              disabled={!inputText.trim() || sending || !targetAgent}
+              title="Ctrl+Enter to send"
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                width: '36px', height: '36px',
+                background: inputText.trim() && targetAgent ? 'var(--phosphor)' : 'var(--surface-0)',
+                color: inputText.trim() && targetAgent ? 'var(--void)' : 'var(--text-muted)',
+                border: `1px solid ${inputText.trim() && targetAgent ? 'var(--phosphor)' : 'var(--border)'}`,
+                borderRadius: '6px',
+                cursor: inputText.trim() && !sending && targetAgent ? 'pointer' : 'default',
+                transition: 'all 0.15s',
+                opacity: sending ? 0.5 : 1,
+              }}
+            >
+              <Send size={14} />
+            </button>
+          </div>
+
+          {/* Status line */}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '8px',
+            fontSize: 'var(--text-xs)', color: 'var(--text-muted)',
+            letterSpacing: '0.06em',
+          }}>
+            <span style={{ opacity: 0.6 }}>{t('chat.send_hint')}</span>
+            <span style={{ flex: 1 }} />
+            {sending && <span style={{ color: 'var(--amber)' }}>{t('chat.sending')}</span>}
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
-// ─── Custom hook: session history with faster polling for chat ────────────────
+// ─── Group chat bubble ──────────────────────────────────────────────────────
 
-function useChatHistory(teamId: string | null, agentName: string | null) {
-  const [messages, setMessages] = useState<SessionMessage[]>([]);
-  const [loading, setLoading] = useState(false);
-  const isFirstFetch = useRef(true);
+function GroupChatBubble({ message, prevMessage, isPendingHuman }: {
+  message: AgentMessage;
+  prevMessage: AgentMessage | null;
+  isPendingHuman: boolean;
+}) {
+  const color = agentColor(message.sender);
+  const isHuman = message.parsedType === 'human_input_request' || message.parsedType === 'human_response';
+  const isSystem = message.parsedType === 'shutdown_request' || message.parsedType === 'shutdown_response'
+    || message.parsedType === 'idle_notification' || message.parsedType === 'broadcast';
 
-  useEffect(() => {
-    if (!teamId || !agentName) { setMessages([]); setLoading(false); return; }
+  // Show sender header if different from previous message's sender
+  const showSender = !prevMessage || prevMessage.sender !== message.sender
+    || timeDiffMinutes(prevMessage.timestamp, message.timestamp) > 2;
 
-    isFirstFetch.current = true;
-    let cancelled = false;
-    async function fetchData() {
-      // Only show loading spinner on initial fetch, not on poll updates
-      if (isFirstFetch.current) setLoading(true);
-      try {
-        const url = `/api/teams/${teamId}/session-history?agentName=${encodeURIComponent(agentName!)}`;
-        const res = await fetch(url);
-        if (!res.ok) return;
-        const json = await res.json() as { messages?: SessionMessage[] };
-        if (!cancelled) setMessages(json.messages ?? []);
-      } catch { /* silent */ } finally {
-        if (!cancelled) {
-          if (isFirstFetch.current) { setLoading(false); isFirstFetch.current = false; }
-        }
-      }
-    }
-    fetchData();
-    // 5s polling for chat real-time feel
-    const interval = setInterval(fetchData, 5000);
-    return () => { cancelled = true; clearInterval(interval); };
-  }, [teamId, agentName]);
+  // System messages rendered as centered notices
+  if (isSystem) {
+    return (
+      <div style={{
+        display: 'flex', justifyContent: 'center',
+        padding: '4px 0',
+      }}>
+        <span style={{
+          fontSize: 'var(--text-xs)', color: 'var(--text-muted)',
+          letterSpacing: '0.08em', opacity: 0.7,
+          background: 'var(--surface-1)',
+          border: '1px solid var(--border)',
+          borderRadius: '10px',
+          padding: '2px 12px',
+        }}>
+          {message.sender} · {message.text.slice(0, 80)}{message.text.length > 80 ? '...' : ''}
+          <span style={{ marginLeft: '6px', opacity: 0.5 }}>{fmtTime(message.timestamp)}</span>
+        </span>
+      </div>
+    );
+  }
 
-  return { messages, loading };
+  return (
+    <div style={{ padding: showSender ? '6px 0 2px' : '1px 0' }}>
+      {/* Sender header */}
+      {showSender && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: '6px',
+          marginBottom: '3px',
+          paddingLeft: '4px',
+        }}>
+          {/* Avatar */}
+          <span style={{
+            width: '20px', height: '20px',
+            borderRadius: '50%',
+            background: `${color}22`,
+            border: `1.5px solid ${color}44`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '8px', fontWeight: 700, color,
+            flexShrink: 0,
+          }}>
+            {agentInitials(message.sender)}
+          </span>
+          <span style={{
+            fontSize: '10px', fontWeight: 700, color,
+            letterSpacing: '0.04em',
+          }}>
+            {message.sender}
+          </span>
+          <span style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', opacity: 0.5 }}>
+            → {message.recipient}
+          </span>
+          <span style={{
+            fontSize: 'var(--text-xs)', color: 'var(--text-muted)',
+            opacity: 0.4, marginLeft: 'auto',
+          }}>
+            {fmtTime(message.timestamp)}
+          </span>
+          {isPendingHuman && (
+            <span style={{
+              fontSize: 'var(--text-xs)', color: 'var(--amber)',
+              letterSpacing: '0.08em', fontWeight: 700,
+            }}>
+              ⚠ WAITING
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Message bubble */}
+      <div style={{
+        marginLeft: '30px',
+        maxWidth: 'calc(100% - 40px)',
+      }}>
+        <div style={{
+          background: isHuman ? 'var(--amber-glow, rgba(255,191,0,0.08))' : 'var(--surface-1)',
+          border: `1px solid ${isHuman ? 'var(--amber-dim, rgba(255,191,0,0.2))' : 'var(--border)'}`,
+          borderLeft: `2px solid ${color}55`,
+          borderRadius: '2px 8px 8px 2px',
+          padding: '8px 12px',
+          fontSize: '11px',
+          lineHeight: 1.6,
+          color: 'var(--text-secondary)',
+        }}>
+          <MarkdownContent content={message.text} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function fmtTime(ts: string) {
+  if (!ts) return '';
+  try {
+    const d = new Date(ts);
+    return d.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  } catch { return ts.slice(11, 19); }
+}
+
+function timeDiffMinutes(ts1: string, ts2: string): number {
+  try {
+    return Math.abs(new Date(ts2).getTime() - new Date(ts1).getTime()) / 60000;
+  } catch { return 999; }
 }

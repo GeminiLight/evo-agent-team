@@ -30,6 +30,7 @@ const CostView = lazy(() => import('./components/cost/CostView'));
 const ReviewView = lazy(() => import('./components/review/ReviewView'));
 const KnowledgeView = lazy(() => import('./components/knowledge/KnowledgeView'));
 const SettingsView = lazy(() => import('./components/settings/SettingsView'));
+const ApprovalsView = lazy(() => import('./components/approvals/ApprovalsView'));
 const ApprovalModal = lazy(() => import('./components/shared/ApprovalModal'));
 
 export default function App() {
@@ -210,7 +211,7 @@ export default function App() {
           />
         )}
 
-        {(view === 'dashboard' || view === 'approvals') && teamDetail && (
+        {view === 'dashboard' && teamDetail && (
           <DashboardView
             team={teamDetail}
             onTaskSelect={setSelectedTaskId}
@@ -237,6 +238,14 @@ export default function App() {
             LOADING...
           </div>
         }>
+        {view === 'approvals' && (
+          <ApprovalsView
+            permissionRequests={permissionRequests}
+            resolvingId={resolvingId}
+            onResolve={resolveRequest}
+            onOpenDetails={request => setSelectedPermissionRequestId(request.id)}
+          />
+        )}
         {view === 'graph' && teamDetail && (
           <TopologyView team={teamDetail} onTaskSelect={setSelectedTaskId} onAgentSelect={setSelectedAgentId} containerRef={graphContainerRef} selectedAgentId={selectedAgentId} alertedAgentNames={alertedAgentNames} />
         )}
@@ -274,6 +283,7 @@ export default function App() {
           <ChatView
             teamId={selectedTeamId}
             teamDetail={teamDetail}
+            pendingHumanRequests={pendingHuman}
           />
         )}
         {view === 'cost' && selectedTeamId && (

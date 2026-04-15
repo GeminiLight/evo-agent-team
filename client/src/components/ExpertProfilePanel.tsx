@@ -21,7 +21,7 @@ interface HumanInputStatus {
 export default function ExpertProfilePanel({ teamId, teamName }: ExpertProfilePanelProps) {
   const { t } = useTranslation();
   const [entries, setEntries] = useState<FeedbackEntry[]>([]);
-  const [preferences, setPreferences] = useState<Record<string, string[]>>({});
+  const [preferences, setPreferences] = useState<Record<string, Array<{ rule: string } & Record<string, unknown>>>>({});
   const [guide, setGuide] = useState<GuideData | null>(null);
   const [humanInput, setHumanInput] = useState<HumanInputStatus | null>(null);
   const [loading, setLoading] = useState(true);
@@ -295,7 +295,7 @@ export default function ExpertProfilePanel({ teamId, teamName }: ExpertProfilePa
                         {rules.slice(0, 3).map((rule, i) => (
                           <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
                             <span style={{ color: 'var(--ice)', fontSize: 'var(--text-xs)', flexShrink: 0, marginTop: '2px' }}>▸</span>
-                            <span style={{ fontSize: '10px', color: 'var(--text-primary)', lineHeight: 1.5 }}>{rule}</span>
+                            <span style={{ fontSize: '10px', color: 'var(--text-primary)', lineHeight: 1.5 }}>{typeof rule === 'string' ? rule : rule.rule ?? JSON.stringify(rule)}</span>
                           </div>
                         ))}
                         {rules.length > 3 && (

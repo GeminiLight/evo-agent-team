@@ -22,6 +22,9 @@
 
 | Feature | Description |
 |---|---|
+| ⚙️ **Approval System** | Permission request approval panel, global modal, toast notifications, browser alerts |
+| 🛡️ **Supervision Rules** | Rule-based agent supervision with auto-extraction from feedback |
+| 🎓 **Onboarding Tour** | 5-step interactive guided walkthrough for new users |
 | 📊 **Matrix View** | Dashboard with team overview, agent roster cards, and filterable task registry |
 | 🕸️ **Graph View** | Interactive DAG topology of agents and task dependencies powered by ReactFlow |
 | 💬 **Comms View** | Agent communication log with per-agent filtering and message type badges |
@@ -96,9 +99,11 @@ PORT=3006
 POLL_INTERVAL_MS=2000
 DEMO_MODE=auto
 
-# LLM configuration (for AI features)
-OPENAI_API_KEY=sk-...
-LLM_MODEL=gpt-4o-mini
+# LLM configuration (for AI features — supports 20+ providers)
+LLM_PROVIDER=openai-compatible
+LLM_API_KEY=your-api-key
+LLM_BASE_URL=https://api.openai.com/v1
+LLM_MODEL=claude-sonnet-4-6
 ```
 
 | Variable | Default | Description |
@@ -107,7 +112,10 @@ LLM_MODEL=gpt-4o-mini
 | `TASKS_DIR` | `~/.claude/tasks` | Claude Code task files |
 | `PORT` | `3006` | API server port |
 | `DEMO_MODE` | `auto` | `auto`/`on`/`off` |
-| `OPENAI_API_KEY` | - | Required for AI features |
+| `LLM_PROVIDER` | `openai-compatible` | Provider: openai, anthropic, google, groq, openai-compatible |
+| `LLM_API_KEY` | - | Required for AI features (summaries, extraction, supervision) |
+| `LLM_BASE_URL` | - | Custom API endpoint (for openai-compatible provider) |
+| `LLM_MODEL` | - | Model identifier |
 
 ### Data Sources
 
@@ -119,7 +127,8 @@ The dashboard reads from:
 | Task files | `~/.claude/tasks/{team}/{task-id}.json` |
 | Agent inboxes | `~/.claude/teams/{team}/inboxes/{agent}.json` |
 | Memory | `~/.claude-internal/projects/{cwd}/memory/MEMORY.md` |
-| Feedback | `{team}/feedback.jsonl` |
+| Feedback | `~/.claude/teams/{team}/feedback/{agent}.jsonl` |
+| Supervision rules | `~/.claude/teams/{team}/TEAM_GUIDE.md ## Supervision Rules` |
 
 ---
 
@@ -135,7 +144,7 @@ The dashboard reads from:
 | i18n | react-i18next |
 | Backend | Node.js, Express 4, TypeScript ESM |
 | Real-time | WebSocket (`ws`), `fs.watch` |
-| AI | OpenAI SDK |
+| AI | Multi-provider LLM via @mariozechner/pi-ai (OpenAI, Anthropic, Google, Groq) |
 
 ### Project Structure
 

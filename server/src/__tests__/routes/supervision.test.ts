@@ -45,10 +45,10 @@ beforeEach(async () => {
   vi.doMock('../../alertEngine.js', () => ({ computeAlerts: () => [], DEFAULT_THRESHOLDS: {} }));
   vi.doMock('../../summaryEngine.js', () => ({ getSummary: async () => ({}), invalidateSummary: noop }));
 
-  const { default: feedbackRouter } = await import('../../routes/feedback.js');
+  const { default: supervisionRouter } = await import('../../routes/supervision.js');
   app = express();
   app.use(express.json());
-  app.use('/api', feedbackRouter);
+  app.use('/api', supervisionRouter);
 });
 
 afterEach(async () => {

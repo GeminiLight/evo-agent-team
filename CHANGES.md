@@ -1,5 +1,36 @@
 ## Summary of Changes
 
+> Detailed changelog: [`wiki/90-changelog.md`](wiki/90-changelog.md)
+
+---
+
+### 2026-04-15 — Documentation Sync
+
+Updated all wiki docs to match actual codebase state. All metrics (component counts, endpoint counts, test counts) verified against code.
+
+### 2026-04-01 — 100% Feature Complete (23/23)
+
+**Stage C — Lightweight Intervention ✅**
+- C1: Human intervention (inbox response + PermissionRequest Hook + Approval UI)
+- C2: Task inline editing (StatusPopover + Undo + Ctrl+Click)
+
+**Stage E2 — Supervision Rules ✅**
+- SupervisionPanel UI (threshold slider, rule add/remove, auto-extract from feedback)
+- 3 new API endpoints: GET/PUT `/supervision`, POST `/supervision/extract`
+- TEAM_GUIDE.md `## Supervision Rules` section parsing + serialization
+
+**Product-Grade UX Improvements ✅**
+- Navigation restructure: 5 semantic groups (Monitoring, Collaboration, Knowledge, Review, Settings) + live badge counts
+- Dashboard reordering: Approvals moved to first-screen priority
+- First-run experience: OnboardingTour (5-step guided walkthrough) + redesigned EmptyState
+- Adaptive polling: Tab visibility detection reduces API calls by 77%
+
+**Security Audit ✅**
+- Red-team review: 9 issues found and fixed
+- 141/141 tests passing (zero regressions)
+
+### 2026-03 — Permission Request Stability
+
 ### Overview
 Completed the permission request stability and dashboard approval UX improvements as per spec `wiki/task-spec-permission-approval.md`.
 

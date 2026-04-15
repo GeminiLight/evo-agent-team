@@ -15,7 +15,7 @@ describe('Security fixes', () => {
     app.use(express.json({ limit: '1mb' }));
     
     // Global error handler
-    app.use((err: Error, _req: Request, res: Response, _next) => {
+    app.use((err: Error, _req: Request, res: Response, _next: Function) => {
       res.status(500).json({ error: 'Internal server error' });
     });
 

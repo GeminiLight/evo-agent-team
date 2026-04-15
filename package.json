@@ -12,7 +12,14 @@
     "server/src/",
     "server/package.json",
     "server/tsconfig.json",
-    ".env.example"
+    ".env.example",
+    ".claude-plugin/",
+    "hooks/",
+    "skills/",
+    "scripts/check-server.sh",
+    "scripts/start_service.sh",
+    "scripts/stop_service.sh",
+    "CLAUDE.md"
   ],
   "scripts": {
     "dev": "concurrently \"npm run dev -w server\" \"npm run dev -w client\"",

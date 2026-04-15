@@ -7,7 +7,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CODEBUDDY_PLUGIN_ROOT}/scripts/check-server.sh",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/check-server.sh",
             "timeout": 5
           }
         ]

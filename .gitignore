@@ -1,6 +1,11 @@
 node_modules/
 dist/
+.env
 .env.local
 *.tsbuildinfo
 
 demo
+
+# Runtime artifacts
+scripts/.server.pid
+scripts/server.log

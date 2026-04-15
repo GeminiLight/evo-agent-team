@@ -1,0 +1,29 @@
+{
+  "name": "evo-agent-team",
+  "version": "1.0.0",
+  "description": "Real-time dashboard for monitoring and managing Claude Code agent teams. Provides live visualization, communication logs, task tracking, performance analytics, and human-in-the-loop intervention capabilities.",
+  "author": {
+    "name": "evo-agent-team contributors"
+  },
+  "license": "MIT",
+  "keywords": [
+    "claude-code",
+    "agent",
+    "monitoring",
+    "dashboard",
+    "visualizer",
+    "team",
+    "multi-agent"
+  ],
+  "category": "Development Tools",
+  "features": [
+    "Live agent dashboard with WebSocket updates",
+    "Task topology visualization",
+    "Communication log viewer",
+    "Session history browser",
+    "Human-in-the-loop approval workflow",
+    "Agent feedback and preference distillation"
+  ],
+  "hooks": "./hooks/hooks.json",
+  "skills": "./skills/"
+}
